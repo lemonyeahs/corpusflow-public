@@ -60,6 +60,6 @@ P0-A 回滚：停止 API，备份开发数据库后可在本地执行 `uv run --
 
 分层：Router → Application Service → Domain Policy → Repository / Adapter。P0-A 没有业务写路由，也没有 MockAdapter、假登录或假任务。用途许可默认拒绝、身份隔离、审计事件将在 P0-B 实现；请求 JSON 日志不能替代不可变业务审计。
 
-项目仓库：https://github.com/lemonyeahs/corpusflow（私有）。默认分支为 `main`。P0-A 验收报告记录首次发布前的本地验收状态；远程 CI 结果以 GitHub Actions 为准。
+项目仓库：[lemonyeahs/corpusflow](https://github.com/lemonyeahs/corpusflow)（私有）。默认分支为 `main`。P0-A 验收报告记录首次发布前的本地验收状态；远程 CI 结果以 GitHub Actions 为准。首次远程运行的镜像拉取限制见 [GitHub 上传记录](docs/reports/GITHUB_UPLOAD.md)。
 
 当前镜像与 CI 在 ARM64 验证。PG/MinIO 使用固定摘要；x86 兼容与生产镜像安全评估未完成，详见验收报告。
