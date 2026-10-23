@@ -1,0 +1,9 @@
+docker compose --env-file .env -f infra/compose.yaml up -d --build --wait api
+ Image redis:7.4.8-alpine Pulling 
+ Image minio/minio:RELEASE.2025-09-07T16-13-09Z Pulling 
+ Image postgres:16.13-alpine Pulling 
+ Image minio/minio:RELEASE.2025-09-07T16-13-09Z Error pull access denied for minio/minio, repository does not exist or may require 'docker login'
+ Image redis:7.4.8-alpine Interrupted 
+ Image postgres:16.13-alpine Interrupted 
+Error response from daemon: pull access denied for minio/minio, repository does not exist or may require 'docker login'
+make: *** [up] Error 1

@@ -1,0 +1,73 @@
+name: corpusflow-p0a
+services:
+  postgres:
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?initialize .env}
+      POSTGRES_DB: ${POSTGRES_DB:?initialize .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?initialize .env}
+    ports: ["127.0.0.1:55432:5432"]
+    volumes: ["pg-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: redis:7.4.8-alpine
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?initialize .env}
+    command: ["sh", "-c", 'exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"']
+    ports: ["127.0.0.1:56379:6379"]
+    volumes: ["redis-data:/data"]
+    healthcheck:
+      test: ["CMD-SHELL", 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -q PONG']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z@sha256:a1ea29fa28355559ef137d71fc570e508a214ec84ff8083e39bc5428980b015e
+    environment:
+      MINIO_ROOT_USER: ${OBJECT_STORE_ACCESS_KEY:?initialize .env}
+      MINIO_ROOT_PASSWORD: ${OBJECT_STORE_SECRET_KEY:?initialize .env}
+    command: ["server", "/data", "--console-address", ":9001"]
+    ports: ["127.0.0.1:59000:9000", "127.0.0.1:59001:9001"]
+    volumes: ["s3-data:/data"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  init:
+    build:
+      context: ..
+      dockerfile: infra/docker/Dockerfile
+    env_file: ../.env
+    environment: &api-env
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      OBJECT_STORE_ENDPOINT: http://minio:9000
+    command: ["sh", "-c", "alembic upgrade head && python scripts/init_storage.py"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      minio: {condition: service_healthy}
+  api:
+    build:
+      context: ..
+      dockerfile: infra/docker/Dockerfile
+    env_file: ../.env
+    environment: *api-env
+    ports: ["127.0.0.1:58000:8000"]
+    command: ["uvicorn", "corpusflow.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
+    depends_on:
+      init: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/ready')"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+volumes:
+  pg-data:
+  redis-data:
+  s3-data:

@@ -1,0 +1,24 @@
+name: P0-A checks
+on: [push, pull_request]
+jobs:
+  foundation:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.9"
+          python-version: "3.12"
+      - run: uv sync --locked
+      - run: make init-env
+      - run: make check
+      - run: make up
+      - run: |
+          set -a
+          . ./.env
+          set +a
+          export CF_TEST_ADMIN_DATABASE_URL="$DATABASE_URL"
+          make integration
+          curl --fail http://127.0.0.1:58000/ready
+      - if: always()
+        run: docker compose --env-file .env -f infra/compose.yaml down

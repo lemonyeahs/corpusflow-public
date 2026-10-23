@@ -1,0 +1,14 @@
+INFO:     Started server process [26890]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:58001 (Press CTRL+C to quit)
+{"timestamp": "2026-10-23T07:36:11.552353+00:00", "level": "INFO", "service": "corpusflow-api", "event": "http_request", "request_id": "4468d5c6b2f44413a5c27c7eada06e6f", "workspace_id": null, "actor_id": null, "run_id": null, "build_id": null, "error_code": null, "status_code": 200, "duration_ms": 3.34}
+{"timestamp": "2026-10-23T07:36:11.604080+00:00", "level": "INFO", "service": "corpusflow-api", "event": "http_request", "request_id": "cc696d6a16414fceb07169b5100f0f88", "workspace_id": null, "actor_id": null, "run_id": null, "build_id": null, "error_code": null, "status_code": 200, "duration_ms": 36.15}
+{"timestamp": "2026-10-23T07:36:11.619909+00:00", "level": "INFO", "service": "corpusflow-api", "event": "http_request", "request_id": "a6bf28adecd6458f8756e546d028a0a0", "workspace_id": null, "actor_id": null, "run_id": null, "build_id": null, "error_code": null, "status_code": 404, "duration_ms": 0.74}
+{"timestamp": "2026-10-23T07:36:11.950271+00:00", "level": "INFO", "service": "corpusflow-api", "event": "http_request", "request_id": "6e962c172baa4afeb8f44d438b56b7af", "workspace_id": null, "actor_id": null, "run_id": null, "build_id": null, "error_code": null, "status_code": 503, "duration_ms": 6.38}
+{"timestamp": "2026-10-23T07:36:11.965209+00:00", "level": "INFO", "service": "corpusflow-api", "event": "http_request", "request_id": "08cc11d3559746478e6e5e6c0aba5102", "workspace_id": null, "actor_id": null, "run_id": null, "build_id": null, "error_code": null, "status_code": 200, "duration_ms": 0.58}
+{"timestamp": "2026-10-23T07:36:15.814176+00:00", "level": "INFO", "service": "corpusflow-api", "event": "http_request", "request_id": "60a6d0b10b724609b750ea21207b613f", "workspace_id": null, "actor_id": null, "run_id": null, "build_id": null, "error_code": null, "status_code": 200, "duration_ms": 7.22}
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [26890]

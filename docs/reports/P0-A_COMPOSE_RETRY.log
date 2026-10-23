@@ -1,0 +1,222 @@
+docker compose --env-file .env -f infra/compose.yaml up -d --build --wait api
+ Image corpusflow-p0a-init Building 
+ Image corpusflow-p0a-api Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 947B done
+#1 DONE 0.0s
+
+#2 [api internal] load build definition from Dockerfile
+#2 transferring dockerfile: 383B done
+#2 DONE 0.0s
+
+#3 [init internal] load metadata for docker.io/library/python:3.12.13-slim
+#3 ...
+
+#4 [init internal] load metadata for ghcr.io/astral-sh/uv:0.10.9
+#4 DONE 3.3s
+
+#3 [init internal] load metadata for docker.io/library/python:3.12.13-slim
+#3 DONE 3.6s
+
+#5 [api internal] load .dockerignore
+#5 transferring context: 91B done
+#5 DONE 0.0s
+
+#6 [init internal] load build context
+#6 transferring context: 104.18kB done
+#6 DONE 0.0s
+
+#7 [init] FROM ghcr.io/astral-sh/uv:0.10.9@sha256:10902f58a1606787602f303954cea099626a4adb02acbac4c69920fe9d278f82
+#7 resolve ghcr.io/astral-sh/uv:0.10.9@sha256:10902f58a1606787602f303954cea099626a4adb02acbac4c69920fe9d278f82 done
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 0B / 21.95MB 0.2s
+#7 sha256:ea3f44987903c750d69e26d196b627d6a2476c006ba56741dcf8aed98b98941b 0B / 98B 0.2s
+#7 sha256:ea3f44987903c750d69e26d196b627d6a2476c006ba56741dcf8aed98b98941b 98B / 98B 0.6s done
+#7 sha256:ea3f44987903c750d69e26d196b627d6a2476c006ba56741dcf8aed98b98941b 98B / 98B 0.6s done
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 2.10MB / 21.95MB 2.6s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 4.19MB / 21.95MB 3.8s
+#7 ...
+
+#8 [api stage-0 1/9] FROM docker.io/library/python:3.12.13-slim@sha256:229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36
+#8 resolve docker.io/library/python:3.12.13-slim@sha256:229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36 done
+#8 sha256:ffe2235b438bf2d5a9725b6b391ca866f3ad9fa86d047bfa7f87b28b5f5bfa5a 248B / 248B 0.4s done
+#8 sha256:a2b3b32822dbd2735c2a373a3c64705aa5af5160784ec389567d91964e62e23d 1.27MB / 1.27MB 2.9s done
+#8 sha256:e81bdc779ed996c55fa787ea36746f5042413c8b38f3521f3d6211b45af08058 12.05MB / 12.05MB 3.0s done
+#8 sha256:1b7200988f192e72703c70486d494e2457935ac9b0f031ac09eb115b01a12d45 30.14MB / 30.14MB 6.4s done
+#8 extracting sha256:1b7200988f192e72703c70486d494e2457935ac9b0f031ac09eb115b01a12d45 0.4s done
+#8 extracting sha256:a2b3b32822dbd2735c2a373a3c64705aa5af5160784ec389567d91964e62e23d 0.0s done
+#8 extracting sha256:e81bdc779ed996c55fa787ea36746f5042413c8b38f3521f3d6211b45af08058 0.1s done
+#8 extracting sha256:ffe2235b438bf2d5a9725b6b391ca866f3ad9fa86d047bfa7f87b28b5f5bfa5a done
+#8 DONE 7.1s
+
+#7 [init] FROM ghcr.io/astral-sh/uv:0.10.9@sha256:10902f58a1606787602f303954cea099626a4adb02acbac4c69920fe9d278f82
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 5.24MB / 21.95MB 8.9s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 5.24MB / 21.95MB 14.0s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 5.24MB / 21.95MB 19.1s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 6.29MB / 21.95MB 24.2s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 6.29MB / 21.95MB 29.3s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 6.29MB / 21.95MB 34.4s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 7.34MB / 21.95MB 39.5s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 7.34MB / 21.95MB 44.6s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 7.34MB / 21.95MB 49.7s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 7.34MB / 21.95MB 54.8s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 8.39MB / 21.95MB 59.9s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 8.39MB / 21.95MB 65.0s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 8.39MB / 21.95MB 70.1s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 8.39MB / 21.95MB 75.2s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 9.44MB / 21.95MB 80.3s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 9.44MB / 21.95MB 85.4s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 9.44MB / 21.95MB 90.5s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 11.53MB / 21.95MB 95.4s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 13.63MB / 21.95MB 96.8s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 15.73MB / 21.95MB 97.5s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 17.83MB / 21.95MB 98.1s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 19.92MB / 21.95MB 98.6s
+#7 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 21.95MB / 21.95MB 98.8s done
+#7 extracting sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308
+#7 extracting sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 0.2s done
+#7 extracting sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 0.2s done
+#7 extracting sha256:ea3f44987903c750d69e26d196b627d6a2476c006ba56741dcf8aed98b98941b done
+#7 DONE 99.0s
+
+#9 [api stage-0 2/9] COPY --from=ghcr.io/astral-sh/uv:0.10.9 /uv /usr/local/bin/uv
+#9 DONE 0.2s
+
+#10 [api stage-0 3/9] WORKDIR /app
+#10 DONE 0.0s
+
+#11 [api stage-0 4/9] COPY pyproject.toml uv.lock ./
+#11 DONE 0.0s
+
+#12 [api stage-0 5/9] COPY apps/api apps/api
+#12 DONE 0.0s
+
+#13 [api stage-0 6/9] RUN uv sync --locked --no-dev
+#13 0.206 Using CPython 3.12.13 interpreter at: /usr/local/bin/python3
+#13 0.206 Creating virtual environment at: .venv
+#13 0.209 Resolved 61 packages in 0.70ms
+#13 0.254    Building corpusflow @ file:///app
+#13 0.962 Downloading botocore (15.4MiB)
+#13 0.963 Downloading sqlalchemy (3.3MiB)
+#13 0.965 Downloading pydantic-core (2.0MiB)
+#13 0.967 Downloading psycopg-binary (6.5MiB)
+#13 2.454  Downloaded pydantic-core
+#13 2.979  Downloaded sqlalchemy
+#13 3.503  Downloaded psycopg-binary
+#13 3.993       Built corpusflow @ file:///app
+#13 4.415  Downloaded botocore
+#13 4.415 Prepared 44 packages in 4.20s
+#13 4.480 Installed 44 packages in 65ms
+#13 4.882 Bytecode compiled 1685 files in 401ms
+#13 4.882  + alembic==1.20.1
+#13 4.882  + amqp==5.4.1
+#13 4.882  + annotated-doc==0.0.5
+#13 4.882  + annotated-types==0.8.0
+#13 4.882  + anyio==4.15.1
+#13 4.882  + billiard==4.3.1
+#13 4.882  + boto3==1.43.118
+#13 4.882  + botocore==1.43.118
+#13 4.882  + celery==5.6.3
+#13 4.882  + click==8.5.0
+#13 4.882  + click-didyoumean==0.3.1
+#13 4.882  + click-plugins==1.1.1.2
+#13 4.882  + click-repl==0.4.1
+#13 4.882  + corpusflow==0.1.0 (from file:///app)
+#13 4.882  + fastapi==0.135.4
+#13 4.882  + greenlet==3.5.6
+#13 4.882  + h11==0.16.0
+#13 4.882  + idna==3.20
+#13 4.882  + jmespath==1.1.0
+#13 4.882  + kombu==5.6.2
+#13 4.882  + mako==1.4.3
+#13 4.882  + markupsafe==3.0.4
+#13 4.882  + packaging==26.3
+#13 4.882  + prompt-toolkit==3.0.53
+#13 4.882  + psycopg==3.3.6
+#13 4.882  + psycopg-binary==3.3.6
+#13 4.882  + pydantic==2.14.1
+#13 4.882  + pydantic-core==2.50.1
+#13 4.882  + pydantic-settings==2.16.1
+#13 4.882  + python-dateutil==2.9.0.post0
+#13 4.882  + python-dotenv==1.2.4
+#13 4.882  + redis==7.4.1
+#13 4.882  + s3transfer==0.19.3
+#13 4.882  + six==1.17.0
+#13 4.882  + sqlalchemy==2.0.55
+#13 4.882  + starlette==1.9.0
+#13 4.882  + typing-extensions==4.16.0
+#13 4.882  + typing-inspection==0.4.4
+#13 4.882  + tzdata==2026.5
+#13 4.882  + tzlocal==5.4.5
+#13 4.882  + urllib3==2.8.0
+#13 4.882  + uvicorn==0.41.0
+#13 4.882  + vine==5.1.0
+#13 4.882  + wcwidth==0.9.3
+#13 DONE 5.3s
+
+#14 [api stage-0 7/9] COPY alembic.ini ./
+#14 DONE 0.0s
+
+#15 [api stage-0 8/9] COPY scripts scripts
+#15 DONE 0.0s
+
+#16 [api stage-0 9/9] RUN useradd --uid 10001 --create-home corpusflow
+#16 DONE 0.2s
+
+#17 [api] exporting to image
+#17 exporting layers
+#17 exporting layers 3.7s done
+#17 exporting manifest sha256:21839343c22b765c55bf3c9738d9c3b47fa9b1fe6326ceb3b54c094a33f86b62 done
+#17 exporting config sha256:3cc3e77622a3f2028c17c4ce8aa5abd2429a734d9f371b04411da13e168a46ce done
+#17 exporting attestation manifest sha256:96ed81b5fa09f7edb6223ea2ce45148ad63528d58ddf7ef4740897ee3f241017 0.0s done
+#17 exporting manifest list sha256:103288b3c7b7f9a696a4ebabaee415dc319a8ff6cb2e85711ccab81068639fe8 done
+#17 naming to docker.io/library/corpusflow-p0a-api:latest done
+#17 unpacking to docker.io/library/corpusflow-p0a-api:latest
+#17 unpacking to docker.io/library/corpusflow-p0a-api:latest 1.1s done
+#17 DONE 4.8s
+
+#18 [init] exporting to image
+#18 exporting layers 3.7s done
+#18 exporting manifest sha256:39dc8e2900b04b58fe1b1f3c4e427fc490bf34c5fe22b4bbcc07ad797f0079a3 done
+#18 exporting config sha256:8d347090e9b1d843227dad435cd04a1a0c27d39634793274f94768f13e0b4f29 done
+#18 exporting attestation manifest sha256:719ac46f1527a0fdfe720005f5ce6cd347c4eda3056b7fb138fecd380604f1dc 0.0s done
+#18 exporting manifest list sha256:23f103621c74068e6d3d569c234d0ca8bdf78f6036345d60a8ed1250b5fdd5b9 done
+#18 naming to docker.io/library/corpusflow-p0a-init:latest done
+#18 unpacking to docker.io/library/corpusflow-p0a-init:latest 1.1s done
+#18 DONE 4.8s
+
+#19 [init] resolving provenance for metadata file
+#19 DONE 0.0s
+
+#20 [api] resolving provenance for metadata file
+#20 DONE 0.0s
+ Image corpusflow-p0a-init Built 
+ Image corpusflow-p0a-api Built 
+ Container corpusflow-p0a-minio-1 Running 
+ Container corpusflow-p0a-postgres-1 Running 
+ Container corpusflow-p0a-redis-1 Running 
+ Container corpusflow-p0a-init-1 Creating 
+ Container corpusflow-p0a-init-1 Created 
+ Container corpusflow-p0a-api-1 Creating 
+ Container corpusflow-p0a-api-1 Created 
+ Container corpusflow-p0a-minio-1 Waiting 
+ Container corpusflow-p0a-postgres-1 Waiting 
+ Container corpusflow-p0a-redis-1 Waiting 
+ Container corpusflow-p0a-postgres-1 Healthy 
+ Container corpusflow-p0a-redis-1 Healthy 
+ Container corpusflow-p0a-minio-1 Healthy 
+ Container corpusflow-p0a-init-1 Starting 
+ Container corpusflow-p0a-init-1 Started 
+ Container corpusflow-p0a-init-1 Waiting 
+ Container corpusflow-p0a-init-1 Exited 
+ Container corpusflow-p0a-api-1 Starting 
+ Container corpusflow-p0a-api-1 Started 
+ Container corpusflow-p0a-postgres-1 Waiting 
+ Container corpusflow-p0a-redis-1 Waiting 
+ Container corpusflow-p0a-minio-1 Waiting 
+ Container corpusflow-p0a-init-1 Waiting 
+ Container corpusflow-p0a-api-1 Waiting 
+ Container corpusflow-p0a-init-1 Exited 
+ Container corpusflow-p0a-redis-1 Healthy 
+ Container corpusflow-p0a-postgres-1 Healthy 
+ Container corpusflow-p0a-minio-1 Healthy 
+ Container corpusflow-p0a-api-1 Healthy 

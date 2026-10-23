@@ -1,0 +1,11 @@
+ Container corpusflow-p0a-redis-1 Stopping 
+ Container corpusflow-p0a-redis-1 Stopped 
+ Container corpusflow-p0a-redis-1 Starting 
+ Container corpusflow-p0a-redis-1 Started 
+ Container corpusflow-p0a-redis-1 Waiting 
+ Container corpusflow-p0a-redis-1 Healthy 
+/health 200 {"status":"alive","phase":"P0-A","request_id":"4468d5c6b2f44413a5c27c7eada06e6f"}
+/ready 200 {"status":"ready","phase":"P0-A","request_id":"cc696d6a16414fceb07169b5100f0f88"}
+/missing 404 {"error":{"code":"NOT_FOUND","message":"请求路径不存在或方法不受支持","details":[],"retryable":false},"request_id":"a6bf28adecd6458f8756e546d028a0a0"}
+redis stopped /ready 503 {"error":{"code":"DEPENDENCY_UNAVAILABLE","message":"依赖未就绪，请检查服务与迁移版本","details":[{"dependency":"postgresql","status":"ok"},{"dependency":"redis","status":"unavailable"},{"dependency":"s3","status":"ok"}],"retryable":true},"request_id":"6e962c172baa4afeb8f44d438b56b7af"}
+redis restored /ready 200 {"status":"ready","phase":"P0-A","request_id":"60a6d0b10b724609b750ea21207b613f"}

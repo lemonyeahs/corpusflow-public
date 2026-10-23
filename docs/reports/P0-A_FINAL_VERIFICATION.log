@@ -1,0 +1,8 @@
+/health 200 {"status":"alive","phase":"P0-A","request_id":"9ae95f126549404cb043070cffd9a1e4"}
+/ready 200 {"status":"ready","phase":"P0-A","request_id":"86dbb53d9ec343b9b7ec0942dda314c4"}
+/openapi.json 200 paths=['/health', '/ready']
+unchanged/copy equal CorpusFlow_V3_1.html b65d5ac9a0dd81d28dcf5297cddf0789a214bcbd9922ca88b19d1e8f0f98ea32
+unchanged/copy equal CorpusFlow_V3_1_CHANGELOG.md 10733bade01c525a523ad320960d84697896c526a6f2cbdb4d82b4f47a5f3b50
+unchanged/copy equal 《CorpusFlow 需求分析与确认》.md f9065571c0f625cb26712ba1197bcd01ebf327bb1d0d8d2df9ee25bdf207c1a3
+unchanged/copy equal 《CorpusFlow 技术方案设计》.md 17c87c328b32f3c5160075a23076810d7a4ae318f0d83d765700b6270de310b6
+missing configuration exit 1 corpusflow.core.config.ConfigurationError: CONFIG_INVALID: check database_url, object_store_access_key, object_store_bucket, object_store_endpoint, object_store_secret_key, redis_url
