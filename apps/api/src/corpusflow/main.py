@@ -56,6 +56,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         request.state.request_id = (
             incoming if re.fullmatch(r"[A-Za-z0-9_-]{1,64}", incoming) else uuid4().hex
         )
+        trace = request.headers.get("X-Trace-ID", "")
+        request.state.trace_id = (
+            trace if re.fullmatch(r"[A-Za-z0-9_-]{1,64}", trace) else request.state.request_id
+        )
         start = time.monotonic()
         try:
             response = await call_next(request)
@@ -63,10 +67,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             logging.getLogger("corpusflow").exception("request_failed")
             response = error_response(request, 500, "INTERNAL_ERROR", "服务内部错误")
         response.headers["X-Request-ID"] = request.state.request_id
+        response.headers["X-Trace-ID"] = request.state.trace_id
         logging.getLogger("corpusflow").info(
             "http_request",
             extra={
                 "request_id": request.state.request_id,
+                "trace_id": request.state.trace_id,
                 "status_code": response.status_code,
                 "duration_ms": round((time.monotonic() - start) * 1000, 2),
                 "error_code": "INTERNAL_ERROR" if response.status_code == 500 else None,
@@ -99,6 +105,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "MATERIALIZATION_HASH_MISMATCH",
             "DATASET_VERSION_NOT_FOUND",
             "DOWNLOAD_NOT_AUTHORIZED",
+            "UPLOAD_SIZE_MISMATCH",
+            "IDEMPOTENCY_KEY_REUSED",
         }
         return error_response(
             request,

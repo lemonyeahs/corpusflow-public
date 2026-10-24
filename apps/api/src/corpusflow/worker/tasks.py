@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
@@ -14,6 +16,7 @@ from corpusflow.db.models import (
     Artifact,
     Asset,
     AssetBlob,
+    DatasetVersion,
     Document,
     DocumentVersion,
     ExecutionLog,
@@ -65,7 +68,7 @@ def _store(settings: Settings, key: str, body: bytes, content_type: str) -> None
 
 
 @celery_app.task(bind=True, name="corpusflow.execute_pipeline_run", max_retries=3, acks_late=True)  # type: ignore[untyped-decorator]
-def execute_pipeline_run(self: object, run_id: str) -> dict[str, str]:
+def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
     settings = load_settings()
     factory = _session()
     with factory() as session:
@@ -85,12 +88,22 @@ def execute_pipeline_run(self: object, run_id: str) -> dict[str, str]:
             node = NodeRun(run_id=run.id, node_id="parse", status="pending")
             session.add(node)
             session.flush()
+        elif node.status == "failed":
+            node = NodeRun(
+                run_id=run.id,
+                node_id="parse",
+                attempt_no=node.attempt_no + 1,
+                status="pending",
+            )
+            session.add(node)
+            session.flush()
         if node.status == "succeeded":
             run.status = "succeeded"
             session.commit()
             return {"run_id": run.id, "status": run.status}
         node.status = "running"
         run.status = "running"
+        run.started_at = run.started_at or datetime.now(UTC)
         attempt = node.attempt_no
         session.commit()
 
@@ -234,6 +247,7 @@ def execute_pipeline_run(self: object, run_id: str) -> dict[str, str]:
                 )
             node.status = "succeeded"
             run.status = "succeeded"
+            run.finished_at = datetime.now(UTC)
             run.error_code = None
             _write_log(
                 session,
@@ -248,6 +262,7 @@ def execute_pipeline_run(self: object, run_id: str) -> dict[str, str]:
             node.status = "failed"
             run.status = "failed"
             run.error_code = exc.code
+            run.finished_at = datetime.now(UTC)
             _write_log(session, run, f"parser failure {exc.code}", level="ERROR", attempt=attempt)
             session.commit()
             return {"run_id": run.id, "status": run.status, "error_code": exc.code}
@@ -258,15 +273,35 @@ def execute_pipeline_run(self: object, run_id: str) -> dict[str, str]:
                     select(PipelineRun).where(PipelineRun.id == run_id).with_for_update()
                 )
                 if retry_run:
-                    retry_run.status = "failed"
-                    retry_run.error_code = "PROCESSING_ERROR"
+                    retries = int(getattr(getattr(self, "request", None), "retries", 0))
+                    retry_run.status = "queued" if retries < 3 else "failed"
+                    retry_run.error_code = "PROCESSING_RETRY" if retries < 3 else "PROCESSING_ERROR"
+                    retry_run.finished_at = datetime.now(UTC) if retries >= 3 else None
                     _write_log(
                         retry_session,
                         retry_run,
-                        f"processing failure {type(exc).__name__}",
+                        f"processing failure {type(exc).__name__}; retry={retries < 3}",
                         level="ERROR",
                         attempt=attempt,
                     )
                     retry_session.commit()
             log.exception("pipeline_run_failed", extra={"run_id": run_id})
+            retries = int(getattr(getattr(self, "request", None), "retries", 0))
+            if retries < 3:
+                raise self.retry(exc=exc, countdown=min(60, 2**retries)) from exc
             raise
+
+
+@celery_app.task(name="corpusflow.deliver_dataset_version", acks_late=True)  # type: ignore[untyped-decorator]
+def deliver_dataset_version(dataset_version_id: str) -> dict[str, str]:
+    """Acknowledge an immutable version delivery event without mutating content."""
+    factory = _session()
+    with factory() as session:
+        version = session.scalar(
+            select(DatasetVersion).where(DatasetVersion.id == dataset_version_id)
+        )
+        if not version:
+            return {"dataset_version_id": dataset_version_id, "status": "missing"}
+        if version.status != "published":
+            return {"dataset_version_id": version.id, "status": version.status}
+        return {"dataset_version_id": version.id, "status": "delivered"}

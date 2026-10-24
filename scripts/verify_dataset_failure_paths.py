@@ -8,7 +8,7 @@ import urllib.request
 from uuid import uuid4
 
 from corpusflow.core.config import load_settings
-from corpusflow.db.models import DatasetVersion, DatasetVersionArtifact, Segment, User
+from corpusflow.db.models import DatasetVersion, DatasetVersionArtifact, Membership, Segment, User
 from corpusflow.db.session import build_engine
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
@@ -75,12 +75,24 @@ def main():
             .where(User.oidc_sub.like("acceptance-admin-%"))
             .order_by(User.created_at.desc())
         )
+        workspace_ids = session.scalars(
+            select(Membership.workspace_id).where(Membership.user_id == admin.id)
+        ).all()
+        latest = session.scalar(
+            select(DatasetVersion)
+            .where(DatasetVersion.workspace_id.in_(workspace_ids))
+            .order_by(DatasetVersion.created_at.desc())
+        )
         reviewer = session.scalar(
             select(User)
-            .where(User.oidc_sub.like("acceptance-reviewer-%"))
+            .join(Membership, Membership.user_id == User.id)
+            .where(
+                User.oidc_sub.like("acceptance-reviewer-%"),
+                Membership.workspace_id == latest.workspace_id if latest else False,
+                Membership.role == "reviewer",
+            )
             .order_by(User.created_at.desc())
         )
-        latest = session.scalar(select(DatasetVersion).order_by(DatasetVersion.created_at.desc()))
         segment = session.scalar(
             select(Segment)
             .where(Segment.workspace_id == latest.workspace_id)

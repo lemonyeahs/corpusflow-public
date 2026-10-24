@@ -7,7 +7,7 @@ import urllib.request
 
 import boto3
 from corpusflow.core.config import load_settings
-from corpusflow.db.models import DatasetVersion, User
+from corpusflow.db.models import DatasetVersion, Membership, User
 from corpusflow.db.session import build_engine
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
@@ -39,7 +39,14 @@ def main() -> None:
             .where(User.oidc_sub.like("acceptance-admin-%"))
             .order_by(User.created_at.desc())
         )
-        version = session.scalar(select(DatasetVersion).order_by(DatasetVersion.created_at.desc()))
+        workspace_ids = session.scalars(
+            select(Membership.workspace_id).where(Membership.user_id == user.id)
+        ).all()
+        version = session.scalar(
+            select(DatasetVersion)
+            .where(DatasetVersion.workspace_id.in_(workspace_ids))
+            .order_by(DatasetVersion.created_at.desc())
+        )
         assert user and version
         workspace = version.workspace_id
         dataset_id = version.dataset_id

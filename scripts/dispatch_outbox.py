@@ -11,8 +11,17 @@ factory = sessionmaker(build_engine(settings), expire_on_commit=False)
 
 
 class Dispatcher:
-    def delay(self, run_id: str) -> object:
-        return celery_app.send_task("corpusflow.execute_pipeline_run", args=[run_id])
+    def publish(self, event) -> object:
+        task_name = {
+            "pipeline.run.execute": "corpusflow.execute_pipeline_run",
+            "dataset.version.deliver": "corpusflow.deliver_dataset_version",
+        }.get(event.event_type)
+        if not task_name:
+            raise ValueError(f"unsupported outbox event: {event.event_type}")
+        aggregate_id = str(
+            event.payload.get("run_id", event.payload.get("dataset_version_id", event.aggregate_id))
+        )
+        return celery_app.send_task(task_name, args=[aggregate_id])
 
 
 while True:

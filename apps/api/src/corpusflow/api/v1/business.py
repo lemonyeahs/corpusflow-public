@@ -15,9 +15,9 @@ from typing import Any
 from urllib.parse import urlparse
 
 import boto3
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -41,6 +41,7 @@ from corpusflow.db.models import (
     LineageEdge,
     Membership,
     NodeRun,
+    OutboxEvent,
     PipelineRun,
     PipelineTemplate,
     PipelineVersion,
@@ -373,8 +374,8 @@ def decisions(body: DecisionIn, request: Request, session: Session = Depends(db)
 
 
 class SourceIn(BaseModel):
-    name: str
-    kind: str = "upload"
+    name: str = Field(min_length=1, max_length=255)
+    kind: str = Field(default="upload", min_length=1, max_length=50)
 
 
 @router.post("/sources")
@@ -410,7 +411,7 @@ def candidate(body: CandidateIn, request: Request, session: Session = Depends(db
 
 
 class UploadIn(BaseModel):
-    filename: str = Field(min_length=1, max_length=255)
+    filename: str = Field(min_length=1, max_length=255, pattern=r"^[^/\\\x00-\x1f]+$")
     size: int = Field(ge=0, le=1024 * 1024 * 1024)
     content_type: str = "application/octet-stream"
 
@@ -451,7 +452,16 @@ async def upload_content(upload_id: str, request: Request, session: Session = De
     )
     if not row:
         raise HTTPException(404, "NOT_FOUND")
+    if row.status == "verified":
+        return {
+            "upload_id": row.id,
+            "status": row.status,
+            "bytes": row.declared_size,
+            "sha256": row.checksum,
+        }
     data = await request.body()
+    if len(data) != row.declared_size:
+        raise HTTPException(422, "UPLOAD_SIZE_MISMATCH")
     row.content = data
     row.checksum = hashlib.sha256(data).hexdigest()
     row.status = "uploaded"
@@ -476,7 +486,16 @@ async def upload_content_post(upload_id: str, request: Request, session: Session
     )
     if not row:
         raise HTTPException(404, "NOT_FOUND")
+    if row.status == "verified":
+        return {
+            "upload_id": row.id,
+            "status": row.status,
+            "bytes": row.declared_size,
+            "sha256": row.checksum,
+        }
     data = await request.body()
+    if len(data) != row.declared_size:
+        raise HTTPException(422, "UPLOAD_SIZE_MISMATCH")
     row.content = data
     row.checksum = hashlib.sha256(data).hexdigest()
     row.status = "uploaded"
@@ -500,7 +519,11 @@ def upload_complete(
             UploadSession.id == upload_id, UploadSession.workspace_id == wid
         )
     )
-    if not row or row.status != "uploaded":
+    if not row:
+        raise HTTPException(404, "NOT_FOUND")
+    if row.status == "verified" and (not body.checksum or body.checksum == row.checksum):
+        return {"upload_id": row.id, "status": row.status, "sha256": row.checksum}
+    if row.status != "uploaded":
         raise HTTPException(409, "INVALID_STATE_TRANSITION")
     if body.checksum and body.checksum != row.checksum:
         raise HTTPException(422, "CHECKSUM_MISMATCH")
@@ -524,15 +547,21 @@ def ingest_batch(body: BatchIn, request: Request, session: Session = Depends(db)
     )
     if not src:
         raise HTTPException(404, "NOT_FOUND")
+    uploads = {
+        row.id: row
+        for row in session.scalars(
+            select(UploadSession).where(
+                UploadSession.id.in_(body.upload_ids), UploadSession.workspace_id == wid
+            )
+        ).all()
+    }
+    if len(uploads) != len(set(body.upload_ids)):
+        raise HTTPException(404, "NOT_FOUND")
     batch = IngestBatch(workspace_id=wid, created_by=user, status="completed")
     session.add(batch)
     session.flush()
     for upload_id in body.upload_ids:
-        up = session.scalar(
-            select(UploadSession).where(
-                UploadSession.id == upload_id, UploadSession.workspace_id == wid
-            )
-        )
+        up = uploads[upload_id]
         item = IngestItem(batch_id=batch.id, upload_session_id=upload_id)
         if not up or up.status != "verified":
             item.status = "failed"
@@ -611,7 +640,12 @@ def ingest_batch(body: BatchIn, request: Request, session: Session = Depends(db)
 
 
 @router.get("/assets")
-def assets(request: Request, session: Session = Depends(db), limit: int = 20, offset: int = 0):
+def assets(
+    request: Request,
+    session: Session = Depends(db),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+):
     user = actor_id(request, session)
     wid = workspace_id(request, session, user)
     rows = session.scalars(
@@ -619,7 +653,7 @@ def assets(request: Request, session: Session = Depends(db), limit: int = 20, of
         .where(Asset.workspace_id == wid)
         .order_by(Asset.created_at, Asset.id)
         .offset(offset)
-        .limit(min(limit, 100))
+        .limit(limit)
     ).all()
     total = (
         session.scalar(select(func.count()).select_from(Asset).where(Asset.workspace_id == wid))
@@ -755,6 +789,19 @@ def ensure_pipeline(session: Session, wid: str) -> PipelineVersion:
     return version
 
 
+def pipeline_batch_response(session: Session, batch: ProcessingBatch) -> dict[str, Any]:
+    runs = session.scalars(
+        select(PipelineRun).where(PipelineRun.batch_id == batch.id).order_by(PipelineRun.created_at)
+    ).all()
+    return {
+        "batch_id": batch.id,
+        "status": batch.status,
+        "accepted": [{"run_id": run.id, "asset_id": run.asset_id} for run in runs],
+        "rejected": [],
+        "idempotent": True,
+    }
+
+
 @router.post("/pipeline-runs/batches")
 def pipeline_batch(
     body: PipelineIn,
@@ -765,8 +812,25 @@ def pipeline_batch(
     user = actor_id(request, session)
     wid = workspace_id(request, session, user)
     role_required(session, user, wid, {"admin", "engineer"})
+    request_hash = digest({"asset_ids": body.asset_ids, "config": body.config})
+    if idempotency_key:
+        existing = session.scalar(
+            select(ProcessingBatch).where(
+                ProcessingBatch.workspace_id == wid,
+                ProcessingBatch.idempotency_key == idempotency_key,
+            )
+        )
+        if existing:
+            if existing.request_hash != request_hash:
+                raise HTTPException(409, "IDEMPOTENCY_KEY_REUSED")
+            return pipeline_batch_response(session, existing)
     version = ensure_pipeline(session, wid)
-    batch = ProcessingBatch(workspace_id=wid, created_by=user, idempotency_key=idempotency_key)
+    batch = ProcessingBatch(
+        workspace_id=wid,
+        created_by=user,
+        idempotency_key=idempotency_key,
+        request_hash=request_hash,
+    )
     session.add(batch)
     session.flush()
     accepted = []
@@ -792,12 +856,26 @@ def pipeline_batch(
         accepted.append({"run_id": run.id, "asset_id": aid})
     batch.status = "queued" if accepted else "failed"
     audit(session, request, wid, user, "pipeline.batch.create", "processing_batch", batch.id)
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError as exc:
+        session.rollback()
+        if idempotency_key:
+            existing = session.scalar(
+                select(ProcessingBatch).where(
+                    ProcessingBatch.workspace_id == wid,
+                    ProcessingBatch.idempotency_key == idempotency_key,
+                )
+            )
+            if existing and existing.request_hash == request_hash:
+                return pipeline_batch_response(session, existing)
+        raise HTTPException(409, "IDEMPOTENCY_KEY_REUSED") from exc
     return {
         "batch_id": batch.id,
         "status": batch.status,
         "accepted": accepted,
         "rejected": rejected,
+        "idempotent": False,
     }
 
 
@@ -1037,15 +1115,20 @@ def datasets(request: Request, session: Session = Depends(db)):
     }
 
 
+class DatasetIn(BaseModel):
+    name: str = Field(default="dataset", min_length=1, max_length=160)
+    product_type: str = Field(default="sft", pattern="^sft$")
+
+
 @router.post("/datasets")
-def create_dataset(body: dict[str, Any], request: Request, session: Session = Depends(db)):
+def create_dataset(body: DatasetIn, request: Request, session: Session = Depends(db)):
     user = actor_id(request, session)
     wid = workspace_id(request, session, user)
     role_required(session, user, wid, {"admin", "engineer"})
     row = Dataset(
         workspace_id=wid,
-        name=str(body.get("name", "dataset")),
-        product_type=str(body.get("product_type", "sft")),
+        name=body.name,
+        product_type=body.product_type,
     )
     session.add(row)
     session.commit()
@@ -1093,7 +1176,7 @@ def build_preview(body: PreviewIn, request: Request, session: Session = Depends(
 class BuildIn(BaseModel):
     dataset_id: str
     segment_ids: list[str] = Field(min_length=1)
-    purpose: str = "training"
+    purpose: str = Field(default="training", pattern="^(research|training|rag|evaluation|redistribute)$")
     config: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -1291,6 +1374,7 @@ def publish(
     )
     if not dataset or not build:
         raise HTTPException(404, "NOT_FOUND")
+    _lock_dataset_version(session, dataset_id, body.version)
     existing = session.scalar(
         select(DatasetVersion).where(
             DatasetVersion.dataset_id == dataset_id,
@@ -1410,6 +1494,16 @@ def _version_authorized(session: Session, wid: str, version: DatasetVersion, pur
         )
         for asset in assets
     )
+
+
+def _lock_dataset_version(session: Session, dataset_id: str, version: str) -> None:
+    """Serialize publication attempts for one immutable dataset version."""
+    bind = session.get_bind()
+    if bind.dialect.name == "postgresql":
+        session.execute(
+            text("SELECT pg_advisory_xact_lock(hashtext(:lock_key))"),
+            {"lock_key": f"dataset-version:{dataset_id}:{version}"},
+        )
 
 
 @router.get("/datasets/{dataset_id}/versions")
@@ -1576,4 +1670,62 @@ def audit_events(request: Request, session: Session = Depends(db)):
             }
             for e in rows
         ]
+    }
+
+
+@router.get("/ops/metrics")
+def ops_metrics(request: Request, session: Session = Depends(db)):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    role_required(session, user, wid, {"admin"})
+    run_counts = dict(
+        session.execute(
+            select(PipelineRun.status, func.count(PipelineRun.id))
+            .where(PipelineRun.workspace_id == wid)
+            .group_by(PipelineRun.status)
+        ).all()
+    )
+    outbox_counts = dict(
+        session.execute(
+            select(OutboxEvent.status, func.count(OutboxEvent.id))
+            .where(OutboxEvent.workspace_id == wid)
+            .group_by(OutboxEvent.status)
+        ).all()
+    )
+    retry_count = session.scalar(
+        select(func.coalesce(func.sum(OutboxEvent.attempts), 0)).where(
+            OutboxEvent.workspace_id == wid
+        )
+    )
+    runs_with_duration = session.scalars(
+        select(PipelineRun).where(
+            PipelineRun.workspace_id == wid,
+            PipelineRun.started_at.is_not(None),
+            PipelineRun.finished_at.is_not(None),
+        )
+    ).all()
+    durations = [
+        (run.finished_at - run.started_at).total_seconds() * 1000
+        for run in runs_with_duration
+        if run.started_at and run.finished_at
+    ]
+    return {
+        "workspace_id": wid,
+        "pipeline_runs": {str(key): int(value) for key, value in run_counts.items()},
+        "outbox": {str(key): int(value) for key, value in outbox_counts.items()},
+        "outbox_attempts": int(retry_count or 0),
+        "execution_duration_ms": {
+            "completed_runs": len(durations),
+            "average": round(sum(durations) / len(durations), 2) if durations else None,
+            "max": round(max(durations), 2) if durations else None,
+        },
+        "published_versions": int(
+            session.scalar(
+                select(func.count(DatasetVersion.id)).where(
+                    DatasetVersion.workspace_id == wid,
+                    DatasetVersion.status == "published",
+                )
+            )
+            or 0
+        ),
     }

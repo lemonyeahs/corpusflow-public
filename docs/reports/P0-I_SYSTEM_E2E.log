@@ -1,0 +1,56 @@
+CorpusFlow P0-I 系统级真实复验记录
+执行日期: 2026-10-24
+环境: 本地 Docker Compose（PostgreSQL 16、Redis 7、MinIO、FastAPI、Celery Worker、Outbox Dispatcher）
+范围: 隔离开发/验收环境；未访问生产，不执行远程 push。
+
+[基础环境]
+$ curl -fsS http://127.0.0.1:58000/ready
+{"status":"ready","phase":"P0-A","request_id":"..."}
+$ docker compose ... exec -T api alembic current
+0007_execution_timing (head)
+$ docker compose ... ps
+api healthy; postgres healthy; redis healthy; minio healthy; worker up; dispatcher up
+
+[静态与契约]
+$ uv run --locked ruff check apps/api/src tests scripts
+All checks passed!
+$ uv run --locked mypy apps/api/src
+Success: no issues found in 27 source files
+$ uv run --locked pytest -q tests/contract/test_openapi.py
+1 passed
+$ npm run typecheck && npm run lint && npm run build
+typecheck passed; eslint passed; Vite build passed
+
+[后端测试]
+$ uv run --locked pytest -q  # 已注入本地 PostgreSQL/Redis/MinIO 测试变量
+26 passed, 16 warnings
+
+[真实 Web E2E]
+$ npm run e2e
+3 passed (6.5s)
+- 窄屏登录和总览无横向溢出
+- P0-I：尺寸校验、损坏 PDF、幂等 Run、审核门控和角色隔离
+- P0-H：真实 PDF、异步解析、SFT 发布、下载和血缘
+
+[业务与故障脚本]
+$ uv run --locked python scripts/verify_business_loop.py
+P0-C PASS; P0-D PASS; P0-E PASS; P0-F PASS
+$ uv run --locked python scripts/verify_publish_concurrency.py
+PUBLISH_CONCURRENCY PASS
+{"statuses": [200, 200], "visible_versions": 1}
+（第二个并发请求在事务锁后观察到已提交版本并幂等返回。）
+$ uv run --locked python scripts/verify_dataset_materialization.py
+DATASET_MATERIALIZATION PASS
+真实 JSONL 245 bytes；SHA-256 校验一致；签名下载、重复发布幂等、跨 workspace 拒绝均通过。
+$ uv run --locked python scripts/verify_dataset_failure_paths.py
+DATASET_FAILURE_PATHS PASS
+config_changed_blocked=true; unreviewed_blocked=true; self_approval_blocked=true;
+minio_failure_no_version=true; db_commit_failure_no_version=true
+$ uv run --locked python scripts/verify_worker_recovery.py
+WORKER_RECOVERY PASS
+{"run_count": 3, "statuses": ["succeeded", "succeeded", "succeeded"], "worker_restarted": true}
+
+[未执行项]
+- 生产 OIDC/SSO：NOT RUN；当前应用明确禁止 production 环境使用开发身份。
+- Redis 真实断电/网络隔离：NOT RUN；会影响同一验收栈中的异步队列，已由 Outbox 单元覆盖异常重投路径。
+- 大规模性能、长时间压力和多节点故障注入：NOT RUN；本轮仅执行本地隔离小规模验收。

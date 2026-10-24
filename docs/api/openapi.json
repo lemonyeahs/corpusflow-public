@@ -948,6 +948,8 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
               "default": 20,
               "title": "Limit"
             }
@@ -958,6 +960,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "minimum": 0,
               "default": 0,
               "title": "Offset"
             }
@@ -1803,9 +1806,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": true,
-                "type": "object",
-                "title": "Body"
+                "$ref": "#/components/schemas/DatasetIn"
               }
             }
           },
@@ -2570,6 +2571,55 @@
           }
         }
       }
+    },
+    "/api/v1/ops/metrics": {
+      "get": {
+        "tags": [
+          "business"
+        ],
+        "summary": "Ops Metrics",
+        "operationId": "ops_metrics_api_v1_ops_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2612,6 +2662,7 @@
           },
           "purpose": {
             "type": "string",
+            "pattern": "^(research|training|rag|evaluation|redistribute)$",
             "title": "Purpose",
             "default": "training"
           },
@@ -2664,6 +2715,25 @@
         },
         "type": "object",
         "title": "CompleteIn"
+      },
+      "DatasetIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Name",
+            "default": "dataset"
+          },
+          "product_type": {
+            "type": "string",
+            "pattern": "^sft$",
+            "title": "Product Type",
+            "default": "sft"
+          }
+        },
+        "type": "object",
+        "title": "DatasetIn"
       },
       "DecisionIn": {
         "properties": {
@@ -2992,10 +3062,14 @@
         "properties": {
           "name": {
             "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
             "title": "Name"
           },
           "kind": {
             "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
             "title": "Kind",
             "default": "upload"
           }
@@ -3012,6 +3086,7 @@
             "type": "string",
             "maxLength": 255,
             "minLength": 1,
+            "pattern": "^[^/\\\\\\x00-\\x1f]+$",
             "title": "Filename"
           },
           "size": {

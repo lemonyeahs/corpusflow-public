@@ -12,7 +12,18 @@ class JsonFormatter(logging.Formatter):
             "service": "corpusflow-api",
             "event": record.getMessage(),
         }
-        for key in ("request_id", "workspace_id", "actor_id", "run_id", "build_id", "error_code"):
+        for key in (
+            "request_id",
+            "trace_id",
+            "workspace_id",
+            "actor_id",
+            "run_id",
+            "node_run_id",
+            "asset_id",
+            "build_id",
+            "dataset_version_id",
+            "error_code",
+        ):
             payload[key] = getattr(record, key, None)
         for key in ("status_code", "duration_ms"):
             if hasattr(record, key):

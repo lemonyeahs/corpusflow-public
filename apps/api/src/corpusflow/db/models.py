@@ -9,7 +9,17 @@ from typing import Any
 from uuid import uuid4
 
 from sqlalchemy import JSON as SAJSON
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -177,7 +187,17 @@ class ProcessingBatch(Timestamped):
     workspace_id: Mapped[str] = mapped_column(String(36), index=True)
     created_by: Mapped[str] = mapped_column(String(36))
     idempotency_key: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    request_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     status: Mapped[str] = mapped_column(String(30), default="queued")
+    __table_args__ = (
+        Index(
+            "uq_processing_batch_idempotency",
+            "workspace_id",
+            "idempotency_key",
+            unique=True,
+            postgresql_where=text("idempotency_key IS NOT NULL"),
+        ),
+    )
 
 
 class PipelineRun(Timestamped):
@@ -190,6 +210,8 @@ class PipelineRun(Timestamped):
     snapshot_hash: Mapped[str] = mapped_column(String(64))
     status: Mapped[str] = mapped_column(String(30), default="queued")
     error_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class NodeRun(Timestamped):

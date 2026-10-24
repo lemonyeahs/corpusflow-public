@@ -1,8 +1,8 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from corpusflow.db.models import OutboxEvent
 from corpusflow.db.session import Base
-from corpusflow.worker.outbox import enqueue_run, publish_pending
+from corpusflow.worker.outbox import enqueue_delivery, enqueue_run, publish_pending
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
@@ -36,3 +36,26 @@ def test_outbox_is_idempotent_and_retries():
         assert sent.calls == ["r"]
         final = session.scalar(select(OutboxEvent).where(OutboxEvent.id == one.id))
         assert final.status == "published"
+
+
+def test_outbox_routes_delivery_and_reclaims_stale_processing():
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine, tables=[OutboxEvent.__table__])
+
+    class RoutedDispatcher:
+        def __init__(self):
+            self.events = []
+
+        def publish(self, event):
+            self.events.append((event.event_type, event.aggregate_id))
+
+    with Session(engine) as session:
+        event = enqueue_delivery(session, "w", "version-1")
+        session.commit()
+        event.status = "processing"
+        event.locked_at = datetime.now(UTC) - timedelta(minutes=10)
+        session.commit()
+        dispatcher = RoutedDispatcher()
+        assert publish_pending(session, dispatcher) == 1
+        assert dispatcher.events == [("dataset.version.deliver", "version-1")]
+        assert session.get(OutboxEvent, event.id).status == "published"

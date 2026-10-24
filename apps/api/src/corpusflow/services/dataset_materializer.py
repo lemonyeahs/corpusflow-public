@@ -253,7 +253,8 @@ def materialize(
         settings.object_store_access_key.get_secret_value(),
         settings.object_store_secret_key.get_secret_value(),
     )
-    written = [staging_content_key, staging_manifest_key]
+    staging_keys = [staging_content_key, staging_manifest_key]
+    written = list(staging_keys)
     try:
         try:
             if store.exists(content_key) or store.exists(manifest_key):
@@ -359,7 +360,10 @@ def materialize(
         build.status = "published"
         return version, written
     except Exception:
-        for key in written:
+        # Final immutable keys may belong to a concurrent successful publisher.
+        # The outer API transaction owns cleanup after a commit failure; this
+        # scope only removes staging objects that this attempt created.
+        for key in staging_keys:
             try:
                 store.delete(key)
             except Exception:
