@@ -115,3 +115,7 @@ td small, .list-row small, .candidate small, .audit-row small { display: block; 
 .assets-layout { grid-template-columns: minmax(0, 1.1fr) minmax(360px, .9fr); }
 @media (max-width: 960px) { .sidebar { position: fixed; inset: 0 auto 0 0; transform: translateX(-100%); transition: transform .2s ease; box-shadow: 20px 0 40px rgba(0,0,0,.3); } .sidebar.open { transform: translateX(0); } .mobile-only { display: grid; } .backdrop { position: fixed; inset: 0; z-index: 15; background: rgba(0,0,0,.5); border: 0; } .topbar { padding: 0 20px; gap: 12px; justify-content: flex-start; } .topbar-user { margin-left: auto; } .page { padding: 25px 20px; } .two-col, .assets-layout { grid-template-columns: 1fr; } .metric-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 580px) { .page { padding: 22px 14px; } .page-heading { display: grid; } .topbar-user > span:first-child { display: none; } .metric-grid { grid-template-columns: 1fr 1fr; gap: 9px; } .metric-card { padding: 13px; min-height: 105px; } .metric-card strong { font-size: 23px; margin-top: 8px; } .form-grid, .detail-grid, .demo-grid { grid-template-columns: 1fr; } .card { padding: 15px; } .lineage-edge { grid-template-columns: 1fr; } .lineage-edge strong { text-align: center; } .footer { padding: 18px 14px; } }
+
+.node-row { display: grid; grid-template-columns: 1fr auto auto; gap: 0.6rem; align-items: center; padding: 0.45rem 0; border-top: 1px solid var(--line); }
+.node-row small { color: var(--muted); }
+@media (max-width: 720px) { .node-row { grid-template-columns: 1fr; gap: 0.2rem; } }

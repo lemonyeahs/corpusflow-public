@@ -61,6 +61,39 @@ export interface PipelineRun {
   snapshot_hash: string;
   revision: number;
   error_code?: string | null;
+  nodes?: NodeRun[];
+}
+
+export interface NodeRun {
+  node_id: string;
+  status: string;
+  attempt: number;
+  operator_key?: string | null;
+  operator_version?: string | null;
+  input_count: number;
+  output_count: number;
+  filtered_count: number;
+  duration_ms?: number | null;
+  failure_code?: string | null;
+  config?: Record<string, unknown>;
+  log_ref?: string | null;
+}
+
+export interface ProcessingArtifact {
+  artifact_id: string;
+  kind: string;
+  storage_key: string;
+  sha256: string;
+  immutable: boolean;
+}
+
+export interface OperatorDefinition {
+  operator_key: string;
+  version: string;
+  adapter_kind: string;
+  params_schema: Record<string, string>;
+  available: boolean;
+  reason?: string;
 }
 
 export interface QualityIssue {

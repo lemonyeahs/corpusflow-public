@@ -5,7 +5,7 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from corpusflow.core.config import Settings
 
-SCHEMA_REVISION = "0007_execution_timing"
+SCHEMA_REVISION = "0008_p1a_processing"
 
 
 class Base(DeclarativeBase):

@@ -46,7 +46,7 @@ class _HTML(HTMLParser):
 
 class HTMLParserAdapter:
     name = "builtin.html"
-    version = "1.0.0"
+    version = "1.1.0"
 
     def parse(self, content: bytes, filename: str, media_type: str) -> ParseResult:
         if not (filename.lower().endswith((".html", ".htm")) or "html" in media_type):
@@ -65,6 +65,9 @@ class HTMLParserAdapter:
         structured = {
             "title": sections[0].title if sections else filename,
             "sections": [s.__dict__ for s in sections],
+            "heading_count": len(sections),
+            "source_location": "line",
+            "layout": "dom_order",
         }
         return ParseResult(
             self.name,

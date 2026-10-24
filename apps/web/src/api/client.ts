@@ -1,6 +1,6 @@
 import type {
   Asset, AssetDetail, CandidateSample, Dataset, DatasetVersion, LineageEdge, Manifest,
-  PipelineRun, QualityIssue, Session, Source, Workspace,
+  OperatorDefinition, PipelineRun, ProcessingArtifact, QualityIssue, Session, Source, Workspace,
 } from "../types";
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) || "/api/v1";
@@ -70,6 +70,8 @@ export const api = {
   ingest: (ctx: ApiContext, body: { upload_ids: string[]; source_id: string }) => request<{ batch_id: string; status: string; totals: Record<string, number>; items: Array<{ upload_id: string; asset_id?: string; status: string; error_code?: string }> }>("/ingest-batches", ctx, json(body)),
   createRuns: (ctx: ApiContext, body: { asset_ids: string[]; config: Record<string, unknown> }) => request<{ batch_id: string; status: string; accepted: Array<{ run_id: string; asset_id: string }>; rejected: Array<{ asset_id: string; reason: string }> }>("/pipeline-runs/batches", ctx, json(body)),
   run: (ctx: ApiContext, id: string) => request<PipelineRun>(`/pipeline-runs/${id}`, ctx),
+  runArtifacts: (ctx: ApiContext, id: string) => request<{ items: ProcessingArtifact[] }>(`/pipeline-runs/${id}/artifacts`, ctx),
+  operators: (ctx: ApiContext) => request<{ items: OperatorDefinition[] }>("/processing/operators", ctx),
   runLogs: (ctx: ApiContext, id: string) => request<{ items: Array<{ level: string; message: string; attempt: number; created_at: string }> }>(`/pipeline-runs/${id}/logs`, ctx),
   resumeRun: (ctx: ApiContext, id: string) => request<{ run_id: string; status: string; queued: boolean }>(`/pipeline-runs/${id}/resume`, ctx, json({})),
   issues: (ctx: ApiContext, status?: string) => request<{ items: QualityIssue[] }>(`/quality/issues${status ? `?status=${encodeURIComponent(status)}` : ""}`, ctx),

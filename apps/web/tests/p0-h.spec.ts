@@ -25,7 +25,7 @@ test.describe("P0-H 真实 Web 联调", () => {
     await page.getByRole("button", { name: "处理中心" }).click();
     await page.locator('.check-row input[type="checkbox"]').first().check();
     await page.getByRole("button", { name: "创建 N 个独立 Run" }).click();
-    await expect(page.getByText("succeeded", { exact: true })).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByTestId("run-status").getByText("succeeded", { exact: true })).toBeVisible({ timeout: 60_000 });
 
     await page.getByRole("button", { name: "资产中心" }).click();
     await page.getByText("corpusflow-e2e.pdf", { exact: true }).click();

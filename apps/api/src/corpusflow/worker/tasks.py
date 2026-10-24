@@ -6,10 +6,11 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from corpusflow.adapters.parser import HTMLParserAdapter, ParserError, PDFParserAdapter
+from corpusflow.adapters.processing import ProcessingError
 from corpusflow.adapters.storage import S3ObjectStore
 from corpusflow.core.config import Settings, load_settings
 from corpusflow.db.models import (
@@ -26,6 +27,11 @@ from corpusflow.db.models import (
     Segment,
 )
 from corpusflow.db.session import build_engine
+from corpusflow.services.processing_pipeline import (
+    create_derived_version,
+    run_processor,
+    segment_records,
+)
 from corpusflow.worker.celery_app import celery_app
 
 log = logging.getLogger(__name__)
@@ -65,6 +71,140 @@ def _store(settings: Settings, key: str, body: bytes, content_type: str) -> None
         settings.object_store_access_key.get_secret_value(),
         settings.object_store_secret_key.get_secret_value(),
     ).put(key, body, content_type)
+
+
+def _run_processing_chain(
+    session: Session,
+    settings: Settings,
+    run: PipelineRun,
+    source_version: DocumentVersion,
+) -> DocumentVersion:
+    """Run the immutable, versioned post-parse operators for one Run."""
+    pipeline_config = run.config_snapshot if isinstance(run.config_snapshot, dict) else {}
+    configured = pipeline_config.get("operators")
+    operators = configured if isinstance(configured, list) else [
+        {"key": "builtin.clean", "config": {}},
+        {"key": "builtin.deduplicate", "config": {}},
+        {"key": "builtin.quality", "config": {}},
+    ]
+    current = source_version
+    for spec in operators:
+        operator_config: dict[str, Any] = {}
+        if isinstance(spec, str):
+            key = spec
+        elif isinstance(spec, dict):
+            key = str(spec.get("key", ""))
+            raw_config = spec.get("config", {})
+            if not isinstance(raw_config, dict):
+                raise ProcessingError(
+                    "PROCESSING_CONFIG_INVALID", f"config for {key} must be an object"
+                )
+            operator_config = dict(raw_config)
+        else:
+            raise ProcessingError("PROCESSING_CONFIG_INVALID", "operator specification is invalid")
+        if not key:
+            raise ProcessingError("PROCESSING_CONFIG_INVALID", "operator key is empty")
+        node_id = key.rsplit(".", 1)[-1]
+        node = session.scalar(
+            select(NodeRun)
+            .where(NodeRun.run_id == run.id, NodeRun.node_id == node_id)
+            .order_by(NodeRun.attempt_no.desc())
+        )
+        if node and node.status == "succeeded":
+            continue
+        if not node:
+            node = NodeRun(
+                run_id=run.id,
+                node_id=node_id,
+                status="pending",
+                operator_key=key,
+                operator_version="builtin",
+                config_snapshot=operator_config,
+            )
+            session.add(node)
+            session.flush()
+        node.status = "running"
+        node.operator_key = key
+        node.config_snapshot = operator_config
+        node.input_count = len(segment_records(session, current.id))
+        started = datetime.now(UTC)
+        session.commit()
+        try:
+            records = segment_records(session, current.id)
+            result = run_processor(key, records, operator_config)
+            node.operator_version = result.operator_version
+            node.output_count = len(result.records)
+            node.filtered_count = result.filtered_count
+            node.duration_ms = (datetime.now(UTC) - started).total_seconds() * 1000
+            artifact_key = f"artifacts/{run.id}/{node_id}/output.json"
+            payload = json.dumps(
+                {
+                    "operator": key,
+                    "version": result.operator_version,
+                    "config": result.config_snapshot,
+                    "metrics": result.metrics,
+                    "records": result.records,
+                },
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ).encode()
+            _store(settings, artifact_key, payload, "application/json")
+            artifact = session.scalar(
+                select(Artifact).where(
+                    Artifact.run_id == run.id, Artifact.kind == f"operator_{node_id}"
+                )
+            )
+            if not artifact:
+                artifact = Artifact(
+                    workspace_id=run.workspace_id,
+                    run_id=run.id,
+                    kind=f"operator_{node_id}",
+                    storage_key=artifact_key,
+                    content_sha256=hashlib.sha256(payload).hexdigest(),
+                )
+                session.add(artifact)
+                session.flush()
+            node.log_ref = artifact_key
+            if key != "builtin.quality" and result.records != records:
+                current = create_derived_version(
+                    session, run.workspace_id, current, run.id, result, operator_config
+                )
+            if key == "builtin.quality" and operator_config.get("create_issues", False):
+                short_count = int(result.metrics.get("short_records", 0))
+                if short_count:
+                    from corpusflow.db.models import QualityIssue
+
+                    session.add(
+                        QualityIssue(
+                            workspace_id=run.workspace_id,
+                            run_id=run.id,
+                            asset_id=run.asset_id,
+                            status="open",
+                            severity="medium",
+                            reason=f"{short_count} segments below minimum length",
+                            rule_version=result.operator_version,
+                        )
+                    )
+            node.status = "succeeded"
+            _write_log(
+                session,
+                run,
+                f"operator {key} input={node.input_count} output={node.output_count} "
+                f"filtered={node.filtered_count}",
+                node_id=node_id,
+            )
+            session.commit()
+        except ProcessingError as exc:
+            session.rollback()
+            failed = session.scalar(select(NodeRun).where(NodeRun.id == node.id))
+            if failed:
+                failed.status = "failed"
+                failed.failure_code = exc.code
+                failed.duration_ms = (datetime.now(UTC) - started).total_seconds() * 1000
+                _write_log(session, run, f"operator failure {exc.code}", "ERROR", node_id=node_id)
+                session.commit()
+            raise
+    return current
 
 
 @celery_app.task(bind=True, name="corpusflow.execute_pipeline_run", max_retries=3, acks_late=True)  # type: ignore[untyped-decorator]
@@ -164,9 +304,24 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                 dv = DocumentVersion(
                     workspace_id=run.workspace_id,
                     document_id=doc.id,
-                    version_no=1,
+                    version_no=int(
+                        session.scalar(
+                            select(func.coalesce(func.max(DocumentVersion.version_no), 0)).where(
+                                DocumentVersion.document_id == doc.id,
+                                DocumentVersion.workspace_id == run.workspace_id,
+                            )
+                        )
+                        or 0
+                    )
+                    + 1,
                     content_sha256=result.input_sha256,
                     parser_version=result.parser_version,
+                    parser_name=result.parser,
+                    config_hash=hashlib.sha256(
+                        json.dumps(run.config_snapshot, sort_keys=True).encode()
+                    ).hexdigest(),
+                    run_id=run.id,
+                    status="succeeded",
                 )
                 session.add(dv)
                 session.flush()
@@ -177,6 +332,9 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                         source_id=asset.source_id,
                         text=section.text,
                         content_hash=hashlib.sha256(section.text.encode()).hexdigest(),
+                        location_json=section.location,
+                        token_count=len(section.text.split()),
+                        section_title=section.title,
                     )
                     session.add(seg)
                     session.flush()
@@ -245,6 +403,7 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                         ).hexdigest(),
                     )
                 )
+            _run_processing_chain(session, settings, run, dv)
             node.status = "succeeded"
             run.status = "succeeded"
             run.finished_at = datetime.now(UTC)
@@ -258,7 +417,7 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
             )
             session.commit()
             return {"run_id": run.id, "status": run.status, "parser": result.parser}
-        except ParserError as exc:
+        except (ParserError, ProcessingError) as exc:
             node.status = "failed"
             run.status = "failed"
             run.error_code = exc.code

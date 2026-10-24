@@ -182,6 +182,17 @@ class PipelineVersion(Timestamped):
     status: Mapped[str] = mapped_column(String(30), default="active")
 
 
+class OperatorDefinition(Timestamped):
+    __tablename__ = "operator_definitions"
+    operator_key: Mapped[str] = mapped_column(String(120), index=True)
+    version: Mapped[str] = mapped_column(String(40))
+    adapter_kind: Mapped[str] = mapped_column(String(40), default="builtin")
+    input_schema: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    output_schema: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    params_schema: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    __table_args__ = (UniqueConstraint("operator_key", "version", name="uq_operator_version"),)
+
+
 class ProcessingBatch(Timestamped):
     __tablename__ = "processing_batches"
     workspace_id: Mapped[str] = mapped_column(String(36), index=True)
@@ -221,6 +232,14 @@ class NodeRun(Timestamped):
     attempt_no: Mapped[int] = mapped_column(Integer, default=1)
     status: Mapped[str] = mapped_column(String(30), default="pending")
     log_ref: Mapped[str | None] = mapped_column(Text, nullable=True)
+    operator_key: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    operator_version: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    config_snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    input_count: Mapped[int] = mapped_column(Integer, default=0)
+    output_count: Mapped[int] = mapped_column(Integer, default=0)
+    filtered_count: Mapped[int] = mapped_column(Integer, default=0)
+    duration_ms: Mapped[float | None] = mapped_column(nullable=True)
+    failure_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
     __table_args__ = (UniqueConstraint("run_id", "node_id", "attempt_no", name="uq_node_attempt"),)
 
 
@@ -249,6 +268,11 @@ class DocumentVersion(Timestamped):
     version_no: Mapped[int] = mapped_column(Integer, default=1)
     content_sha256: Mapped[str] = mapped_column(String(64))
     parser_version: Mapped[str] = mapped_column(String(50), default="builtin-1")
+    parser_name: Mapped[str] = mapped_column(String(80), default="builtin")
+    config_hash: Mapped[str] = mapped_column(String(64), default="")
+    run_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    artifact_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default="succeeded")
 
 
 class Segment(Timestamped):
@@ -259,6 +283,9 @@ class Segment(Timestamped):
     text: Mapped[str] = mapped_column(Text)
     content_hash: Mapped[str] = mapped_column(String(64), index=True)
     quality_state: Mapped[str] = mapped_column(String(30), default="reviewed")
+    location_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    token_count: Mapped[int] = mapped_column(Integer, default=0)
+    section_title: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
 
 class QualityIssue(Timestamped):

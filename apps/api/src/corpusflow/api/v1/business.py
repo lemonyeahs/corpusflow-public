@@ -22,6 +22,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from corpusflow.db.models import (
+    Artifact,
     Asset,
     AssetBlob,
     AuditEvent,
@@ -41,6 +42,7 @@ from corpusflow.db.models import (
     LineageEdge,
     Membership,
     NodeRun,
+    OperatorDefinition,
     OutboxEvent,
     PipelineRun,
     PipelineTemplate,
@@ -733,7 +735,11 @@ def asset_detail(asset_id: str, request: Request, session: Session = Depends(db)
                 "document_version_id": version.id,
                 "version_no": version.version_no,
                 "content_sha256": version.content_sha256,
+                "parser_name": version.parser_name,
                 "parser_version": version.parser_version,
+                "config_hash": version.config_hash,
+                "run_id": version.run_id,
+                "status": version.status,
                 "segments": [
                     {
                         "segment_id": segment.id,
@@ -741,6 +747,9 @@ def asset_detail(asset_id: str, request: Request, session: Session = Depends(db)
                         "content_hash": segment.content_hash,
                         "text": segment.text,
                         "quality_state": segment.quality_state,
+                        "location": segment.location_json,
+                        "token_count": segment.token_count,
+                        "section_title": segment.section_title,
                     }
                     for segment in session.scalars(
                         select(Segment)
@@ -771,21 +780,46 @@ def ensure_pipeline(session: Session, wid: str) -> PipelineVersion:
         session.add(template)
         session.flush()
     version = session.scalar(
-        select(PipelineVersion).where(PipelineVersion.template_id == template.id)
+        select(PipelineVersion)
+        .where(PipelineVersion.template_id == template.id, PipelineVersion.semver == "1.1.0")
     )
     if not version:
         dag = {
             "nodes": [
                 {"id": "parse", "operator": "builtin.parser"},
-                {"id": "quality", "operator": "builtin.quality"},
+                {"id": "clean", "operator": "builtin.clean", "config": {}},
+                {"id": "deduplicate", "operator": "builtin.deduplicate", "config": {}},
+                {"id": "quality", "operator": "builtin.quality", "config": {}},
             ],
-            "edges": [["parse", "quality"]],
+            "edges": [["parse", "clean"], ["clean", "deduplicate"], ["deduplicate", "quality"]],
         }
         version = PipelineVersion(
-            template_id=template.id, semver="1.0.0", dag_json=dag, dag_hash=digest(dag)
+            template_id=template.id, semver="1.1.0", dag_json=dag, dag_hash=digest(dag)
         )
         session.add(version)
         session.flush()
+    definitions = [
+        ("builtin.clean", "1.0.0", {"text": "string"}, {"text": "string"}, {"collapse_whitespace": "boolean"}),
+        ("builtin.deduplicate", "1.0.0", {"text": "string"}, {"text": "string"}, {"lowercase": "boolean"}),
+        ("builtin.quality", "1.0.0", {"text": "string"}, {"metrics": "object"}, {"min_chars": "integer"}),
+    ]
+    for key, operator_version, input_schema, output_schema, params_schema in definitions:
+        if not session.scalar(
+            select(OperatorDefinition).where(
+                OperatorDefinition.operator_key == key,
+                OperatorDefinition.version == operator_version,
+            )
+        ):
+            session.add(
+                OperatorDefinition(
+                    operator_key=key,
+                    version=operator_version,
+                    adapter_kind="builtin",
+                    input_schema=input_schema,
+                    output_schema=output_schema,
+                    params_schema=params_schema,
+                )
+            )
     return version
 
 
@@ -894,6 +928,93 @@ def get_run(run_id: str, request: Request, session: Session = Depends(db)):
         "status": run.status,
         "snapshot_hash": run.snapshot_hash,
         "revision": run.revision,
+        "nodes": [
+            {
+                "node_id": node.node_id,
+                "status": node.status,
+                "attempt": node.attempt_no,
+                "operator_key": node.operator_key,
+                "operator_version": node.operator_version,
+                "input_count": node.input_count,
+                "output_count": node.output_count,
+                "filtered_count": node.filtered_count,
+                "duration_ms": node.duration_ms,
+                "failure_code": node.failure_code,
+                "config": node.config_snapshot,
+                "log_ref": node.log_ref,
+            }
+            for node in session.scalars(
+                select(NodeRun).where(NodeRun.run_id == run.id).order_by(NodeRun.created_at)
+            ).all()
+        ],
+    }
+
+
+@router.get("/pipeline-runs/{run_id}/artifacts")
+def run_artifacts(run_id: str, request: Request, session: Session = Depends(db)):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    if not session.scalar(select(PipelineRun).where(PipelineRun.id == run_id, PipelineRun.workspace_id == wid)):
+        raise HTTPException(404, "NOT_FOUND")
+    return {
+        "items": [
+            {
+                "artifact_id": artifact.id,
+                "kind": artifact.kind,
+                "storage_key": artifact.storage_key,
+                "sha256": artifact.content_sha256,
+                "immutable": artifact.immutable,
+            }
+            for artifact in session.scalars(
+                select(Artifact).where(Artifact.run_id == run_id).order_by(Artifact.created_at)
+            ).all()
+        ]
+    }
+
+
+@router.get("/processing/operators")
+def processing_operators(request: Request, session: Session = Depends(db)):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    del user
+    builtins = session.scalars(
+        select(OperatorDefinition).where(OperatorDefinition.adapter_kind == "builtin")
+    ).all()
+    if not builtins:
+        ensure_pipeline(session, wid)
+        session.flush()
+        builtins = session.scalars(
+            select(OperatorDefinition).where(OperatorDefinition.adapter_kind == "builtin")
+        ).all()
+    return {
+        "items": [
+            {
+                "operator_key": operator.operator_key,
+                "version": operator.version,
+                "adapter_kind": operator.adapter_kind,
+                "params_schema": operator.params_schema,
+                "available": True,
+            }
+            for operator in builtins
+        ]
+        + [
+            {
+                "operator_key": "data-juicer",
+                "version": "unconfigured",
+                "adapter_kind": "external",
+                "params_schema": {},
+                "available": False,
+                "reason": "外部可执行文件未配置",
+            },
+            {
+                "operator_key": "weknora.docreader",
+                "version": "unconfigured",
+                "adapter_kind": "external",
+                "params_schema": {},
+                "available": False,
+                "reason": "docreader gRPC endpoint 未配置",
+            },
+        ],
     }
 
 
@@ -1076,6 +1197,28 @@ def document_versions(document_id: str, request: Request, session: Session = Dep
                 "document_version_id": row.id,
                 "version_no": row.version_no,
                 "content_sha256": row.content_sha256,
+                "parser_name": row.parser_name,
+                "parser_version": row.parser_version,
+                "config_hash": row.config_hash,
+                "status": row.status,
+                "segments": [
+                    {
+                        "segment_id": segment.id,
+                        "source_id": segment.source_id,
+                        "document_version_id": segment.document_version_id,
+                        "content_hash": segment.content_hash,
+                        "text": segment.text,
+                        "quality_state": segment.quality_state,
+                        "location": segment.location_json,
+                        "token_count": segment.token_count,
+                        "section_title": segment.section_title,
+                    }
+                    for segment in session.scalars(
+                        select(Segment)
+                        .where(Segment.document_version_id == row.id, Segment.workspace_id == wid)
+                        .order_by(Segment.created_at)
+                    ).all()
+                ],
             }
             for row in rows
         ]

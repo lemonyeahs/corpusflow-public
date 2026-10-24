@@ -1,0 +1,94 @@
+{
+  "plain_text.pdf": {
+    "kind": "pdf",
+    "expected": "success",
+    "markers": [
+      "CorpusFlow Parser Benchmark",
+      "Introduction"
+    ],
+    "text": [
+      "CorpusFlow Parser Benchmark",
+      "Introduction",
+      "This synthetic document tests ordinary text extraction."
+    ]
+  },
+  "math_formula.pdf": {
+    "kind": "pdf",
+    "expected": "success",
+    "markers": [
+      "E = mc^2",
+      "\\alpha"
+    ],
+    "text": [
+      "Mathematical Methods",
+      "E = mc^2",
+      "The probability is \\alpha + \\beta and should remain visible."
+    ]
+  },
+  "complex_table.pdf": {
+    "kind": "pdf",
+    "expected": "success",
+    "markers": [
+      "| Algorithm | Accuracy |",
+      "AES"
+    ],
+    "text": [
+      "Evaluation Table",
+      "| Algorithm | Accuracy |",
+      "| AES | 0.98 |",
+      "| RSA | 0.95 |"
+    ]
+  },
+  "two_column.pdf": {
+    "kind": "pdf",
+    "expected": "success",
+    "markers": [
+      "Column A",
+      "Column B"
+    ],
+    "text": [
+      "Two Column Technical Note",
+      "Column A: parser order is recorded.",
+      "Column B: source location is recorded."
+    ]
+  },
+  "scanned.pdf": {
+    "kind": "pdf",
+    "expected": "SCANNED_PDF_UNSUPPORTED",
+    "markers": []
+  },
+  "encrypted.pdf": {
+    "kind": "pdf",
+    "expected": "ENCRYPTED_PDF",
+    "markers": []
+  },
+  "corrupt.pdf": {
+    "kind": "pdf",
+    "expected": "CORRUPT_PDF",
+    "markers": []
+  },
+  "technical.html": {
+    "kind": "html",
+    "expected": "success",
+    "markers": [
+      "Threat Model",
+      "Evidence"
+    ],
+    "text": [
+      "Threat Model",
+      "Evidence"
+    ]
+  },
+  "cryptanalysis.html": {
+    "kind": "html",
+    "expected": "success",
+    "markers": [
+      "Differential Cryptanalysis",
+      "S-box"
+    ],
+    "text": [
+      "Differential Cryptanalysis",
+      "S-box"
+    ]
+  }
+}
