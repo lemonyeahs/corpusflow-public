@@ -22,7 +22,10 @@ def enqueue_run(session: Session, workspace_id: str, run_id: str) -> OutboxEvent
         )
     )
     if existing:
-        if existing.status in {"failed", "pending"}:
+        # An explicit rework is a new execution attempt.  Reuse the
+        # idempotent outbox row while making a previously published event
+        # dispatchable again; the worker remains idempotent on run_id.
+        if existing.status in {"failed", "pending", "published"}:
             existing.status = "pending"
             existing.available_at = datetime.now(UTC)
         return existing

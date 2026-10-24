@@ -16,6 +16,7 @@ from corpusflow.db.models import (
     CandidateSample,
     Dataset,
     DatasetBuild,
+    DatasetQualityReport,
     DatasetVersion,
     DatasetVersionArtifact,
     DatasetVersionSample,
@@ -122,6 +123,7 @@ def materialize(
     samples: list[CandidateSample],
     publisher_id: str,
     version_label: str,
+    quality_snapshot: dict[str, Any] | None = None,
 ) -> tuple[DatasetVersion, list[str]]:
     if not samples:
         raise MaterializationError("RELEASE_GATE_FAILED", "no approved samples")
@@ -295,6 +297,14 @@ def materialize(
         "published_by": publisher_id,
         "published_at": datetime.now(UTC).isoformat(),
     }
+    if quality_snapshot:
+        quality_snapshot = {**quality_snapshot, "dataset_version_id": version_id}
+        manifest["quality_snapshot"] = {
+            "evaluation_id": quality_snapshot["evaluation_id"],
+            "report_sha256": _digest(quality_snapshot),
+            "rule_version_id": quality_snapshot["rule_version_id"],
+            "quality_status": quality_snapshot["quality_status"],
+        }
     manifest_bytes = (json.dumps(manifest, ensure_ascii=False, indent=2) + "\n").encode()
     manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
     manifest_key = f"datasets/{dataset.id}/versions/{version_label}/manifest.json"
@@ -351,6 +361,17 @@ def materialize(
         )
         session.add(version)
         session.flush()
+        if quality_snapshot:
+            session.add(
+                DatasetQualityReport(
+                    workspace_id=workspace_id,
+                    dataset_version_id=version.id,
+                    evaluation_run_id=quality_snapshot["evaluation_id"],
+                    report_json=quality_snapshot,
+                    report_sha256=_digest(quality_snapshot),
+                    status="publication",
+                )
+            )
         session.add(
             DatasetVersionArtifact(
                 workspace_id=workspace_id,

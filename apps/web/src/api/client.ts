@@ -1,6 +1,6 @@
 import type {
   Asset, AssetDetail, CandidateSample, Dataset, DatasetProductType, DatasetVersion, LineageEdge, Manifest,
-  OperatorDefinition, PipelineRun, ProcessingArtifact, QualityIssue, Session, Source, Workspace,
+  OperatorDefinition, PipelineRun, ProcessingArtifact, QualityIssue, QualityEvaluation, QualityRules, QualityRuleConfig, QualityReportData, QualityCoverage, QualityComparison, Session, Source, Workspace,
 } from "../types";
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) || "/api/v1";
@@ -76,13 +76,22 @@ export const api = {
   resumeRun: (ctx: ApiContext, id: string) => request<{ run_id: string; status: string; queued: boolean }>(`/pipeline-runs/${id}/resume`, ctx, json({})),
   issues: (ctx: ApiContext, status?: string) => request<{ items: QualityIssue[] }>(`/quality/issues${status ? `?status=${encodeURIComponent(status)}` : ""}`, ctx),
   reviewIssue: (ctx: ApiContext, id: string, body: { decision: string; note: string }) => request<{ issue_id: string; status: string }>(`/quality/issues/${id}/reviews`, ctx, json(body)),
+  qualityRules: (ctx: ApiContext) => request<QualityRules>("/quality/rules", ctx),
+  createQualityRuleVersion: (ctx: ApiContext, body: { version: string; rules: Record<string, QualityRuleConfig> }) => request<{ id: string; version: string }>("/quality/rules/versions", ctx, json(body)),
+  evaluateQuality: (ctx: ApiContext, body: { target_type: "dataset_build" | "dataset_version"; target_id: string; rule_version_id?: string; idempotency_key?: string }) => request<QualityEvaluation>("/quality/evaluations", ctx, json(body)),
+  qualityEvaluations: (ctx: ApiContext) => request<{ items: Array<{ evaluation_id: string; target_type: string; target_id: string; status: string; quality_status: string; created_at: string }> }>("/quality/evaluations", ctx),
+  qualityEvaluation: (ctx: ApiContext, id: string) => request<QualityEvaluation>(`/quality/evaluations/${id}`, ctx),
+  qualityReport: (ctx: ApiContext, versionId: string) => request<{ report_id: string; dataset_version_id: string; sha256: string; report: QualityReportData }>(`/quality/reports/${versionId}`, ctx),
+  qualityCoverage: (ctx: ApiContext, params = "") => request<QualityCoverage>(`/quality/coverage${params ? `?${params}` : ""}`, ctx),
+  qualityRatios: (ctx: ApiContext, versionId: string) => request<Record<string, unknown>>(`/quality/ratios/${versionId}`, ctx),
+  compareQualityVersions: (ctx: ApiContext, body: { left_version_id: string; right_version_id: string }) => request<QualityComparison>("/quality/version-comparisons", ctx, json(body)),
   datasets: (ctx: ApiContext) => request<{ items: Dataset[] }>("/datasets", ctx),
   datasetProductTypes: (ctx: ApiContext) => request<{ items: DatasetProductType[] }>("/dataset-products/types", ctx),
   createDataset: (ctx: ApiContext, body: { name: string; product_type: string }) => request<Dataset>("/datasets", ctx, json(body)),
   preview: (ctx: ApiContext, body: { product_type: string; purpose: string; segment_ids: string[] }) => request<{ included: Array<{ segment_id: string; reason: string }>; excluded: Array<{ segment_id: string; reason: string }>; included_count: number; excluded_count: number }>("/dataset-builds/preview", ctx, json(body)),
   createBuild: (ctx: ApiContext, body: { dataset_id: string; segment_ids: string[]; purpose: string; config: Record<string, unknown> }) => request<{ build_id: string; config_hash: string; status: string; candidate_count: number; product_type: string; excluded: Array<Record<string, string>>; metrics: Record<string, unknown> }>("/dataset-builds", ctx, json(body)),
   candidates: (ctx: ApiContext, buildId: string) => request<{ items: CandidateSample[] }>(`/dataset-builds/${buildId}/candidates`, ctx),
-  qualityReport: (ctx: ApiContext, buildId: string) => request<{ build_id: string; product_type: string; status: string; config_hash: string; metrics: Record<string, unknown>; excluded: Array<Record<string, string>>; candidate_count: number; approved_count: number; rejected_count: number }>(`/dataset-builds/${buildId}/quality-report`, ctx),
+  buildQualityReport: (ctx: ApiContext, buildId: string) => request<{ build_id: string; product_type: string; status: string; config_hash: string; metrics: Record<string, unknown>; excluded: Array<Record<string, string>>; candidate_count: number; approved_count: number; rejected_count: number }>(`/dataset-builds/${buildId}/quality-report`, ctx),
   reviewSample: (ctx: ApiContext, id: string, body: { decision: "approved" | "rejected"; note: string }) => request<{ sample_id: string; status: string }>(`/candidate-samples/${id}/reviews`, ctx, json(body)),
   validateBuild: (ctx: ApiContext, id: string) => request<{ build_id: string; ok: boolean; checks: Array<{ sample_id: string; ok: boolean; reason: string }>; release_candidate_hash: string }>(`/dataset-builds/${id}/validate`, ctx, json({})),
   versions: (ctx: ApiContext, datasetId: string) => request<{ items: DatasetVersion[] }>(`/datasets/${datasetId}/versions`, ctx),

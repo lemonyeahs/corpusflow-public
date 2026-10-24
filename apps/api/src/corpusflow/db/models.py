@@ -307,6 +307,96 @@ class QualityReview(Timestamped):
     note: Mapped[str] = mapped_column(Text, default="")
 
 
+class QualityRuleSet(Timestamped):
+    __tablename__ = "quality_rule_sets"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    name: Mapped[str] = mapped_column(String(160))
+    description: Mapped[str] = mapped_column(Text, default="")
+    product_type: Mapped[str] = mapped_column(String(30), default="*")
+    status: Mapped[str] = mapped_column(String(30), default="active")
+
+
+class QualityRuleVersion(Timestamped):
+    __tablename__ = "quality_rule_versions"
+    rule_set_id: Mapped[str] = mapped_column(ForeignKey("quality_rule_sets.id"), index=True)
+    version: Mapped[str] = mapped_column(String(50))
+    rules_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    config_hash: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(30), default="active")
+    created_by: Mapped[str] = mapped_column(String(36))
+    __table_args__ = (UniqueConstraint("rule_set_id", "version", name="uq_quality_rule_version"),)
+
+
+class QualityEvaluationRun(Timestamped):
+    __tablename__ = "quality_evaluation_runs"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    rule_set_id: Mapped[str] = mapped_column(ForeignKey("quality_rule_sets.id"), index=True)
+    rule_version_id: Mapped[str] = mapped_column(ForeignKey("quality_rule_versions.id"), index=True)
+    target_type: Mapped[str] = mapped_column(String(40))
+    target_id: Mapped[str] = mapped_column(String(36), index=True)
+    product_type: Mapped[str] = mapped_column(String(30), default="*")
+    config_snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    status: Mapped[str] = mapped_column(String(30), default="queued")
+    metric_count: Mapped[int] = mapped_column(Integer, default=0)
+    issue_count: Mapped[int] = mapped_column(Integer, default=0)
+    created_by: Mapped[str] = mapped_column(String(36))
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    error_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
+
+
+class QualityMetricResult(Timestamped):
+    __tablename__ = "quality_metric_results"
+    evaluation_run_id: Mapped[str] = mapped_column(
+        ForeignKey("quality_evaluation_runs.id"), index=True
+    )
+    metric_id: Mapped[str] = mapped_column(String(120), index=True)
+    metric_version: Mapped[str] = mapped_column(String(40))
+    category: Mapped[str] = mapped_column(String(40))
+    value_numeric: Mapped[float | None] = mapped_column(nullable=True)
+    numerator: Mapped[float | None] = mapped_column(nullable=True)
+    denominator: Mapped[float | None] = mapped_column(nullable=True)
+    unit: Mapped[str] = mapped_column(String(40), default="ratio")
+    direction: Mapped[str] = mapped_column(String(20), default="higher_is_better")
+    threshold_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    status: Mapped[str] = mapped_column(String(30), default="NOT_EVALUATED")
+    scope_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    evidence_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+
+
+class DatasetQualityReport(Timestamped):
+    __tablename__ = "dataset_quality_reports"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    dataset_version_id: Mapped[str] = mapped_column(ForeignKey("dataset_versions.id"), index=True)
+    evaluation_run_id: Mapped[str] = mapped_column(
+        ForeignKey("quality_evaluation_runs.id"), index=True
+    )
+    report_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    report_sha256: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(30), default="final")
+    immutable: Mapped[bool] = mapped_column(Boolean, default=True)
+    __table_args__ = (
+        UniqueConstraint(
+            "dataset_version_id", "evaluation_run_id", name="uq_dataset_quality_report"
+        ),
+    )
+
+
+class DatasetVersionComparison(Timestamped):
+    __tablename__ = "dataset_version_comparisons"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    left_version_id: Mapped[str] = mapped_column(ForeignKey("dataset_versions.id"), index=True)
+    right_version_id: Mapped[str] = mapped_column(ForeignKey("dataset_versions.id"), index=True)
+    comparison_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    status: Mapped[str] = mapped_column(String(30), default="completed")
+    created_by: Mapped[str] = mapped_column(String(36))
+    __table_args__ = (
+        UniqueConstraint(
+            "left_version_id", "right_version_id", name="uq_dataset_version_comparison"
+        ),
+    )
+
+
 class Dataset(Timestamped):
     __tablename__ = "dataset_definitions"
     workspace_id: Mapped[str] = mapped_column(String(36), index=True)

@@ -113,6 +113,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "INVALID_CHUNK_UNIT",
             "INVALID_CHUNK_CONFIG",
             "INVALID_EVALUATION_CONFIG",
+            "QUALITY_GATE_FAILED",
+            "QUALITY_SCOPE_TOO_LARGE",
+            "INVALID_QUALITY_RULE",
+            "PRODUCT_MISMATCH",
         }
         return error_response(
             request,

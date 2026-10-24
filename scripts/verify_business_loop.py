@@ -187,6 +187,19 @@ def main() -> None:
         )
         call(client.post(f"/api/v1/pipeline-runs/{run_ids[0]}/execute", headers=headers), 202)
 
+        for _ in range(60):
+            run_state = call(client.get(f"/api/v1/pipeline-runs/{run_ids[0]}", headers=headers))[
+                "status"
+            ]
+            issue_rows = call(client.get("/api/v1/quality/issues", headers=headers))["items"]
+            issue_state = next(
+                row["status"] for row in issue_rows if row["issue_id"] == issue["issue_id"]
+            )
+            if run_state == "succeeded" and issue_state == "resolved":
+                break
+            time.sleep(0.3)
+        assert run_state == "succeeded" and issue_state == "resolved", (run_state, issue_state)
+
         dataset = call(
             client.post("/api/v1/datasets", headers=headers, json={"name": "acceptance-sft"})
         )

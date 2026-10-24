@@ -32,6 +32,7 @@ from corpusflow.services.processing_pipeline import (
     run_processor,
     segment_records,
 )
+from corpusflow.services.quality_rework import resolve_reworked_issues
 from corpusflow.worker.celery_app import celery_app
 
 log = logging.getLogger(__name__)
@@ -50,7 +51,9 @@ def _write_log(
     attempt: int = 1,
 ) -> None:
     node = session.scalar(
-        select(NodeRun).where(NodeRun.run_id == run.id, NodeRun.node_id == (node_id or "parse"))
+        select(NodeRun)
+        .where(NodeRun.run_id == run.id, NodeRun.node_id == (node_id or "parse"))
+        .order_by(NodeRun.attempt_no.desc())
     )
     session.add(
         ExecutionLog(
@@ -82,11 +85,15 @@ def _run_processing_chain(
     """Run the immutable, versioned post-parse operators for one Run."""
     pipeline_config = run.config_snapshot if isinstance(run.config_snapshot, dict) else {}
     configured = pipeline_config.get("operators")
-    operators = configured if isinstance(configured, list) else [
-        {"key": "builtin.clean", "config": {}},
-        {"key": "builtin.deduplicate", "config": {}},
-        {"key": "builtin.quality", "config": {}},
-    ]
+    operators = (
+        configured
+        if isinstance(configured, list)
+        else [
+            {"key": "builtin.clean", "config": {}},
+            {"key": "builtin.deduplicate", "config": {}},
+            {"key": "builtin.quality", "config": {}},
+        ]
+    )
     current = source_version
     for spec in operators:
         operator_config: dict[str, Any] = {}
@@ -136,7 +143,17 @@ def _run_processing_chain(
             node.output_count = len(result.records)
             node.filtered_count = result.filtered_count
             node.duration_ms = (datetime.now(UTC) - started).total_seconds() * 1000
-            artifact_key = f"artifacts/{run.id}/{node_id}/output.json"
+            prefix = (
+                f"artifacts/{run.id}"
+                if node.attempt_no == 1
+                else f"artifacts/{run.id}/attempt-{node.attempt_no}"
+            )
+            artifact_key = f"{prefix}/{node_id}/output.json"
+            artifact_kind = (
+                f"operator_{node_id}"
+                if node.attempt_no == 1
+                else f"operator_{node_id}_attempt_{node.attempt_no}"
+            )
             payload = json.dumps(
                 {
                     "operator": key,
@@ -150,15 +167,13 @@ def _run_processing_chain(
             ).encode()
             _store(settings, artifact_key, payload, "application/json")
             artifact = session.scalar(
-                select(Artifact).where(
-                    Artifact.run_id == run.id, Artifact.kind == f"operator_{node_id}"
-                )
+                select(Artifact).where(Artifact.run_id == run.id, Artifact.kind == artifact_kind)
             )
             if not artifact:
                 artifact = Artifact(
                     workspace_id=run.workspace_id,
                     run_id=run.id,
-                    kind=f"operator_{node_id}",
+                    kind=artifact_kind,
                     storage_key=artifact_key,
                     content_sha256=hashlib.sha256(payload).hexdigest(),
                 )
@@ -268,8 +283,11 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                 else HTMLParserAdapter()
             )
             result = parser.parse(content, asset.filename, blob.media_type)
-            markdown_key = f"artifacts/{run.id}/document.md"
-            json_key = f"artifacts/{run.id}/document.json"
+            prefix = (
+                f"artifacts/{run.id}" if attempt == 1 else f"artifacts/{run.id}/attempt-{attempt}"
+            )
+            markdown_key = f"{prefix}/document.md"
+            json_key = f"{prefix}/document.json"
             _store(settings, markdown_key, result.markdown.encode(), "text/markdown")
             _store(
                 settings,
@@ -287,7 +305,7 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                     DocumentVersion.parser_version == result.parser_version,
                 )
             )
-            if existing:
+            if existing and attempt == 1:
                 dv = existing
             else:
                 doc = session.scalar(
@@ -380,14 +398,16 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
             )
             if not session.scalar(
                 select(Artifact).where(
-                    Artifact.run_id == run.id, Artifact.kind == "document_markdown"
+                    Artifact.run_id == run.id, Artifact.storage_key == markdown_key
                 )
             ):
                 session.add(
                     Artifact(
                         workspace_id=run.workspace_id,
                         run_id=run.id,
-                        kind="document_markdown",
+                        kind="document_markdown"
+                        if attempt == 1
+                        else f"document_markdown_attempt_{attempt}",
                         storage_key=markdown_key,
                         content_sha256=hashlib.sha256(result.markdown.encode()).hexdigest(),
                     )
@@ -396,7 +416,9 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                     Artifact(
                         workspace_id=run.workspace_id,
                         run_id=run.id,
-                        kind="document_json",
+                        kind="document_json"
+                        if attempt == 1
+                        else f"document_json_attempt_{attempt}",
                         storage_key=json_key,
                         content_sha256=hashlib.sha256(
                             json.dumps(result.structured, ensure_ascii=False).encode()
@@ -405,7 +427,8 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                 )
             _run_processing_chain(session, settings, run, dv)
             node.status = "succeeded"
-            run.status = "succeeded"
+            session.flush()
+            run.status = "succeeded" if resolve_reworked_issues(session, run) else "awaiting_review"
             run.finished_at = datetime.now(UTC)
             run.error_code = None
             _write_log(

@@ -107,6 +107,45 @@ export interface QualityIssue {
   created_at: string;
 }
 
+export interface QualityMetric {
+  metric_id: string; metric_version: string; method: string;
+  value: number | null; numerator: number | null; denominator: number | null;
+  unit: string; status: string; threshold: number | null; direction: string;
+  evidence?: unknown;
+}
+export interface QualityReportData {
+  evaluation_id: string; dataset_version_id: string | null; build_id: string;
+  quality_status: string; authorization_gate: string; product_type: string;
+  rule_version: string; rule_config_hash: string; sample_count: number;
+  metrics: QualityMetric[]; unassessed: string[]; gates: Record<string, boolean>;
+  inputs: Array<{ segment_id: string; document_version_id: string; source_id: string }>;
+  composition: Record<string, unknown>; processing_records: unknown[];
+  generated_at: string;
+}
+export interface QualityEvaluation {
+  evaluation_id: string; status: string; target_type: string; target_id: string;
+  report: QualityReportData;
+}
+export interface QualityRuleConfig { enabled: boolean; threshold: number | null; manual_review: boolean }
+export interface QualityRules {
+  rule_set: { id: string; name: string };
+  versions: Array<{ id: string; version: string; config_hash: string; rules: Record<string, QualityRuleConfig> }>;
+}
+export interface QualityCoverage {
+  asset_count: number; domain_label_occurrences: Record<string, number>;
+  domain_unique_assets: Record<string, number>; format_distribution: Record<string, number>;
+  year_distribution: Record<string, number>; denominator: string; as_of: string;
+  distributions: Record<string, unknown>; authorization: Record<string, unknown>;
+}
+export interface QualityComparison {
+  comparison_id: string;
+  comparison: {
+    counts: Record<string, number>; quality_comparison: string; quality_reason: string | null;
+    token_count_delta: number | null; sample_count_delta: number;
+    [key: string]: unknown;
+  };
+}
+
 export interface Dataset {
   dataset_id: string;
   name: string;
@@ -152,6 +191,7 @@ export interface Manifest {
   tokenizer_version: string;
   content: { storage_key: string; sha256: string; bytes: number };
   authorization?: { purpose: string; status: string };
+  quality_snapshot?: { evaluation_id: string; report_sha256: string; rule_version_id: string; quality_status: string };
   quality_report?: { status: string; approved_sample_count: number; review_records: unknown[] };
   input_references?: Array<{ source_id: string; document_version_id: string; segment_id: string }>;
   samples: Array<Record<string, unknown>>;

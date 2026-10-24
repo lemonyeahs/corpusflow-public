@@ -30,7 +30,9 @@ from corpusflow.db.models import (
     CandidateSample,
     Dataset,
     DatasetBuild,
+    DatasetQualityReport,
     DatasetVersion,
+    DatasetVersionComparison,
     DatasetVersionSample,
     DiscoveryCandidate,
     Document,
@@ -48,8 +50,11 @@ from corpusflow.db.models import (
     PipelineTemplate,
     PipelineVersion,
     ProcessingBatch,
+    QualityEvaluationRun,
     QualityIssue,
+    QualityMetricResult,
     QualityReview,
+    QualityRuleVersion,
     SampleEvidence,
     SampleReview,
     Segment,
@@ -61,6 +66,23 @@ from corpusflow.db.models import (
 )
 from corpusflow.services.dataset_builders import BuilderError, builder_for
 from corpusflow.services.dataset_materializer import MaterializationError, materialize
+from corpusflow.services.quality_governance import (
+    METRICS,
+    default_rule_set,
+)
+from corpusflow.services.quality_governance import (
+    compare as compare_quality_versions,
+)
+from corpusflow.services.quality_governance import (
+    coverage as quality_coverage,
+)
+from corpusflow.services.quality_governance import (
+    evaluate as evaluate_quality,
+)
+from corpusflow.services.quality_governance import (
+    ratios as quality_ratios,
+)
+from corpusflow.services.quality_rework import prepare_rework
 from corpusflow.worker.outbox import enqueue_run
 
 router = APIRouter(prefix="/api/v1", tags=["business"])
@@ -254,7 +276,12 @@ def sources(request: Request, session: Session = Depends(db)):
     ).all()
     return {
         "items": [
-            {"source_id": row.id, "name": row.name, "kind": row.kind, "created_at": row.created_at.isoformat()}
+            {
+                "source_id": row.id,
+                "name": row.name,
+                "kind": row.kind,
+                "created_at": row.created_at.isoformat(),
+            }
             for row in rows
         ]
     }
@@ -700,7 +727,9 @@ def asset_detail(asset_id: str, request: Request, session: Session = Depends(db)
     if not row:
         raise HTTPException(404, "NOT_FOUND")
     blob = session.scalar(select(AssetBlob).where(AssetBlob.id == row.blob_id))
-    source = session.scalar(select(Source).where(Source.id == row.source_id, Source.workspace_id == wid))
+    source = session.scalar(
+        select(Source).where(Source.id == row.source_id, Source.workspace_id == wid)
+    )
     document = session.scalar(
         select(Document).where(Document.asset_id == row.id, Document.workspace_id == wid)
     )
@@ -717,18 +746,26 @@ def asset_detail(asset_id: str, request: Request, session: Session = Depends(db)
         "asset_id": row.id,
         "filename": row.filename,
         "format": row.format,
-        "source": {"source_id": source.id, "name": source.name, "kind": source.kind} if source else None,
+        "source": {"source_id": source.id, "name": source.name, "kind": source.kind}
+        if source
+        else None,
         "blob": {
             "storage_key": blob.storage_key,
             "sha256": blob.sha256,
             "byte_size": blob.byte_size,
             "media_type": blob.media_type,
-        } if blob else None,
+        }
+        if blob
+        else None,
         "ingestion_status": row.ingestion_status,
         "quality_status": row.quality_status,
         "language": row.language,
         "metadata": row.metadata_json,
-        "document": {"document_id": document.id, "title": document.title, "parse_status": document.parse_status}
+        "document": {
+            "document_id": document.id,
+            "title": document.title,
+            "parse_status": document.parse_status,
+        }
         if document
         else None,
         "versions": [
@@ -781,8 +818,9 @@ def ensure_pipeline(session: Session, wid: str) -> PipelineVersion:
         session.add(template)
         session.flush()
     version = session.scalar(
-        select(PipelineVersion)
-        .where(PipelineVersion.template_id == template.id, PipelineVersion.semver == "1.1.0")
+        select(PipelineVersion).where(
+            PipelineVersion.template_id == template.id, PipelineVersion.semver == "1.1.0"
+        )
     )
     if not version:
         dag = {
@@ -800,9 +838,27 @@ def ensure_pipeline(session: Session, wid: str) -> PipelineVersion:
         session.add(version)
         session.flush()
     definitions = [
-        ("builtin.clean", "1.0.0", {"text": "string"}, {"text": "string"}, {"collapse_whitespace": "boolean"}),
-        ("builtin.deduplicate", "1.0.0", {"text": "string"}, {"text": "string"}, {"lowercase": "boolean"}),
-        ("builtin.quality", "1.0.0", {"text": "string"}, {"metrics": "object"}, {"min_chars": "integer"}),
+        (
+            "builtin.clean",
+            "1.0.0",
+            {"text": "string"},
+            {"text": "string"},
+            {"collapse_whitespace": "boolean"},
+        ),
+        (
+            "builtin.deduplicate",
+            "1.0.0",
+            {"text": "string"},
+            {"text": "string"},
+            {"lowercase": "boolean"},
+        ),
+        (
+            "builtin.quality",
+            "1.0.0",
+            {"text": "string"},
+            {"metrics": "object"},
+            {"min_chars": "integer"},
+        ),
     ]
     for key, operator_version, input_schema, output_schema, params_schema in definitions:
         if not session.scalar(
@@ -955,7 +1011,9 @@ def get_run(run_id: str, request: Request, session: Session = Depends(db)):
 def run_artifacts(run_id: str, request: Request, session: Session = Depends(db)):
     user = actor_id(request, session)
     wid = workspace_id(request, session, user)
-    if not session.scalar(select(PipelineRun).where(PipelineRun.id == run_id, PipelineRun.workspace_id == wid)):
+    if not session.scalar(
+        select(PipelineRun).where(PipelineRun.id == run_id, PipelineRun.workspace_id == wid)
+    ):
         raise HTTPException(404, "NOT_FOUND")
     return {
         "items": [
@@ -1136,6 +1194,329 @@ def review_issue(
     return {"issue_id": issue.id, "status": issue.status}
 
 
+class QualityEvaluationIn(BaseModel):
+    target_type: str = Field(pattern="^(dataset_build|dataset_version)$")
+    target_id: str
+    rule_version_id: str | None = None
+    idempotency_key: str | None = Field(default=None, max_length=200)
+
+
+@router.get("/quality/rules")
+def quality_rules(request: Request, session: Session = Depends(db)):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    rule_set, version = default_rule_set(session, wid, user)
+    versions = list(
+        session.scalars(
+            select(QualityRuleVersion)
+            .where(QualityRuleVersion.rule_set_id == rule_set.id)
+            .order_by(QualityRuleVersion.created_at.desc())
+        )
+    )
+    session.commit()
+    return {
+        "metric_catalog": {
+            key: {"method": value[0], "direction": value[1], "default_threshold": value[2]}
+            for key, value in METRICS.items()
+        },
+        "rule_set": {
+            "id": rule_set.id,
+            "name": rule_set.name,
+            "product_type": rule_set.product_type,
+        },
+        "versions": [
+            {
+                "id": version.id,
+                "version": version.version,
+                "config_hash": version.config_hash,
+                "rules": version.rules_json,
+                "status": version.status,
+            }
+            for version in versions
+        ],
+    }
+
+
+class QualityRuleConfigIn(BaseModel):
+    enabled: bool = True
+    threshold: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    manual_review: bool = False
+
+
+class QualityRuleVersionIn(BaseModel):
+    version: str = Field(pattern=r"^\d+\.\d+\.\d+$", max_length=50)
+    rules: dict[str, QualityRuleConfigIn]
+
+
+@router.post("/quality/rules/versions")
+def create_quality_rule_version(
+    body: QualityRuleVersionIn, request: Request, session: Session = Depends(db)
+):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    role_required(session, user, wid, {"admin"})
+    rule_set, latest = default_rule_set(session, wid, user)
+    if not body.rules or any(key not in METRICS for key in body.rules):
+        raise HTTPException(422, "INVALID_QUALITY_RULE")
+    rules = {**latest.rules_json, **{key: value.model_dump() for key, value in body.rules.items()}}
+    for key, config in rules.items():
+        if (
+            key != "sample.token_count"
+            and config["threshold"] is not None
+            and config["threshold"] > 1
+        ):
+            raise HTTPException(422, "INVALID_QUALITY_RULE")
+    existing = session.scalar(
+        select(QualityRuleVersion).where(
+            QualityRuleVersion.rule_set_id == rule_set.id,
+            QualityRuleVersion.version == body.version,
+        )
+    )
+    if existing:
+        if existing.config_hash != digest(rules):
+            raise HTTPException(409, "VERSION_CONFLICT")
+        return {"id": existing.id, "version": existing.version, "config_hash": existing.config_hash}
+    row = QualityRuleVersion(
+        rule_set_id=rule_set.id,
+        version=body.version,
+        rules_json=rules,
+        config_hash=digest(rules),
+        created_by=user,
+    )
+    session.add(row)
+    session.flush()
+    audit(
+        session,
+        request,
+        wid,
+        user,
+        "quality.rules.version",
+        "quality_rule_version",
+        row.id,
+        {"version": row.version, "config_hash": row.config_hash},
+    )
+    session.commit()
+    return {"id": row.id, "version": row.version, "config_hash": row.config_hash}
+
+
+@router.post("/quality/evaluations")
+def create_quality_evaluation(
+    body: QualityEvaluationIn, request: Request, session: Session = Depends(db)
+):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    role_required(session, user, wid, {"admin", "engineer", "reviewer"})
+    try:
+        run, report = evaluate_quality(
+            session,
+            wid,
+            user,
+            body.target_type,
+            body.target_id,
+            rule_version_id=body.rule_version_id,
+            idempotency_key=body.idempotency_key,
+            settings=request.app.state.config,
+        )
+    except ValueError as exc:
+        raise HTTPException(404 if str(exc) == "NOT_FOUND" else 409, str(exc)) from exc
+    audit(
+        session,
+        request,
+        wid,
+        user,
+        "quality.evaluation.create",
+        "quality_evaluation_run",
+        run.id,
+        {"target_type": body.target_type, "target_id": body.target_id},
+    )
+    session.commit()
+    return {
+        "evaluation_id": run.id,
+        "status": run.status,
+        "target_type": run.target_type,
+        "target_id": run.target_id,
+        "report": report,
+    }
+
+
+@router.get("/quality/evaluations")
+def list_quality_evaluations(
+    request: Request, session: Session = Depends(db), limit: int = Query(default=50, ge=1, le=200)
+):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    rows = session.scalars(
+        select(QualityEvaluationRun)
+        .where(QualityEvaluationRun.workspace_id == wid)
+        .order_by(QualityEvaluationRun.created_at.desc())
+        .limit(limit)
+    ).all()
+    return {
+        "items": [
+            {
+                "evaluation_id": row.id,
+                "target_type": row.target_type,
+                "target_id": row.target_id,
+                "status": row.status,
+                "quality_status": row.config_snapshot.get("report", {}).get(
+                    "quality_status", "NOT_EVALUATED"
+                ),
+                "created_at": row.created_at.isoformat(),
+            }
+            for row in rows
+        ]
+    }
+
+
+@router.get("/quality/evaluations/{evaluation_id}")
+def quality_evaluation(evaluation_id: str, request: Request, session: Session = Depends(db)):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    run = session.scalar(
+        select(QualityEvaluationRun).where(
+            QualityEvaluationRun.id == evaluation_id, QualityEvaluationRun.workspace_id == wid
+        )
+    )
+    if not run:
+        raise HTTPException(404, "NOT_FOUND")
+    audit(session, request, wid, user, "quality.report.read", "quality_evaluation_run", run.id)
+    session.commit()
+    metrics = session.scalars(
+        select(QualityMetricResult).where(QualityMetricResult.evaluation_run_id == run.id)
+    ).all()
+    return {
+        "evaluation_id": run.id,
+        "status": run.status,
+        "target_type": run.target_type,
+        "target_id": run.target_id,
+        "rule_version_id": run.rule_version_id,
+        "report": run.config_snapshot.get("report"),
+        "metrics": [
+            {
+                "metric_id": m.metric_id,
+                "value": m.value_numeric,
+                "numerator": m.numerator,
+                "denominator": m.denominator,
+                "unit": m.unit,
+                "status": m.status,
+                "threshold": m.threshold_json,
+                "scope": m.scope_json,
+                "evidence": m.evidence_json,
+            }
+            for m in metrics
+        ],
+    }
+
+
+@router.get("/quality/reports/{dataset_version_id}")
+def quality_report(dataset_version_id: str, request: Request, session: Session = Depends(db)):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    report = session.scalar(
+        select(DatasetQualityReport)
+        .where(
+            DatasetQualityReport.dataset_version_id == dataset_version_id,
+            DatasetQualityReport.workspace_id == wid,
+        )
+        .order_by(DatasetQualityReport.created_at.desc())
+    )
+    if not report:
+        raise HTTPException(404, "NOT_FOUND")
+    return {
+        "report_id": report.id,
+        "dataset_version_id": report.dataset_version_id,
+        "evaluation_id": report.evaluation_run_id,
+        "sha256": report.report_sha256,
+        "immutable": report.immutable,
+        "report": report.report_json,
+    }
+
+
+@router.get("/quality/coverage")
+def quality_coverage_endpoint(
+    request: Request,
+    session: Session = Depends(db),
+    dataset_version_id: str | None = None,
+    source_id: str | None = None,
+    product_type: str | None = None,
+    since: datetime | None = None,
+    until: datetime | None = None,
+):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    try:
+        return quality_coverage(
+            session, wid, dataset_version_id, source_id, product_type, since, until
+        )
+    except ValueError as exc:
+        raise HTTPException(404, str(exc)) from exc
+
+
+@router.get("/quality/ratios/{dataset_version_id}")
+def quality_ratios_endpoint(
+    dataset_version_id: str, request: Request, session: Session = Depends(db)
+):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    try:
+        return quality_ratios(session, wid, dataset_version_id)
+    except ValueError as exc:
+        raise HTTPException(404 if str(exc) == "NOT_FOUND" else 409, str(exc)) from exc
+
+
+class VersionComparisonIn(BaseModel):
+    left_version_id: str
+    right_version_id: str
+
+
+@router.post("/quality/version-comparisons")
+def create_version_comparison(
+    body: VersionComparisonIn, request: Request, session: Session = Depends(db)
+):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    role_required(session, user, wid, {"admin", "engineer", "reviewer"})
+    try:
+        row = compare_quality_versions(
+            session,
+            wid,
+            user,
+            body.left_version_id,
+            body.right_version_id,
+            settings=request.app.state.config,
+        )
+    except ValueError as exc:
+        code = "NOT_FOUND" if str(exc) == "NOT_FOUND" else str(exc)
+        raise HTTPException(404 if code == "NOT_FOUND" else 409, code) from exc
+    audit(
+        session,
+        request,
+        wid,
+        user,
+        "quality.version.compare",
+        "dataset_version_comparison",
+        row.id,
+        {"left": body.left_version_id, "right": body.right_version_id},
+    )
+    session.commit()
+    return {"comparison_id": row.id, "status": row.status, "comparison": row.comparison_json}
+
+
+@router.get("/quality/version-comparisons/{comparison_id}")
+def version_comparison(comparison_id: str, request: Request, session: Session = Depends(db)):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    row = session.scalar(
+        select(DatasetVersionComparison).where(
+            DatasetVersionComparison.id == comparison_id,
+            DatasetVersionComparison.workspace_id == wid,
+        )
+    )
+    if not row:
+        raise HTTPException(404, "NOT_FOUND")
+    return {"comparison_id": row.id, "status": row.status, "comparison": row.comparison_json}
+
+
 @router.post("/pipeline-runs/{run_id}/resume")
 def resume_run(run_id: str, request: Request, session: Session = Depends(db)):
     user = actor_id(request, session)
@@ -1149,6 +1530,7 @@ def resume_run(run_id: str, request: Request, session: Session = Depends(db)):
     issues = session.scalars(select(QualityIssue).where(QualityIssue.run_id == run.id)).all()
     if any(i.status in {"open", "in_review", "rejected", "isolated", "returned"} for i in issues):
         raise HTTPException(409, "RUN_REVIEW_BLOCKED")
+    prepare_rework(session, run)
     run.status = "queued"
     run.revision += 1
     enqueue_run(session, wid, run.id)
@@ -1253,7 +1635,12 @@ def datasets(request: Request, session: Session = Depends(db)):
     ).all()
     return {
         "items": [
-            {"dataset_id": row.id, "name": row.name, "product_type": row.product_type, "created_at": row.created_at.isoformat()}
+            {
+                "dataset_id": row.id,
+                "name": row.name,
+                "product_type": row.product_type,
+                "created_at": row.created_at.isoformat(),
+            }
             for row in rows
         ]
     }
@@ -1361,7 +1748,9 @@ def build_preview(body: PreviewIn, request: Request, session: Session = Depends(
 class BuildIn(BaseModel):
     dataset_id: str
     segment_ids: list[str] = Field(min_length=1)
-    purpose: str = Field(default="training", pattern="^(research|training|rag|evaluation|redistribute)$")
+    purpose: str = Field(
+        default="training", pattern="^(research|training|rag|evaluation|redistribute)$"
+    )
     config: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -1425,13 +1814,15 @@ def create_build(body: BuildIn, request: Request, session: Session = Depends(db)
     session.flush()
     count = 0
     for candidate in result.candidates:
-        seg = authorized[0] if not candidate.evidence_ids else next(
-            (item for item in authorized if item.id == candidate.evidence_ids[0]), authorized[0]
+        seg = (
+            authorized[0]
+            if not candidate.evidence_ids
+            else next(
+                (item for item in authorized if item.id == candidate.evidence_ids[0]), authorized[0]
+            )
         )
         for evidence_id in candidate.evidence_ids:
-            evidence_segment = next(
-                (item for item in authorized if item.id == evidence_id), seg
-            )
+            evidence_segment = next((item for item in authorized if item.id == evidence_id), seg)
             session.add(
                 BuildInput(
                     build_id=build.id,
@@ -1491,6 +1882,10 @@ def review_sample(
         == user
     ):
         raise HTTPException(403, "SELF_APPROVAL_FORBIDDEN")
+    if session.scalar(
+        select(DatasetVersionSample.id).where(DatasetVersionSample.candidate_sample_id == sample.id)
+    ):
+        raise HTTPException(409, "VERSION_CONFLICT")
     sample.status = body.decision
     session.add(
         SampleReview(
@@ -1588,7 +1983,9 @@ def build_quality_report(build_id: str, request: Request, session: Session = Dep
     )
     if not build:
         raise HTTPException(404, "NOT_FOUND")
-    samples = session.scalars(select(CandidateSample).where(CandidateSample.build_id == build.id)).all()
+    samples = session.scalars(
+        select(CandidateSample).where(CandidateSample.build_id == build.id)
+    ).all()
     return {
         "build_id": build.id,
         "product_type": build.config_json.get("product_type", "sft"),
@@ -1617,7 +2014,7 @@ def publish(
 ):
     user = actor_id(request, session)
     wid = workspace_id(request, session, user)
-    role_required(session, user, wid, {"admin", "engineer"})
+    role_required(session, user, wid, {"admin"})
     dataset = session.scalar(
         select(Dataset).where(Dataset.id == dataset_id, Dataset.workspace_id == wid)
     )
@@ -1657,8 +2054,34 @@ def publish(
     if user in reviewer_ids:
         raise HTTPException(409, "SELF_APPROVAL_FORBIDDEN")
     try:
+        quality_run, quality_snapshot = evaluate_quality(
+            session, wid, user, "dataset_build", build.id
+        )
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    if quality_snapshot["quality_status"] != "PASS":
+        audit(
+            session,
+            request,
+            wid,
+            user,
+            "dataset.publish.quality_blocked",
+            "quality_evaluation_run",
+            quality_run.id,
+        )
+        session.commit()
+        raise HTTPException(409, "QUALITY_GATE_FAILED")
+    try:
         version, object_keys = materialize(
-            session, request.app.state.config, wid, dataset, build, samples, user, body.version
+            session,
+            request.app.state.config,
+            wid,
+            dataset,
+            build,
+            samples,
+            user,
+            body.version,
+            quality_snapshot=quality_snapshot,
         )
     except MaterializationError as exc:
         raise HTTPException(409, exc.code) from exc
