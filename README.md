@@ -67,3 +67,23 @@ P0-A 回滚：停止 API，备份开发数据库后可在本地执行 `uv run --
 项目仓库：[lemonyeahs/corpusflow](https://github.com/lemonyeahs/corpusflow)（私有）。默认分支为 `main`。P0-A 验收报告记录首次发布前的本地验收状态；远程 CI 结果以 GitHub Actions 为准。首次远程运行的镜像拉取限制见 [GitHub 上传记录](docs/reports/GITHUB_UPLOAD.md)。
 
 当前完整流程已在本机 ARM64 验证，远程 CI 未重跑。基础镜像固定摘要，MinIO 固定源码提交及下载包校验值；AMD64 兼容与生产镜像安全评估未完成，详见验收报告。
+
+## P0-H Web 联调
+
+Web 工作台位于 `apps/web`，采用 TypeScript + React + Vite，通过 Vite `/api` 代理连接本地 FastAPI。启动真实后端后执行：
+
+```bash
+docker compose --env-file .env -f infra/compose.yaml up -d postgres redis minio init api worker dispatcher
+cd apps/web && npm ci && npm run dev
+```
+
+静态检查和真实 Docker Playwright 测试：
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
+npm run e2e
+```
+
+P0-H 交付报告见 [`docs/reports/P0-H_WEB_ACCEPTANCE.md`](docs/reports/P0-H_WEB_ACCEPTANCE.md)。

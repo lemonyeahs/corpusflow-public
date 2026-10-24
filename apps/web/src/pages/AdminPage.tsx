@@ -1,0 +1,11 @@
+import { useEffect, useState } from "react";
+import { api, ApiError, type ApiContext } from "../api/client";
+import { Card, Empty, ErrorBox, Field, Page, formatTime } from "../components";
+
+export function AdminPage({ ctx }: { ctx: ApiContext }) {
+  const [audit, setAudit] = useState<Array<{ event_id: string; action: string; resource_type: string; resource_id: string; actor_id: string; summary: Record<string, unknown> }>>([]); const [userId, setUserId] = useState(""); const [role, setRole] = useState("reviewer"); const [message, setMessage] = useState(""); const [error, setError] = useState("");
+  async function load() { try { setAudit((await api.audit(ctx)).items); } catch (err) { setError(err instanceof ApiError ? `${err.code}：${err.message}` : "审计加载失败"); } }
+  useEffect(() => { void load(); }, [ctx.workspaceId]);
+  async function addMember() { try { await api.members(ctx, ctx.workspaceId, { user_id: userId, role }); setMessage("成员角色已更新"); setUserId(""); } catch (err) { setError(err instanceof ApiError ? `${err.code}：${err.message}` : "成员更新失败"); } }
+  return <Page title="系统管理" subtitle="成员和审计受后端 admin 权限保护；外部集成入口当前未接入。"><div className="two-col"><Card title="工作空间成员"><Field label="开发身份标识"><input value={userId} onChange={e => setUserId(e.target.value)} placeholder="已通过登录创建的用户标识" /></Field><Field label="角色"><select value={role} onChange={e => setRole(e.target.value)}><option value="viewer">viewer</option><option value="engineer">engineer</option><option value="reviewer">reviewer</option><option value="admin">admin</option></select></Field><button className="button primary" disabled={!userId.trim()} onClick={() => void addMember()}>更新角色</button>{message && <div className="success-box">{message}</div>}{error && <ErrorBox message={error} />}</Card><Card title="操作审计"><div className="list">{audit.map(row => <div className="audit-row" key={row.event_id}><strong>{row.action}</strong><small>{row.resource_type}/{row.resource_id} · {row.actor_id} · {formatTime()}</small></div>)}{!audit.length && <Empty>暂无当前空间审计事件。</Empty>}</div></Card></div><Card title="未接入能力"><div className="demo-grid"><div><strong>DEMO</strong><span>生产 OIDC 登录</span></div><div><strong>未接入</strong><span>WeKnora/docreader 外部连接</span></div><div><strong>未接入</strong><span>RAG 检索与效果验证</span></div><div><strong>未接入</strong><span>AI 智能采集和自动同步</span></div></div></Card></Page>;
+}

@@ -241,6 +241,21 @@ def workspaces(request: Request, session: Session = Depends(db)):
     return {"items": [{"workspace_id": m.workspace_id, "role": m.role} for m in rows]}
 
 
+@router.get("/sources")
+def sources(request: Request, session: Session = Depends(db)):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    rows = session.scalars(
+        select(Source).where(Source.workspace_id == wid).order_by(Source.created_at.desc())
+    ).all()
+    return {
+        "items": [
+            {"source_id": row.id, "name": row.name, "kind": row.kind, "created_at": row.created_at.isoformat()}
+            for row in rows
+        ]
+    }
+
+
 class MemberIn(BaseModel):
     user_id: str
     role: str = Field(pattern="^(admin|engineer|reviewer|viewer)$")
@@ -640,6 +655,74 @@ def asset_stats(request: Request, session: Session = Depends(db)):
     }
 
 
+@router.get("/assets/{asset_id}")
+def asset_detail(asset_id: str, request: Request, session: Session = Depends(db)):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    row = session.scalar(select(Asset).where(Asset.id == asset_id, Asset.workspace_id == wid))
+    if not row:
+        raise HTTPException(404, "NOT_FOUND")
+    blob = session.scalar(select(AssetBlob).where(AssetBlob.id == row.blob_id))
+    source = session.scalar(select(Source).where(Source.id == row.source_id, Source.workspace_id == wid))
+    document = session.scalar(
+        select(Document).where(Document.asset_id == row.id, Document.workspace_id == wid)
+    )
+    versions = (
+        session.scalars(
+            select(DocumentVersion)
+            .where(DocumentVersion.document_id == document.id, DocumentVersion.workspace_id == wid)
+            .order_by(DocumentVersion.version_no.desc())
+        ).all()
+        if document
+        else []
+    )
+    return {
+        "asset_id": row.id,
+        "filename": row.filename,
+        "format": row.format,
+        "source": {"source_id": source.id, "name": source.name, "kind": source.kind} if source else None,
+        "blob": {
+            "storage_key": blob.storage_key,
+            "sha256": blob.sha256,
+            "byte_size": blob.byte_size,
+            "media_type": blob.media_type,
+        } if blob else None,
+        "ingestion_status": row.ingestion_status,
+        "quality_status": row.quality_status,
+        "language": row.language,
+        "metadata": row.metadata_json,
+        "document": {"document_id": document.id, "title": document.title, "parse_status": document.parse_status}
+        if document
+        else None,
+        "versions": [
+            {
+                "document_version_id": version.id,
+                "version_no": version.version_no,
+                "content_sha256": version.content_sha256,
+                "parser_version": version.parser_version,
+                "segments": [
+                    {
+                        "segment_id": segment.id,
+                        "source_id": segment.source_id,
+                        "content_hash": segment.content_hash,
+                        "text": segment.text,
+                        "quality_state": segment.quality_state,
+                    }
+                    for segment in session.scalars(
+                        select(Segment)
+                        .where(
+                            Segment.document_version_id == version.id,
+                            Segment.workspace_id == wid,
+                        )
+                        .order_by(Segment.created_at)
+                    ).all()
+                ],
+            }
+            for version in versions
+        ],
+    }
+
+
 class PipelineIn(BaseModel):
     asset_ids: list[str] = Field(min_length=1)
     config: dict[str, Any] = Field(default_factory=dict)
@@ -765,6 +848,35 @@ class IssueIn(BaseModel):
     asset_id: str | None = None
     reason: str = Field(min_length=1)
     severity: str = "medium"
+
+
+@router.get("/quality/issues")
+def quality_issues(
+    request: Request,
+    session: Session = Depends(db),
+    status: str | None = None,
+):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    query = select(QualityIssue).where(QualityIssue.workspace_id == wid)
+    if status:
+        query = query.where(QualityIssue.status == status)
+    rows = session.scalars(query.order_by(QualityIssue.created_at.desc()).limit(200)).all()
+    return {
+        "items": [
+            {
+                "issue_id": row.id,
+                "run_id": row.run_id,
+                "asset_id": row.asset_id,
+                "status": row.status,
+                "severity": row.severity,
+                "reason": row.reason,
+                "rule_version": row.rule_version,
+                "created_at": row.created_at.isoformat(),
+            }
+            for row in rows
+        ]
+    }
 
 
 @router.post("/quality/issues")
@@ -907,6 +1019,21 @@ def segment_detail(segment_id: str, request: Request, session: Session = Depends
         "source_id": row.source_id,
         "content_hash": row.content_hash,
         "text": row.text,
+    }
+
+
+@router.get("/datasets")
+def datasets(request: Request, session: Session = Depends(db)):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    rows = session.scalars(
+        select(Dataset).where(Dataset.workspace_id == wid).order_by(Dataset.created_at.desc())
+    ).all()
+    return {
+        "items": [
+            {"dataset_id": row.id, "name": row.name, "product_type": row.product_type, "created_at": row.created_at.isoformat()}
+            for row in rows
+        ]
     }
 
 

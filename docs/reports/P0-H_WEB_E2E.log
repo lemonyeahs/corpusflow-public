@@ -1,0 +1,7 @@
+$ npm run e2e
+
+Running 2 tests using 2 workers
+  ✓ tests/responsive.spec.ts:3:1 (desktop and narrow viewport smoke)
+  ✓ tests/p0-h.spec.ts:5:3 (real Docker API workflow)
+
+2 passed (6.3s)
