@@ -1963,6 +1963,55 @@
         }
       }
     },
+    "/api/v1/dataset-products/types": {
+      "get": {
+        "tags": [
+          "business"
+        ],
+        "summary": "Dataset Product Types",
+        "operationId": "dataset_product_types_api_v1_dataset_products_types_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/dataset-builds/preview": {
       "post": {
         "tags": [
@@ -2218,6 +2267,66 @@
         ],
         "summary": "Build Candidates",
         "operationId": "build_candidates_api_v1_dataset_builds__build_id__candidates_get",
+        "parameters": [
+          {
+            "name": "build_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Build Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/dataset-builds/{build_id}/quality-report": {
+      "get": {
+        "tags": [
+          "business"
+        ],
+        "summary": "Build Quality Report",
+        "operationId": "build_quality_report_api_v1_dataset_builds__build_id__quality_report_get",
         "parameters": [
           {
             "name": "build_id",
@@ -2836,7 +2945,7 @@
           },
           "product_type": {
             "type": "string",
-            "pattern": "^sft$",
+            "pattern": "^(sft|pretrain|rag|evaluation)$",
             "title": "Product Type",
             "default": "sft"
           }
@@ -3081,6 +3190,7 @@
         "properties": {
           "product_type": {
             "type": "string",
+            "pattern": "^(sft|pretrain|rag|evaluation)$",
             "title": "Product Type",
             "default": "sft"
           },

@@ -119,6 +119,8 @@ export interface CandidateSample {
   sample_key: string;
   status: string;
   payload_hash: string;
+  payload?: Record<string, unknown>;
+  source_id?: string;
 }
 
 export interface DatasetVersion {
@@ -129,6 +131,14 @@ export interface DatasetVersion {
   content_sha256: string;
   manifest_sha256: string;
   published_at?: string | null;
+  product_type?: string;
+}
+
+export interface DatasetProductType {
+  product_type: string;
+  purpose: string;
+  schema_version: string;
+  description: string;
 }
 
 export interface Manifest {

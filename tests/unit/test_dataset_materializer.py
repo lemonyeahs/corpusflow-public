@@ -5,6 +5,7 @@ from corpusflow.services.dataset_materializer import (
     MaterializationError,
     _split_for_source,
     _validate_messages,
+    _validate_product_payload,
     materialize,
 )
 
@@ -37,4 +38,41 @@ def test_changed_build_config_is_rejected_before_object_access():
             [object()],
             "publisher",
             "1.0.0",
+        )
+
+
+@pytest.mark.parametrize(
+    ("product_type", "payload"),
+    [
+        ("pretrain", {"text": "corpus"}),
+        (
+            "rag",
+            {
+                "text": "chunk",
+                "source_id": "s",
+                "segment_id": "seg",
+                "document_version_id": "dv",
+                "location": {"page": 1},
+            },
+        ),
+        (
+            "evaluation",
+            {
+                "question": "q",
+                "reference_answer": "a",
+                "evidence_ids": ["seg"],
+                "source_ids": ["s"],
+            },
+        ),
+    ],
+)
+def test_product_payload_schema_is_explicit(product_type, payload):
+    _validate_product_payload(product_type, payload)
+
+
+def test_evaluation_payload_without_evidence_is_blocked():
+    with pytest.raises(MaterializationError, match="evidence"):
+        _validate_product_payload(
+            "evaluation",
+            {"question": "q", "reference_answer": "a", "evidence_ids": [], "source_ids": []},
         )

@@ -59,6 +59,7 @@ from corpusflow.db.models import (
     Workspace,
     uid,
 )
+from corpusflow.services.dataset_builders import BuilderError, builder_for
 from corpusflow.services.dataset_materializer import MaterializationError, materialize
 from corpusflow.worker.outbox import enqueue_run
 
@@ -1260,7 +1261,7 @@ def datasets(request: Request, session: Session = Depends(db)):
 
 class DatasetIn(BaseModel):
     name: str = Field(default="dataset", min_length=1, max_length=160)
-    product_type: str = Field(default="sft", pattern="^sft$")
+    product_type: str = Field(default="sft", pattern="^(sft|pretrain|rag|evaluation)$")
 
 
 @router.post("/datasets")
@@ -1278,8 +1279,42 @@ def create_dataset(body: DatasetIn, request: Request, session: Session = Depends
     return {"dataset_id": row.id, "name": row.name, "product_type": row.product_type}
 
 
+@router.get("/dataset-products/types")
+def dataset_product_types(request: Request, session: Session = Depends(db)):
+    user = actor_id(request, session)
+    workspace_id(request, session, user)
+    return {
+        "items": [
+            {
+                "product_type": "sft",
+                "purpose": "training",
+                "schema_version": "sft.v1",
+                "description": "对话消息格式的监督微调数据集",
+            },
+            {
+                "product_type": "pretrain",
+                "purpose": "training",
+                "schema_version": "pretrain.v1",
+                "description": "按来源组织的连续预训练语料",
+            },
+            {
+                "product_type": "rag",
+                "purpose": "rag",
+                "schema_version": "rag.v1",
+                "description": "带来源定位的知识片段数据集",
+            },
+            {
+                "product_type": "evaluation",
+                "purpose": "evaluation",
+                "schema_version": "evaluation.v1",
+                "description": "带证据关联的问答评测数据集",
+            },
+        ]
+    }
+
+
 class PreviewIn(BaseModel):
-    product_type: str = "sft"
+    product_type: str = Field(default="sft", pattern="^(sft|pretrain|rag|evaluation)$")
     purpose: str = "training"
     segment_ids: list[str] = Field(default_factory=list)
 
@@ -1288,6 +1323,11 @@ class PreviewIn(BaseModel):
 def build_preview(body: PreviewIn, request: Request, session: Session = Depends(db)):
     user = actor_id(request, session)
     wid = workspace_id(request, session, user)
+    builder = builder_for(body.product_type)
+    if not builder:
+        raise HTTPException(422, "UNSUPPORTED_PRODUCT_TYPE")
+    if body.purpose != builder.purpose:
+        raise HTTPException(409, "PRODUCT_PURPOSE_MISMATCH")
     segments = session.scalars(
         select(Segment).where(
             Segment.workspace_id == wid,
@@ -1313,6 +1353,8 @@ def build_preview(body: PreviewIn, request: Request, session: Session = Depends(
         "included_count": len(included),
         "excluded_count": len(excluded),
         "metric_definition_version": "p0-1",
+        "product_type": body.product_type,
+        "schema_version": f"{body.product_type}.v1",
     }
 
 
@@ -1333,7 +1375,45 @@ def create_build(body: BuildIn, request: Request, session: Session = Depends(db)
     )
     if not dataset:
         raise HTTPException(404, "NOT_FOUND")
-    cfg = {**body.config, "purpose": body.purpose, "segment_ids": sorted(body.segment_ids)}
+    builder = builder_for(dataset.product_type)
+    if not builder:
+        raise HTTPException(422, "UNSUPPORTED_PRODUCT_TYPE")
+    if body.purpose != builder.purpose:
+        raise HTTPException(409, "PRODUCT_PURPOSE_MISMATCH")
+    segments = session.scalars(
+        select(Segment).where(Segment.workspace_id == wid, Segment.id.in_(body.segment_ids))
+    ).all()
+    authorized: list[Segment] = []
+    excluded: list[dict[str, str]] = []
+    for segment in segments:
+        asset = session.scalar(
+            select(Asset)
+            .join(Document, Document.asset_id == Asset.id)
+            .join(DocumentVersion, DocumentVersion.document_id == Document.id)
+            .where(DocumentVersion.id == segment.document_version_id, Asset.workspace_id == wid)
+        )
+        if asset and current_grant(session, wid, asset.id, body.purpose):
+            authorized.append(segment)
+        else:
+            excluded.append({"segment_id": segment.id, "reason": "grant_missing"})
+    if not authorized:
+        raise HTTPException(409, "PURPOSE_GRANT_MISSING")
+    try:
+        result = builder.build(authorized, body.config)
+    except BuilderError as exc:
+        raise HTTPException(422, exc.code) from exc
+    if not result.candidates:
+        raise HTTPException(409, "NO_VALID_CANDIDATES")
+    cfg = {
+        **body.config,
+        "purpose": body.purpose,
+        "product_type": dataset.product_type,
+        "schema_version": f"{dataset.product_type}.v1",
+        "segment_ids": sorted(body.segment_ids),
+        "authorized_segment_ids": sorted(item.id for item in authorized),
+        "excluded": [*excluded, *result.excluded],
+        "builder_metrics": result.metrics,
+    }
     build = DatasetBuild(
         workspace_id=wid,
         dataset_id=dataset.id,
@@ -1344,30 +1424,35 @@ def create_build(body: BuildIn, request: Request, session: Session = Depends(db)
     session.add(build)
     session.flush()
     count = 0
-    for sid in body.segment_ids:
-        seg = session.scalar(select(Segment).where(Segment.id == sid, Segment.workspace_id == wid))
-        if not seg:
-            continue
-        session.add(
-            BuildInput(
-                build_id=build.id,
-                segment_id=seg.id,
-                source_id=seg.source_id,
-                content_sha256=seg.content_hash,
-            )
+    for candidate in result.candidates:
+        seg = authorized[0] if not candidate.evidence_ids else next(
+            (item for item in authorized if item.id == candidate.evidence_ids[0]), authorized[0]
         )
+        for evidence_id in candidate.evidence_ids:
+            evidence_segment = next(
+                (item for item in authorized if item.id == evidence_id), seg
+            )
+            session.add(
+                BuildInput(
+                    build_id=build.id,
+                    segment_id=evidence_id,
+                    source_id=evidence_segment.source_id,
+                    content_sha256=evidence_segment.content_hash,
+                )
+            )
         sample = CandidateSample(
             workspace_id=wid,
             build_id=build.id,
-            sample_key=seg.id,
-            payload={"messages": [{"role": "user", "content": seg.text}], "evidence_ids": [seg.id]},
-            payload_hash=digest(seg.text),
-            source_id=seg.source_id,
+            sample_key=candidate.key,
+            payload=candidate.payload,
+            payload_hash=digest(candidate.payload),
+            source_id=candidate.source_id,
         )
         session.add(sample)
         session.flush()
-        session.add(SampleEvidence(candidate_sample_id=sample.id, segment_id=seg.id))
-        edge(session, wid, "Segment", seg.id, "CandidateSample", sample.id, "generated")
+        for evidence_id in candidate.evidence_ids:
+            session.add(SampleEvidence(candidate_sample_id=sample.id, segment_id=evidence_id))
+            edge(session, wid, "Segment", evidence_id, "CandidateSample", sample.id, "generated")
         count += 1
     audit(session, request, wid, user, "dataset.build.create", "dataset_build", build.id)
     session.commit()
@@ -1376,6 +1461,9 @@ def create_build(body: BuildIn, request: Request, session: Session = Depends(db)
         "config_hash": build.config_hash,
         "status": build.status,
         "candidate_count": count,
+        "product_type": dataset.product_type,
+        "excluded": cfg["excluded"],
+        "metrics": result.metrics,
     }
 
 
@@ -1483,9 +1571,34 @@ def build_candidates(build_id: str, request: Request, session: Session = Depends
                 "sample_key": row.sample_key,
                 "status": row.status,
                 "payload_hash": row.payload_hash,
+                "payload": row.payload,
+                "source_id": row.source_id,
             }
             for row in rows
         ]
+    }
+
+
+@router.get("/dataset-builds/{build_id}/quality-report")
+def build_quality_report(build_id: str, request: Request, session: Session = Depends(db)):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    build = session.scalar(
+        select(DatasetBuild).where(DatasetBuild.id == build_id, DatasetBuild.workspace_id == wid)
+    )
+    if not build:
+        raise HTTPException(404, "NOT_FOUND")
+    samples = session.scalars(select(CandidateSample).where(CandidateSample.build_id == build.id)).all()
+    return {
+        "build_id": build.id,
+        "product_type": build.config_json.get("product_type", "sft"),
+        "status": build.status,
+        "config_hash": build.config_hash,
+        "metrics": build.config_json.get("builder_metrics", {}),
+        "excluded": build.config_json.get("excluded", []),
+        "candidate_count": len(samples),
+        "approved_count": sum(sample.status == "approved" for sample in samples),
+        "rejected_count": sum(sample.status == "rejected" for sample in samples),
     }
 
 

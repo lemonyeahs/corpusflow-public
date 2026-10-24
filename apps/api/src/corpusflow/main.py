@@ -107,6 +107,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "DOWNLOAD_NOT_AUTHORIZED",
             "UPLOAD_SIZE_MISMATCH",
             "IDEMPOTENCY_KEY_REUSED",
+            "UNSUPPORTED_PRODUCT_TYPE",
+            "PRODUCT_PURPOSE_MISMATCH",
+            "NO_VALID_CANDIDATES",
+            "INVALID_CHUNK_UNIT",
+            "INVALID_CHUNK_CONFIG",
+            "INVALID_EVALUATION_CONFIG",
         }
         return error_response(
             request,
