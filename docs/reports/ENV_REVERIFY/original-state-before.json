@@ -1,0 +1,43 @@
+{
+  "containers": [
+    {
+      "name": "corpusflow-p0a-api-1",
+      "id": "1f644edc375ab9989ca695884d65dc1c3eda50e57725319ec49308750032da8d",
+      "started_at": "2026-10-23T07:37:18.560785095Z",
+      "image_id": "sha256:88d21ec094cf32d5df7cb589a6cbac22a3220417f4e906ca5fac20449220489c",
+      "volumes": []
+    },
+    {
+      "name": "corpusflow-p0a-minio-1",
+      "id": "80030c72ac0494971dc09df59ab5bc183961195c28ce8ddd2f7ca9a718f4fae9",
+      "started_at": "2026-10-23T07:35:21.670925305Z",
+      "image_id": "sha256:a1ea29fa28355559ef137d71fc570e508a214ec84ff8083e39bc5428980b015e",
+      "volumes": [
+        "corpusflow-p0a_s3-data"
+      ]
+    },
+    {
+      "name": "corpusflow-p0a-postgres-1",
+      "id": "df45836e9cb6bfa83bbc3e791ee60d31ddb9370f508b555a341e74ee2476f8dd",
+      "started_at": "2026-10-23T07:35:21.67618818Z",
+      "image_id": "sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777",
+      "volumes": [
+        "corpusflow-p0a_pg-data"
+      ]
+    },
+    {
+      "name": "corpusflow-p0a-redis-1",
+      "id": "fdd4ac2e167d03967457a27f21b3f1de871f27314113b9880d5be9dc21cc2cfd",
+      "started_at": "2026-10-23T07:36:12.186585675Z",
+      "image_id": "sha256:7aec734b2bb298a1d769fd8729f13b8514a41bf90fcdd1f38ec52267fbaa8ee6",
+      "volumes": [
+        "corpusflow-p0a_redis-data"
+      ]
+    }
+  ],
+  "files": {
+    ".env": "f6c597f837a2b032e98f432981bac6c3d3dc1f0800e653a5819277ead427caa6",
+    "CorpusFlow_V3_1.html": "b65d5ac9a0dd81d28dcf5297cddf0789a214bcbd9922ca88b19d1e8f0f98ea32",
+    "docs/prototype/CorpusFlow_V3_1.html": "b65d5ac9a0dd81d28dcf5297cddf0789a214bcbd9922ca88b19d1e8f0f98ea32"
+  }
+}

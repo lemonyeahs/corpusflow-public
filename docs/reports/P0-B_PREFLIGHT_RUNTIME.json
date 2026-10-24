@@ -1,0 +1,32 @@
+[
+  {
+    "original": "CorpusFlow_V3_1.html",
+    "copy": "docs/prototype/CorpusFlow_V3_1.html",
+    "sha256": "b65d5ac9a0dd81d28dcf5297cddf0789a214bcbd9922ca88b19d1e8f0f98ea32",
+    "copy_matches": true
+  },
+  {
+    "original": "CorpusFlow_V3_1_CHANGELOG.md",
+    "copy": "docs/prototype/CorpusFlow_V3_1_CHANGELOG.md",
+    "sha256": "10733bade01c525a523ad320960d84697896c526a6f2cbdb4d82b4f47a5f3b50",
+    "copy_matches": true
+  },
+  {
+    "endpoint": "/health",
+    "http_status": 200,
+    "body": {
+      "status": "alive",
+      "phase": "P0-A",
+      "request_id": "267b0872b0c84d278d96ff2a30f38886"
+    }
+  },
+  {
+    "endpoint": "/ready",
+    "http_status": 200,
+    "body": {
+      "status": "ready",
+      "phase": "P0-A",
+      "request_id": "b195f464be8e42ca9d9d8961a39bd918"
+    }
+  }
+]

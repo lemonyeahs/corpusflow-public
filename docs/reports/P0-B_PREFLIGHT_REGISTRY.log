@@ -1,0 +1,1 @@
+ERROR: unexpected status from HEAD request to https://quay.io/v2/minio/minio/manifests/sha256:a1ea29fa28355559ef137d71fc570e508a214ec84ff8083e39bc5428980b015e: 401 Unauthorized

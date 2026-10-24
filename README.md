@@ -1,10 +1,12 @@
 # CorpusFlow
 
-当前交付为 **P0-A 工程骨架**：FastAPI、真实依赖探活、数据库迁移基线、配置与错误契约、测试和 CI。上传、鉴权、许可证、Worker、发布等业务功能尚未实现。V3.1 是独立浏览器 DEMO，不能代表后端能力。
+当前交付包含 **P0-A 以及 P0-B～P0-F 的最小真实业务闭环**：FastAPI、真实依赖探活、版本化迁移、空间与用途授权、真实字节上传登记、批量 Run/质检恢复、SFT 构建/不可变发布、血缘和审计。V3.1 仍是独立浏览器 DEMO，不能代表正式 Web UI 已完成。
 
 ## 本地启动
 
 前置：Docker Engine / Docker Desktop 与 Compose、Python 3、uv、make。服务仅绑定本机回环地址。本阶段拒绝 staging/production 配置。
+
+MinIO 从官方固定提交构建，源码、Go 依赖与基础镜像均校验锁定，详见 [镜像构建说明](infra/docker/minio/README.md)。首次构建需要足够磁盘空间及 GitHub codeload、Go module proxy/checksum、官方基础镜像注册表访问。磁盘与 Docker 恢复后，完整本地 ARM64 复验已通过，详见 [最新验收报告](docs/reports/ENV_REVERIFY_RECOVERED_ACCEPTANCE.md)；远程 CI 尚未重跑。
 
 ```sh
 make init-env    # 只在 .env 不存在时创建随机本地凭证；不会打印凭证
@@ -23,6 +25,8 @@ make check                # ruff、format、mypy、单元与契约测试
 make openapi              # 导出 FastAPI 契约；提交时与代码一起审阅
 ```
 
+执行 `make verify-environment` 重放完整检查。脚本先确认本机 Docker 可响应和至少 15 GiB 空闲空间，再创建随机项目名、凭证、回环端口和独立测试卷，顺序无缓存构建 MinIO/API，执行迁移、S3 及探活恢复测试；停止临时项目时不删卷。报告默认写入 `.local/cf-verify-*`，使用 `VERIFY_ARGS="--report-dir <新目录>"` 可指定新报告目录，已有目录拒绝覆盖。仅允许本机 Docker socket；现有开发 `.env` 和 `corpusflow-p0a` 卷不用于复验。
+
 容器 API 与本机开发默认使用同一端口，运行 `make dev` 前先停止 API 容器：
 
 ```sh
@@ -40,7 +44,7 @@ export CF_TEST_ADMIN_DATABASE_URL="$DATABASE_URL"
 make integration
 ```
 
-无 `CF_TEST_ADMIN_DATABASE_URL` 时集成测试显示 SKIP，不算通过。生产数据库禁止运行上述测试。初始化迁移 `0001_p0a` 仅建立 Alembic 版本基线，不预建 IAM/业务表；后续追加迁移。
+无 `CF_TEST_ADMIN_DATABASE_URL` 时集成测试显示 SKIP，不算通过。生产数据库禁止运行上述测试。初始化迁移为 `0001_p0a`，业务表在 `0002_business`、发布不可变保护在 `0003_immutable_release`；均需在本地测试库执行迁移检查，不对生产自动运行。
 
 ```sh
 make down                 # 停服务并保留所有 named volumes
@@ -50,16 +54,16 @@ P0-A 回滚：停止 API，备份开发数据库后可在本地执行 `uv run --
 
 ## 目录与边界
 
-- `apps/api/src/corpusflow`：API、配置/错误/日志、DB 与真实依赖探测；`modules/*` 为后续阶段边界。
+- `apps/api/src/corpusflow`：API、配置/错误/日志、DB、业务路由与策略、真实依赖探测；`modules/*` 保留后续扩展边界。
 - `apps/api/alembic`：版本化迁移。业务 Service 持有事务边界，禁止 ORM event 复制业务策略。
 - `apps/web`：P0-F 前端对接边界；`docs/prototype` 为原型只读参考副本。
 - `infra`：PostgreSQL 16、Redis、MinIO 和 API 的本地 Compose；无正式 Worker。
-- `tests`：单元、契约、独立临时 PostgreSQL 迁移测试。
+- `tests`：单元、契约、独立临时 PostgreSQL 迁移测试；`scripts/verify_business_loop.py` 覆盖 P0-B～F 业务门禁。
 - `docs/plans`：现状、分阶段任务、追踪矩阵、待确认决策。
 - `docs/reports/P0-A_ACCEPTANCE.md`：实际执行证据与限制。
 
-分层：Router → Application Service → Domain Policy → Repository / Adapter。P0-A 没有业务写路由，也没有 MockAdapter、假登录或假任务。用途许可默认拒绝、身份隔离、审计事件将在 P0-B 实现；请求 JSON 日志不能替代不可变业务审计。
+分层：Router → Application Service → Domain Policy → Repository / Adapter。当前开发身份 session、内置 parser 和同步 API 是受控本地实现；生产 OIDC、Celery/Outbox、外部 parser/generation、对象发布物化和正式 Web UI 仍未接入。请求 JSON 日志不能替代不可变业务审计。
 
 项目仓库：[lemonyeahs/corpusflow](https://github.com/lemonyeahs/corpusflow)（私有）。默认分支为 `main`。P0-A 验收报告记录首次发布前的本地验收状态；远程 CI 结果以 GitHub Actions 为准。首次远程运行的镜像拉取限制见 [GitHub 上传记录](docs/reports/GITHUB_UPLOAD.md)。
 
-当前镜像与 CI 在 ARM64 验证。PG/MinIO 使用固定摘要；x86 兼容与生产镜像安全评估未完成，详见验收报告。
+当前完整流程已在本机 ARM64 验证，远程 CI 未重跑。基础镜像固定摘要，MinIO 固定源码提交及下载包校验值；AMD64 兼容与生产镜像安全评估未完成，详见验收报告。

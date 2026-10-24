@@ -26,6 +26,7 @@ def test_upgrade_downgrade_reupgrade(monkeypatch):
         admin.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(name)))
         try:
             test_url = url.set(database=name).render_as_string(hide_password=False)
+            test_url = test_url.replace("postgresql://", "postgresql+psycopg://", 1)
             monkeypatch.setenv("DATABASE_URL", test_url)
             config = Config("alembic.ini")
             engine = create_engine(test_url)
@@ -34,7 +35,7 @@ def test_upgrade_downgrade_reupgrade(monkeypatch):
                 with engine.connect() as conn:
                     assert (
                         conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
-                        == "0001_p0a"
+                        == "0004_async_processing"
                     )
                 command.check(config)
                 command.downgrade(config, "base")

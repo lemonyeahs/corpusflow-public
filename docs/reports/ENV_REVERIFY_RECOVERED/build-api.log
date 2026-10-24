@@ -1,0 +1,166 @@
+ Image cf-verify-cacc60d087dd-api Building 
+ Image cf-verify-cacc60d087dd-minio Building 
+ Image cf-verify-cacc60d087dd-init Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.57kB done
+#1 DONE 0.0s
+
+#2 [api internal] load build definition from Dockerfile
+#2 transferring dockerfile: 527B 0.0s done
+#2 DONE 0.1s
+
+#3 [api internal] load metadata for docker.io/library/python:3.12.13-slim@sha256:229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36
+#3 DONE 0.0s
+
+#4 [api internal] load metadata for ghcr.io/astral-sh/uv:0.10.9@sha256:10902f58a1606787602f303954cea099626a4adb02acbac4c69920fe9d278f82
+#4 DONE 3.5s
+
+#5 [init internal] load .dockerignore
+#5 transferring context: 98B done
+#5 DONE 0.0s
+
+#6 [init stage-0 1/9] FROM docker.io/library/python:3.12.13-slim@sha256:229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36
+#6 resolve docker.io/library/python:3.12.13-slim@sha256:229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36 done
+#6 CACHED
+
+#7 [init internal] load build context
+#7 transferring context: 112.51kB 0.0s done
+#7 DONE 0.0s
+
+#8 [init] FROM ghcr.io/astral-sh/uv:0.10.9@sha256:10902f58a1606787602f303954cea099626a4adb02acbac4c69920fe9d278f82
+#8 resolve ghcr.io/astral-sh/uv:0.10.9@sha256:10902f58a1606787602f303954cea099626a4adb02acbac4c69920fe9d278f82 done
+#8 sha256:ea3f44987903c750d69e26d196b627d6a2476c006ba56741dcf8aed98b98941b 0B / 98B 0.2s
+#8 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 0B / 21.95MB 0.2s
+#8 sha256:ea3f44987903c750d69e26d196b627d6a2476c006ba56741dcf8aed98b98941b 98B / 98B 0.8s done
+#8 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 2.10MB / 21.95MB 2.7s
+#8 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 7.34MB / 21.95MB 3.6s
+#8 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 12.58MB / 21.95MB 4.1s
+#8 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 16.78MB / 21.95MB 4.5s
+#8 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 18.87MB / 21.95MB 5.1s
+#8 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 20.97MB / 21.95MB 5.3s
+#8 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 21.95MB / 21.95MB 5.9s done
+#8 extracting sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308
+#8 extracting sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 0.2s done
+#8 extracting sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 0.2s done
+#8 extracting sha256:ea3f44987903c750d69e26d196b627d6a2476c006ba56741dcf8aed98b98941b done
+#8 DONE 6.1s
+
+#9 [api stage-0 2/9] COPY --from=ghcr.io/astral-sh/uv:0.10.9@sha256:10902f58a1606787602f303954cea099626a4adb02acbac4c69920fe9d278f82 /uv /usr/local/bin/uv
+#9 DONE 0.1s
+
+#10 [api stage-0 3/9] WORKDIR /app
+#10 DONE 0.0s
+
+#11 [init stage-0 4/9] COPY pyproject.toml uv.lock ./
+#11 DONE 0.0s
+
+#12 [api stage-0 5/9] COPY apps/api apps/api
+#12 DONE 0.0s
+
+#13 [api stage-0 6/9] RUN uv sync --locked --no-dev
+#13 0.243 Using CPython 3.12.13 interpreter at: /usr/local/bin/python3
+#13 0.243 Creating virtual environment at: .venv
+#13 0.246 Resolved 61 packages in 0.54ms
+#13 0.286    Building corpusflow @ file:///app
+#13 0.924 Downloading botocore (15.4MiB)
+#13 1.129 Downloading pydantic-core (2.0MiB)
+#13 1.146 Downloading sqlalchemy (3.3MiB)
+#13 1.273 Downloading psycopg-binary (6.5MiB)
+#13 2.951  Downloaded pydantic-core
+#13 3.386  Downloaded sqlalchemy
+#13 4.108  Downloaded psycopg-binary
+#13 4.589       Built corpusflow @ file:///app
+#13 5.389  Downloaded botocore
+#13 5.390 Prepared 44 packages in 5.14s
+#13 5.482 Installed 44 packages in 92ms
+#13 5.907 Bytecode compiled 1685 files in 424ms
+#13 5.907  + alembic==1.20.1
+#13 5.907  + amqp==5.4.1
+#13 5.907  + annotated-doc==0.0.5
+#13 5.907  + annotated-types==0.8.0
+#13 5.907  + anyio==4.15.1
+#13 5.907  + billiard==4.3.1
+#13 5.907  + boto3==1.43.118
+#13 5.907  + botocore==1.43.118
+#13 5.907  + celery==5.6.3
+#13 5.907  + click==8.5.0
+#13 5.907  + click-didyoumean==0.3.1
+#13 5.907  + click-plugins==1.1.1.2
+#13 5.907  + click-repl==0.4.1
+#13 5.907  + corpusflow==0.1.0 (from file:///app)
+#13 5.907  + fastapi==0.135.4
+#13 5.907  + greenlet==3.5.6
+#13 5.907  + h11==0.16.0
+#13 5.907  + idna==3.20
+#13 5.907  + jmespath==1.1.0
+#13 5.907  + kombu==5.6.2
+#13 5.907  + mako==1.4.3
+#13 5.907  + markupsafe==3.0.4
+#13 5.907  + packaging==26.3
+#13 5.907  + prompt-toolkit==3.0.53
+#13 5.907  + psycopg==3.3.6
+#13 5.907  + psycopg-binary==3.3.6
+#13 5.907  + pydantic==2.14.1
+#13 5.907  + pydantic-core==2.50.1
+#13 5.907  + pydantic-settings==2.16.1
+#13 5.907  + python-dateutil==2.9.0.post0
+#13 5.907  + python-dotenv==1.2.4
+#13 5.907  + redis==7.4.1
+#13 5.907  + s3transfer==0.19.3
+#13 5.907  + six==1.17.0
+#13 5.907  + sqlalchemy==2.0.55
+#13 5.907  + starlette==1.9.0
+#13 5.907  + typing-extensions==4.16.0
+#13 5.907  + typing-inspection==0.4.4
+#13 5.907  + tzdata==2026.5
+#13 5.907  + tzlocal==5.4.5
+#13 5.907  + urllib3==2.8.0
+#13 5.907  + uvicorn==0.41.0
+#13 5.907  + vine==5.1.0
+#13 5.908  + wcwidth==0.9.3
+#13 DONE 6.1s
+
+#14 [api stage-0 7/9] COPY alembic.ini ./
+#14 DONE 0.0s
+
+#15 [api stage-0 8/9] COPY scripts scripts
+#15 DONE 0.0s
+
+#16 [init stage-0 9/9] RUN useradd --uid 10001 --create-home corpusflow
+#16 DONE 0.1s
+
+#17 [api] exporting to oci image format
+#17 exporting layers
+#17 exporting layers 2.3s done
+#17 exporting manifest sha256:825e8af2766df7e3e3ab702f9aafa71cc41a4ca76dc36aa3378d26bc637a33dd done
+#17 exporting config sha256:24d4661df70dbbc8ba380c62607fd665c10b8b750a9d5650290057743609e8a1 done
+#17 sending tarball
+#17 ...
+
+#18 importing to docker
+#18 DONE 0.0s
+
+#17 [api] exporting to oci image format
+#17 sending tarball 2.9s done
+#17 DONE 5.2s
+
+#19 [api] resolving provenance for metadata file
+#19 DONE 0.0s
+
+#20 [init] exporting to oci image format
+#20 exporting layers 2.3s done
+#20 exporting manifest sha256:49f6f48fec954e9e4987712c25484b43097e9b506af9b66d056bbd3a162538cf done
+#20 exporting config sha256:1c260eb659d796fbcf3160d04f1530e37336e12b8e9ec7480546f3ce1462a718 done
+#20 ...
+
+#21 importing to docker
+#21 DONE 0.0s
+
+#20 [init] exporting to oci image format
+#20 sending tarball 5.5s done
+#20 DONE 7.8s
+
+#22 [init] resolving provenance for metadata file
+#22 DONE 0.0s
+ Image cf-verify-cacc60d087dd-api Built 
+ Image cf-verify-cacc60d087dd-init Built 

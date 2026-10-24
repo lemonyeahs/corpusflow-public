@@ -1,6 +1,32 @@
 # 需求追踪矩阵
 
+## 最新实现状态（2026-10-24）
+
+P0-B～P0-F 已完成最小业务闭环，证据集中在 [总验收报告](../reports/P0_BUSINESS_ACCEPTANCE.md) 与可重复脚本 `scripts/verify_business_loop.py`。以下矩阵中原有 TODO 行保留为细化追踪；对应最小实现已通过阶段报告，未覆盖的增强能力仍标明边界。
+
+| 阶段 | 已实现模块/API/表 | 实测状态 | 未覆盖增强 |
+|---|---|---|---|
+| P0-B | identity/authorization；auth/session、workspaces、authorization/decisions；users/workspaces/memberships/license evidence/grants/audit | PASS：默认拒绝、用途隔离、空间隔离、迁移 | OIDC 生产接入、撤权传播增强 |
+| P0-C | discovery/ingestion/catalog；uploads、ingest-batches、assets/stats；sources/blobs/assets/upload/batch | PASS：真实字节 SHA、三文件部分失败、重复登记 | 病毒扫描、URL/DOI、S3 分片预签名 |
+| P0-D | pipeline/quality；pipeline-runs、execute/resume、quality issues/reviews、documents/segments；Run/DV/Artifact/Issue | PASS：N=3、审核阻断与显式恢复 | Celery/Outbox/lease、外部 parser |
+| P0-E | dataset；preview/build/candidates/reviews/validate/versions；build/candidate/evidence/version | PASS：授权重检、职责分离、发布 hash/不可变记录 | 对象物化、严格来源组 split、撤权处置 |
+| P0-F | lineage/audit；lineage/{type}/{id}、audit-events；lineage_edges | PASS：workspace-scoped 双向边查询 | 正式 Web API Adapter、Playwright、完整 dashboard |
+
 每行对应规范 ID。TODO 表示仅规划，无业务能力。P0-A PARTIAL 仅覆盖基础工程切面，不能据此宣称整条需求完成。API/表的规划摘要对应 TASK，完整清单见技术方案第 4/5 节。
+
+## 本轮最终状态（2026-10-23）
+
+磁盘及 Docker 恢复后，完整本地环境复验通过，详见 [最新报告](../reports/ENV_REVERIFY_RECOVERED_ACCEPTANCE.md)。12 项基础测试、4 项真实迁移/S3 集成测试通过，重启后 3 项 S3 复验通过。以下业务映射仍保留 TODO，不能把基础存储测试算作 IAM、上传业务或发布验收。
+
+| 追踪范围 | 当前证据 | 本轮状态 |
+|---|---|---|
+| NFR-01/06/08、TC-25/26/28 的 P0-A 基础切面 | ENV_REVERIFY_RECOVERED/checks.log、migration-and-storage.log、result.json | 基础复验通过；完整 NFR/业务验收仍 PARTIAL |
+| 技术方案 §9.1 P0-A CI/环境门禁 | ENV_REVERIFY_RECOVERED_ACCEPTANCE.md | 本地完整流程 PASS；两项本地环境阻塞关闭；远程 CI 待验证 |
+| S3 适配基础能力（不替代 AC-ING/AC-BUILD） | tests/integration/test_storage.py；storage-after-restart.log | 真实 multipart、SHA-256、版本、拒绝无效凭证、重启持久性 PASS |
+| TASK-CF-002：FR-010/027/028/041、BR-AUTH-*、BR-GOV-02/04、AC-IAM-*、TC-05/06/07/08/19 | P0-B_ACCEPTANCE.md 为历史阻塞记录 | 本地环境阻塞已解除；业务代码、API、表、测试 TODO |
+| TASK-CF-003～006 对应的逐条 FR/BR/AC/NFR/TC | 下表规划映射 | NOT_STARTED / TODO；没有独立阶段通过证据 |
+
+## 逐条映射
 
 | ID | 阶段/任务 | 模块与文件 | API / 表 | 测试与状态 |
 |---|---|---|---|---|

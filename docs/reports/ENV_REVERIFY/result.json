@@ -1,0 +1,32 @@
+{
+  "project": "cf-verify-dd9e04b3ea32",
+  "status": "failed",
+  "steps": [
+    {
+      "name": "install",
+      "exit_code": 0
+    },
+    {
+      "name": "checks",
+      "exit_code": 0
+    },
+    {
+      "name": "pull",
+      "exit_code": 0
+    },
+    {
+      "name": "build",
+      "exit_code": 1
+    },
+    {
+      "name": "cleanup",
+      "exit_code": 0
+    }
+  ],
+  "http": [],
+  "retained_test_volumes": [
+    "cf-verify-dd9e04b3ea32_pg-data",
+    "cf-verify-dd9e04b3ea32_redis-data",
+    "cf-verify-dd9e04b3ea32_s3-data"
+  ]
+}

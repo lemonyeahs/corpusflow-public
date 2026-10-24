@@ -1,0 +1,435 @@
+ Image cf-verify-dd9e04b3ea32-minio Building 
+ Image cf-verify-dd9e04b3ea32-init Building 
+ Image cf-verify-dd9e04b3ea32-api Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.59kB done
+#1 DONE 0.0s
+
+#2 [minio internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.97kB done
+#2 DONE 0.0s
+
+#3 [api internal] load build definition from Dockerfile
+#3 transferring dockerfile: 527B done
+#3 DONE 0.0s
+
+#4 [minio internal] load metadata for docker.io/library/golang:1.24.2-bookworm@sha256:79390b5e5af9ee6e7b1173ee3eac7fadf6751a545297672916b59bfa0ecf6f71
+#4 DONE 0.0s
+
+#5 [init internal] load metadata for docker.io/library/python:3.12.13-slim@sha256:229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36
+#5 DONE 0.0s
+
+#6 [minio internal] load .dockerignore
+#6 transferring context: 2B done
+#6 DONE 0.0s
+
+#7 [minio build 1/4] FROM docker.io/library/golang:1.24.2-bookworm@sha256:79390b5e5af9ee6e7b1173ee3eac7fadf6751a545297672916b59bfa0ecf6f71
+#7 resolve docker.io/library/golang:1.24.2-bookworm@sha256:79390b5e5af9ee6e7b1173ee3eac7fadf6751a545297672916b59bfa0ecf6f71 done
+#7 DONE 0.0s
+
+#8 [minio build 3/4] ADD --checksum=sha256:7eb30a913fea30f18069abf194e1e78e4983b558cc526911ae1c11396a9859a5 https://codeload.github.com/minio/minio/tar.gz/0d7408fc9969caf07de6a8c3a84f9fbb10a6739e /source.tar.gz
+#8 CACHED
+
+#9 [minio build 2/4] WORKDIR /src
+#9 CACHED
+
+#10 [minio stage-1 1/5] FROM docker.io/library/python:3.12.13-slim@sha256:229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36
+#10 resolve docker.io/library/python:3.12.13-slim@sha256:229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36 done
+#10 CACHED
+
+#11 [minio build 3/4] ADD --checksum=sha256:7eb30a913fea30f18069abf194e1e78e4983b558cc526911ae1c11396a9859a5 https://codeload.github.com/minio/minio/tar.gz/0d7408fc9969caf07de6a8c3a84f9fbb10a6739e /source.tar.gz
+#11 DONE 0.1s
+
+#12 [init internal] load metadata for ghcr.io/astral-sh/uv:0.10.9@sha256:10902f58a1606787602f303954cea099626a4adb02acbac4c69920fe9d278f82
+#12 DONE 2.8s
+
+#10 [api stage-1 1/5] FROM docker.io/library/python:3.12.13-slim@sha256:229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36
+#10 resolve docker.io/library/python:3.12.13-slim@sha256:229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36 done
+#10 CACHED
+
+#13 [api internal] load .dockerignore
+#13 transferring context: 98B done
+#13 DONE 0.0s
+
+#14 [api internal] load build context
+#14 transferring context: 111.65kB 0.0s done
+#14 DONE 0.0s
+
+#15 [init] FROM ghcr.io/astral-sh/uv:0.10.9@sha256:10902f58a1606787602f303954cea099626a4adb02acbac4c69920fe9d278f82
+#15 resolve ghcr.io/astral-sh/uv:0.10.9@sha256:10902f58a1606787602f303954cea099626a4adb02acbac4c69920fe9d278f82 done
+#15 sha256:ea3f44987903c750d69e26d196b627d6a2476c006ba56741dcf8aed98b98941b 0B / 98B 0.2s
+#15 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 0B / 21.95MB 0.2s
+#15 sha256:ea3f44987903c750d69e26d196b627d6a2476c006ba56741dcf8aed98b98941b 98B / 98B 0.6s done
+#15 sha256:ea3f44987903c750d69e26d196b627d6a2476c006ba56741dcf8aed98b98941b 98B / 98B 0.6s done
+#15 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 2.10MB / 21.95MB 1.4s
+#15 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 7.34MB / 21.95MB 1.8s
+#15 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 10.49MB / 21.95MB 2.1s
+#15 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 12.58MB / 21.95MB 2.3s
+#15 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 14.68MB / 21.95MB 2.6s
+#15 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 16.78MB / 21.95MB 2.7s
+#15 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 18.87MB / 21.95MB 2.9s
+#15 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 20.97MB / 21.95MB 3.0s
+#15 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 21.95MB / 21.95MB 3.1s done
+#15 sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 21.95MB / 21.95MB 3.1s done
+#15 extracting sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 0.1s done
+#15 extracting sha256:fd233d83c5267b9e793b2b7b723f2763948daa6d3c52205abd0873529f0c0308 0.1s done
+#15 extracting sha256:ea3f44987903c750d69e26d196b627d6a2476c006ba56741dcf8aed98b98941b done
+#15 DONE 3.3s
+
+#16 [init stage-0 2/9] COPY --from=ghcr.io/astral-sh/uv:0.10.9@sha256:10902f58a1606787602f303954cea099626a4adb02acbac4c69920fe9d278f82 /uv /usr/local/bin/uv
+#16 DONE 0.9s
+
+#17 [init stage-0 3/9] WORKDIR /app
+#17 DONE 0.0s
+
+#18 [api stage-0 4/9] COPY pyproject.toml uv.lock ./
+#18 DONE 0.0s
+
+#19 [init stage-0 5/9] COPY apps/api apps/api
+#19 DONE 0.0s
+
+#20 [init stage-0 6/9] RUN uv sync --locked --no-dev
+#20 0.162 Using CPython 3.12.13 interpreter at: /usr/local/bin/python3
+#20 0.162 Creating virtual environment at: .venv
+#20 0.165 Resolved 61 packages in 0.51ms
+#20 0.212    Building corpusflow @ file:///app
+#20 0.662 Downloading botocore (15.4MiB)
+#20 0.721 Downloading pydantic-core (2.0MiB)
+#20 0.723 Downloading sqlalchemy (3.3MiB)
+#20 0.724 Downloading psycopg-binary (6.5MiB)
+#20 2.280  Downloaded pydantic-core
+#20 2.581  Downloaded sqlalchemy
+#20 ...
+
+#21 [minio build 4/4] RUN tar -xzf /source.tar.gz --strip-components=1     && go mod download     && go mod verify     && go build -mod=readonly -trimpath -buildvcs=false        -ldflags='-s -w -X github.com/minio/minio/cmd.Version=2025-04-22T22:12:26Z -X github.com/minio/minio/cmd.ReleaseTag=DEVELOPMENT.2025-04-22T22-12-26Z -X github.com/minio/minio/cmd.CommitID=0d7408fc9969caf07de6a8c3a84f9fbb10a6739e -X github.com/minio/minio/cmd.ShortCommitID=0d7408fc9969 -X github.com/minio/minio/cmd.CopyrightYear=2025'        -o /out/minio .
+#21 ...
+
+#20 [init stage-0 6/9] RUN uv sync --locked --no-dev
+#20 3.133  Downloaded psycopg-binary
+#20 3.570       Built corpusflow @ file:///app
+#20 4.333  Downloaded botocore
+#20 4.334 Prepared 44 packages in 4.16s
+#20 4.422 Installed 44 packages in 87ms
+#20 4.884 Bytecode compiled 1685 files in 461ms
+#20 4.884  + alembic==1.20.1
+#20 4.884  + amqp==5.4.1
+#20 4.884  + annotated-doc==0.0.5
+#20 4.884  + annotated-types==0.8.0
+#20 4.884  + anyio==4.15.1
+#20 4.884  + billiard==4.3.1
+#20 4.884  + boto3==1.43.118
+#20 4.884  + botocore==1.43.118
+#20 4.884  + celery==5.6.3
+#20 4.884  + click==8.5.0
+#20 4.884  + click-didyoumean==0.3.1
+#20 4.884  + click-plugins==1.1.1.2
+#20 4.884  + click-repl==0.4.1
+#20 4.884  + corpusflow==0.1.0 (from file:///app)
+#20 4.884  + fastapi==0.135.4
+#20 4.884  + greenlet==3.5.6
+#20 4.884  + h11==0.16.0
+#20 4.884  + idna==3.20
+#20 4.884  + jmespath==1.1.0
+#20 4.884  + kombu==5.6.2
+#20 4.884  + mako==1.4.3
+#20 4.884  + markupsafe==3.0.4
+#20 4.884  + packaging==26.3
+#20 4.884  + prompt-toolkit==3.0.53
+#20 4.884  + psycopg==3.3.6
+#20 4.884  + psycopg-binary==3.3.6
+#20 4.884  + pydantic==2.14.1
+#20 4.884  + pydantic-core==2.50.1
+#20 4.884  + pydantic-settings==2.16.1
+#20 4.884  + python-dateutil==2.9.0.post0
+#20 4.884  + python-dotenv==1.2.4
+#20 4.884  + redis==7.4.1
+#20 4.884  + s3transfer==0.19.3
+#20 4.884  + six==1.17.0
+#20 4.884  + sqlalchemy==2.0.55
+#20 4.884  + starlette==1.9.0
+#20 4.884  + typing-extensions==4.16.0
+#20 4.884  + typing-inspection==0.4.4
+#20 4.884  + tzdata==2026.5
+#20 4.884  + tzlocal==5.4.5
+#20 4.884  + urllib3==2.8.0
+#20 4.884  + uvicorn==0.41.0
+#20 4.884  + vine==5.1.0
+#20 4.884  + wcwidth==0.9.3
+#20 DONE 5.7s
+
+#22 [init stage-0 7/9] COPY alembic.ini ./
+#22 DONE 0.0s
+
+#23 [init stage-0 8/9] COPY scripts scripts
+#23 DONE 0.0s
+
+#24 [init stage-0 9/9] RUN useradd --uid 10001 --create-home corpusflow
+#24 DONE 0.1s
+
+#25 [init] exporting to oci image format
+#25 exporting layers
+#25 exporting layers 2.4s done
+#25 exporting manifest sha256:6953b5ea5b98cdf9d3df3a49ba785d7f87db8cf46bb49af76d4ae9609d2968dc done
+#25 exporting config sha256:ad86bbb0ef2ca77c3a697bd3bb1e4923730a03aff6dc978b7b4abdff6365e06b done
+#25 sending tarball
+#25 ...
+
+#26 importing to docker
+#26 DONE 0.0s
+
+#25 [init] exporting to oci image format
+#25 sending tarball 3.4s done
+#25 DONE 5.8s
+
+#27 [init] resolving provenance for metadata file
+#27 DONE 0.0s
+
+#28 [api] exporting to oci image format
+#28 exporting layers 2.4s done
+#28 exporting manifest sha256:ef820b2c527275efaa26a68bf784b41bb8bf5c087b1482c5781683b3ab3f9253 done
+#28 exporting config sha256:174a7faab4bb1d55d2270a7beb3f1b2fbc55f4b29b62ae21314846d5e8ab3de4 done
+#28 ...
+
+#29 importing to docker
+#29 DONE 0.0s
+
+#28 [api] exporting to oci image format
+#28 sending tarball 3.7s done
+#28 DONE 6.1s
+
+#30 [api] resolving provenance for metadata file
+#30 DONE 0.0s
+
+#21 [minio build 4/4] RUN tar -xzf /source.tar.gz --strip-components=1     && go mod download     && go mod verify     && go build -mod=readonly -trimpath -buildvcs=false        -ldflags='-s -w -X github.com/minio/minio/cmd.Version=2025-04-22T22:12:26Z -X github.com/minio/minio/cmd.ReleaseTag=DEVELOPMENT.2025-04-22T22-12-26Z -X github.com/minio/minio/cmd.CommitID=0d7408fc9969caf07de6a8c3a84f9fbb10a6739e -X github.com/minio/minio/cmd.ShortCommitID=0d7408fc9969 -X github.com/minio/minio/cmd.CopyrightYear=2025'        -o /out/minio .
+#21 69.20 all modules verified
+#21 76.67 # github.com/google/s2a-go/internal/proto/v2/common_go_proto
+#21 76.67 compile: -importcfg: open $WORK/b405/importcfg: input/output error
+#21 76.67 google.golang.org/protobuf/types/known/emptypb: mkdir /tmp/go-build2308082038/b419/: input/output error
+#21 76.67 google.golang.org/genproto/googleapis/api/distribution: mkdir /tmp/go-build2308082038/b449/: input/output error
+#21 76.67 google.golang.org/genproto/googleapis/api/label: mkdir /tmp/go-build2308082038/b450/: input/output error
+#21 76.67 # google.golang.org/genproto/googleapis/type/date
+#21 76.67 compile: -importcfg: open $WORK/b418/importcfg: input/output error
+#21 76.67 google.golang.org/protobuf/types/known/structpb: mkdir /tmp/go-build2308082038/b453/: input/output error
+#21 76.67 google.golang.org/genproto/googleapis/type/calendarperiod: mkdir /tmp/go-build2308082038/b454/: input/output error
+#21 76.67 google.golang.org/genproto/googleapis/type/timeofday: mkdir /tmp/go-build2308082038/b455/: input/output error
+#21 76.68 google.golang.org/grpc/internal/balancergroup: mkdir /tmp/go-build2308082038/b481/: input/output error
+#21 76.68 google.golang.org/grpc/credentials/tls/certprovider/pemfile: mkdir /tmp/go-build2308082038/b501/: input/output error
+#21 76.68 google.golang.org/protobuf/types/known/wrapperspb: mkdir /tmp/go-build2308082038/b456/: input/output error
+#21 76.68 google.golang.org/grpc/xds/internal/httpfilter: mkdir /tmp/go-build2308082038/b540/: input/output error
+#21 76.68 google.golang.org/grpc/balancer/leastrequest: mkdir /tmp/go-build2308082038/b547/: input/output error
+#21 76.68 google.golang.org/grpc/internal/hierarchy: mkdir /tmp/go-build2308082038/b552/: input/output error
+#21 76.68 google.golang.org/grpc/balancer/weightedtarget/weightedaggregator: mkdir /tmp/go-build2308082038/b549/: input/output error
+#21 76.68 google.golang.org/grpc/xds/internal/balancer/outlierdetection: mkdir /tmp/go-build2308082038/b565/: input/output error
+#21 76.68 google.golang.org/grpc/balancer/lazy: mkdir /tmp/go-build2308082038/b585/: input/output error
+#21 76.68 github.com/klauspost/compress/zstd: mkdir /tmp/go-build2308082038/b731/: input/output error
+#21 76.69 github.com/klauspost/reedsolomon: mkdir /tmp/go-build2308082038/b744/: input/output error
+#21 76.69 golang.org/x/net/bpf: mkdir /tmp/go-build2308082038/b750/: input/output error
+#21 76.69 google.golang.org/grpc/internal/balancer/nop: mkdir /tmp/go-build2308082038/b554/: input/output error
+#21 76.69 github.com/minio/cli: mkdir /tmp/go-build2308082038/b754/: input/output error
+#21 76.69 golang.org/x/net/internal/socket: mkdir /tmp/go-build2308082038/b752/: input/output error
+#21 76.69 golang.org/x/sync/errgroup: mkdir /tmp/go-build2308082038/b758/: input/output error
+#21 76.69 github.com/docker/go-units: mkdir /tmp/go-build2308082038/b760/: input/output error
+#21 76.70 github.com/go-openapi/runtime/logger: mkdir /tmp/go-build2308082038/b762/: input/output error
+#21 76.70 encoding/csv: mkdir /tmp/go-build2308082038/b757/: input/output error
+#21 76.70 github.com/jessevdk/go-flags: mkdir /tmp/go-build2308082038/b768/: input/output error
+#21 76.70 github.com/minio/madmin-go/v3/cgroup: mkdir /tmp/go-build2308082038/b790/: input/output error
+#21 76.70 github.com/secure-io/sio-go: mkdir /tmp/go-build2308082038/b792/: input/output error
+#21 76.70 github.com/minio/madmin-go/v3/kernel: mkdir /tmp/go-build2308082038/b795/: input/output error
+#21 76.70 github.com/philhofer/fwd: mkdir /tmp/go-build2308082038/b794/: input/output error
+#21 76.70 github.com/goccy/go-json/internal/errors: mkdir /tmp/go-build2308082038/b800/: input/output error
+#21 76.70 github.com/go-ini/ini: mkdir /tmp/go-build2308082038/b797/: input/output error
+#21 76.70 github.com/minio/minio-go/v7/pkg/s3utils: mkdir /tmp/go-build2308082038/b809/: input/output error
+#21 76.70 github.com/minio/md5-simd: mkdir /tmp/go-build2308082038/b808/: input/output error
+#21 76.70 github.com/minio/minio-go/v7/pkg/tags: mkdir /tmp/go-build2308082038/b813/: input/output error
+#21 76.70 github.com/rs/xid: mkdir /tmp/go-build2308082038/b811/: input/output error
+#21 76.70 github.com/prometheus/client_model/go: mkdir /tmp/go-build2308082038/b816/: input/output error
+#21 76.70 github.com/prometheus/procfs/internal/fs: mkdir /tmp/go-build2308082038/b820/: input/output error
+#21 76.70 github.com/prometheus/procfs/internal/util: mkdir /tmp/go-build2308082038/b821/: input/output error
+#21 76.70 github.com/prometheus/prometheus/model/histogram: mkdir /tmp/go-build2308082038/b830/: input/output error
+#21 76.70 github.com/safchain/ethtool: mkdir /tmp/go-build2308082038/b831/: input/output error
+#21 76.70 golang.org/x/sys/cpu: mkdir /tmp/go-build2308082038/b833/: input/output error
+#21 76.70 github.com/shirou/gopsutil/v3/internal/common: mkdir /tmp/go-build2308082038/b835/: input/output error
+#21 76.70 github.com/tklauser/numcpus: mkdir /tmp/go-build2308082038/b838/: input/output error
+#21 76.70 google.golang.org/protobuf/encoding/protodelim: mkdir /tmp/go-build2308082038/b818/: input/output error
+#21 76.70 golang.org/x/crypto/argon2: mkdir /tmp/go-build2308082038/b845/: input/output error
+#21 76.70 github.com/lestrrat-go/option: mkdir /tmp/go-build2308082038/b857/: input/output error
+#21 76.70 github.com/lestrrat-go/blackmagic: mkdir /tmp/go-build2308082038/b859/: input/output error
+#21 76.70 github.com/lestrrat-go/httpcc: mkdir /tmp/go-build2308082038/b861/: input/output error
+#21 76.70 github.com/minio/console/pkg/auth/utils: mkdir /tmp/go-build2308082038/b854/: input/output error
+#21 76.70 github.com/lestrrat-go/iter/arrayiter: mkdir /tmp/go-build2308082038/b862/: input/output error
+#21 76.70 github.com/lestrrat-go/jwx/v2/internal/base64: mkdir /tmp/go-build2308082038/b865/: input/output error
+#21 76.70 github.com/lestrrat-go/jwx/v2/internal/pool: mkdir /tmp/go-build2308082038/b869/: input/output error
+#21 76.70 github.com/lestrrat-go/jwx/v2/jwk/internal/x509: mkdir /tmp/go-build2308082038/b870/: input/output error
+#21 76.70 golang.org/x/crypto/curve25519: mkdir /tmp/go-build2308082038/b872/: input/output error
+#21 76.70 golang.org/x/crypto/ed25519: mkdir /tmp/go-build2308082038/b877/: input/output error
+#21 76.70 github.com/lestrrat-go/jwx/v2/jwe/internal/aescbc: mkdir /tmp/go-build2308082038/b878/: input/output error
+#21 76.70 github.com/lestrrat-go/jwx/v2/jwe/internal/concatkdf: mkdir /tmp/go-build2308082038/b881/: input/output error
+#21 76.70 github.com/minio/console/pkg/logger/color: mkdir /tmp/go-build2308082038/b888/: input/output error
+#21 76.70 github.com/minio/pkg/v3/ellipses: mkdir /tmp/go-build2308082038/b893/: input/output error
+#21 76.70 github.com/rjeczalik/notify: mkdir /tmp/go-build2308082038/b899/: input/output error
+#21 76.70 github.com/minio/pkg/v3/console: mkdir /tmp/go-build2308082038/b900/: input/output error
+#21 76.70 go/scanner: mkdir /tmp/go-build2308082038/b903/: input/output error
+#21 76.70 go/doc/comment: mkdir /tmp/go-build2308082038/b906/: input/output error
+#21 76.70 github.com/lestrrat-go/iter/mapiter: mkdir /tmp/go-build2308082038/b863/: input/output error
+#21 76.70 internal/buildcfg: mkdir /tmp/go-build2308082038/b909/: input/output error
+#21 76.70 internal/goroot: mkdir /tmp/go-build2308082038/b910/: input/output error
+#21 76.70 archive/zip: mkdir /tmp/go-build2308082038/b916/: input/output error
+#21 76.70 github.com/charmbracelet/bubbles/key: mkdir /tmp/go-build2308082038/b919/: input/output error
+#21 76.70 compress/zlib: mkdir /tmp/go-build2308082038/b924/: input/output error
+#21 76.71 internal/lazyregexp: mkdir /tmp/go-build2308082038/b907/: input/output error
+#21 76.71 github.com/aymanbagabas/go-osc52/v2: mkdir /tmp/go-build2308082038/b932/: input/output error
+#21 76.71 github.com/charmbracelet/x/term: mkdir /tmp/go-build2308082038/b933/: input/output error
+#21 76.71 github.com/muesli/ansi: mkdir /tmp/go-build2308082038/b935/: input/output error
+#21 76.71 github.com/lucasb-eyer/go-colorful: mkdir /tmp/go-build2308082038/b930/: input/output error
+#21 76.71 github.com/muesli/cancelreader: mkdir /tmp/go-build2308082038/b936/: input/output error
+#21 76.71 github.com/google/shlex: mkdir /tmp/go-build2308082038/b942/: input/output error
+#21 76.71 github.com/dustin/go-humanize/english: mkdir /tmp/go-build2308082038/b941/: input/output error
+#21 76.71 github.com/jedib0t/go-pretty/v6/text: mkdir /tmp/go-build2308082038/b944/: input/output error
+#21 76.71 github.com/minio/filepath: mkdir /tmp/go-build2308082038/b948/: input/output error
+#21 76.71 github.com/minio/minio-go/v7/pkg/lifecycle: mkdir /tmp/go-build2308082038/b951/: input/output error
+#21 76.71 github.com/minio/mc/pkg/deadlineconn: mkdir /tmp/go-build2308082038/b952/: input/output error
+#21 76.71 github.com/minio/mc/pkg/disk: mkdir /tmp/go-build2308082038/b953/: input/output error
+#21 76.71 github.com/minio/crc64nvme: mkdir /tmp/go-build2308082038/b959/: input/output error
+#21 76.71 github.com/minio/minio-go/v7/pkg/cors: mkdir /tmp/go-build2308082038/b960/: input/output error
+#21 76.71 github.com/minio/minio-go/v7/pkg/sse: mkdir /tmp/go-build2308082038/b963/: input/output error
+#21 76.71 github.com/fatih/structs: mkdir /tmp/go-build2308082038/b971/: input/output error
+#21 76.71 github.com/minio/mc/pkg/probe: mkdir /tmp/go-build2308082038/b950/: input/output error
+#21 76.71 github.com/minio/pkg/v3/safe: mkdir /tmp/go-build2308082038/b972/: input/output error
+#21 76.71 go.etcd.io/etcd/api/v3/v3rpc/rpctypes: mkdir /tmp/go-build2308082038/b981/: input/output error
+#21 76.71 github.com/coreos/go-semver/semver: mkdir /tmp/go-build2308082038/b983/: input/output error
+#21 76.71 github.com/coreos/go-systemd/v22/journal: mkdir /tmp/go-build2308082038/b985/: input/output error
+#21 76.71 go.etcd.io/etcd/client/pkg/v3/systemd: mkdir /tmp/go-build2308082038/b986/: input/output error
+#21 76.71 go.uber.org/multierr: mkdir /tmp/go-build2308082038/b988/: input/output error
+#21 76.71 go.uber.org/zap/internal/color: mkdir /tmp/go-build2308082038/b994/: input/output error
+#21 76.71 go.uber.org/zap/internal/exit: mkdir /tmp/go-build2308082038/b995/: input/output error
+#21 76.71 go.etcd.io/etcd/client/pkg/v3/types: mkdir /tmp/go-build2308082038/b997/: input/output error
+#21 76.71 go.etcd.io/etcd/client/v3/internal/endpoint: mkdir /tmp/go-build2308082038/b999/: input/output error
+#21 76.71 golang.org/x/crypto/scrypt: mkdir /tmp/go-build2308082038/b1007/: input/output error
+#21 76.71 github.com/gogo/protobuf/proto: mkdir /tmp/go-build2308082038/b976/: input/output error
+#21 76.71 github.com/minio/selfupdate/internal/osext: mkdir /tmp/go-build2308082038/b1009/: input/output error
+#21 76.71 github.com/mitchellh/go-homedir: mkdir /tmp/go-build2308082038/b1010/: input/output error
+#21 76.71 github.com/minio/selfupdate/internal/binarydist: mkdir /tmp/go-build2308082038/b1008/: input/output error
+#21 76.72 github.com/muesli/reflow/ansi: mkdir /tmp/go-build2308082038/b1012/: input/output error
+#21 76.72 github.com/pkg/xattr: mkdir /tmp/go-build2308082038/b1015/: input/output error
+#21 76.72 github.com/tidwall/pretty: mkdir /tmp/go-build2308082038/b1031/: input/output error
+#21 76.72 github.com/hashicorp/go-multierror: mkdir /tmp/go-build2308082038/b1019/: input/output error
+#21 76.72 github.com/vbauerster/mpb/v8/decor: mkdir /tmp/go-build2308082038/b1035/: input/output error
+#21 76.72 golang.org/x/term: mkdir /tmp/go-build2308082038/b1038/: input/output error
+#21 76.72 github.com/vbauerster/mpb/v8/cwriter: mkdir /tmp/go-build2308082038/b1034/: input/output error
+#21 76.72 gopkg.in/yaml.v2: mkdir /tmp/go-build2308082038/b1039/: input/output error
+#21 76.72 runtime/pprof: mkdir /tmp/go-build2308082038/b1040/: input/output error
+#21 76.72 golang.org/x/net/netutil: mkdir /tmp/go-build2308082038/b1044/: input/output error
+#21 76.72 golang.org/x/sync/singleflight: mkdir /tmp/go-build2308082038/b1047/: input/output error
+#21 76.72 github.com/ncw/directio: mkdir /tmp/go-build2308082038/b1050/: input/output error
+#21 76.72 github.com/minio/minio/internal/arn: mkdir /tmp/go-build2308082038/b1056/: input/output error
+#21 76.72 github.com/buger/jsonparser: mkdir /tmp/go-build2308082038/b1059/: input/output error
+#21 76.72 github.com/minio/minio/internal/color: mkdir /tmp/go-build2308082038/b1065/: input/output error
+#21 76.72 github.com/minio/kms-go/kms/protobuf: mkdir /tmp/go-build2308082038/b1071/: input/output error
+#21 76.72 github.com/minio/pkg/v3/net: mkdir /tmp/go-build2308082038/b1041/: input/output error
+#21 76.72 github.com/minio/minio/internal/deadlineconn: mkdir /tmp/go-build2308082038/b1077/: input/output error
+#21 76.72 github.com/davecgh/go-spew/spew: mkdir /tmp/go-build2308082038/b1091/: input/output error
+#21 76.72 github.com/minio/minio/internal/hash/sha256: mkdir /tmp/go-build2308082038/b1075/: input/output error
+#21 76.72 github.com/jcmturner/gofork/encoding/asn1: mkdir /tmp/go-build2308082038/b1096/: input/output error
+#21 76.72 github.com/jcmturner/dnsutils/v2: mkdir /tmp/go-build2308082038/b1100/: input/output error
+#21 76.72 github.com/hashicorp/go-uuid: mkdir /tmp/go-build2308082038/b1103/: input/output error
+#21 76.72 github.com/golang/snappy: mkdir /tmp/go-build2308082038/b1094/: input/output error
+#21 76.72 github.com/jcmturner/aescts/v2: mkdir /tmp/go-build2308082038/b1111/: input/output error
+#21 76.72 github.com/jcmturner/gofork/x/crypto/pbkdf2: mkdir /tmp/go-build2308082038/b1112/: input/output error
+#21 76.72 github.com/jcmturner/gokrb5/v8/crypto/rfc4757: mkdir /tmp/go-build2308082038/b1113/: input/output error
+#21 76.72 github.com/jcmturner/gokrb5/v8/iana/errorcode: mkdir /tmp/go-build2308082038/b1122/: input/output error
+#21 76.72 github.com/jcmturner/gokrb5/v8/krberror: mkdir /tmp/go-build2308082038/b1126/: input/output error
+#21 76.72 github.com/jcmturner/gokrb5/v8/crypto/common: mkdir /tmp/go-build2308082038/b1107/: input/output error
+#21 76.72 github.com/pierrec/lz4/v4/internal/lz4block: mkdir /tmp/go-build2308082038/b1135/: input/output error
+#21 76.72 github.com/jcmturner/rpc/v2/ndr: mkdir /tmp/go-build2308082038/b1132/: input/output error
+#21 76.72 log/syslog: mkdir /tmp/go-build2308082038/b1140/: input/output error
+#21 76.72 golang.org/x/net/internal/socks: mkdir /tmp/go-build2308082038/b1142/: input/output error
+#21 76.72 github.com/IBM/sarama/tools/tls: mkdir /tmp/go-build2308082038/b1143/: input/output error
+#21 76.73 github.com/xdg/stringprep: mkdir /tmp/go-build2308082038/b1145/: input/output error
+#21 76.73 github.com/minio/minio/internal/bucket/versioning: mkdir /tmp/go-build2308082038/b1151/: input/output error
+#21 76.73 github.com/pierrec/lz4/v4/internal/xxh32: mkdir /tmp/go-build2308082038/b1138/: input/output error
+#21 76.73 database/sql: mkdir /tmp/go-build2308082038/b1178/: input/output error
+#21 76.73 github.com/go-asn1-ber/asn1-ber: mkdir /tmp/go-build2308082038/b1166/: input/output error
+#21 76.73 filippo.io/edwards25519/field: mkdir /tmp/go-build2308082038/b1188/: input/output error
+#21 76.73 github.com/gomodule/redigo/redis: mkdir /tmp/go-build2308082038/b1189/: input/output error
+#21 76.73 github.com/lib/pq/scram: mkdir /tmp/go-build2308082038/b1192/: input/output error
+#21 76.73 github.com/nats-io/nats.go/encoders/builtin: mkdir /tmp/go-build2308082038/b1196/: input/output error
+#21 76.73 github.com/eclipse/paho.mqtt.golang/packets: mkdir /tmp/go-build2308082038/b1180/: input/output error
+#21 76.73 github.com/nats-io/nats.go/util: mkdir /tmp/go-build2308082038/b1198/: input/output error
+#21 76.73 golang.org/x/crypto/nacl/secretbox: mkdir /tmp/go-build2308082038/b1201/: input/output error
+#21 76.73 github.com/nats-io/nuid: mkdir /tmp/go-build2308082038/b1203/: input/output error
+#21 76.73 github.com/pkg/errors: mkdir /tmp/go-build2308082038/b1207/: input/output error
+#21 76.73 github.com/nats-io/nats.go/internal/parser: mkdir /tmp/go-build2308082038/b1197/: input/output error
+#21 76.73 github.com/minio/minio/internal/pubsub: mkdir /tmp/go-build2308082038/b1225/: input/output error
+#21 76.73 github.com/puzpuzpuz/xsync/v3: mkdir /tmp/go-build2308082038/b1227/: input/output error
+#21 76.73 github.com/zeebo/xxh3: mkdir /tmp/go-build2308082038/b1228/: input/output error
+#21 76.73 github.com/minio/minio/internal/mountinfo: mkdir /tmp/go-build2308082038/b1234/: input/output error
+#21 76.73 github.com/minio/csvparser: mkdir /tmp/go-build2308082038/b1240/: input/output error
+#21 76.73 github.com/minio/minio/internal/s3select/jstream: mkdir /tmp/go-build2308082038/b1241/: input/output error
+#21 76.73 text/scanner: mkdir /tmp/go-build2308082038/b1245/: input/output error
+#21 76.73 internal/sysinfo: mkdir /tmp/go-build2308082038/b1252/: input/output error
+#21 76.73 runtime/trace: mkdir /tmp/go-build2308082038/b1253/: input/output error
+#21 76.73 github.com/minio/pkg/v3/randreader: mkdir /tmp/go-build2308082038/b1257/: input/output error
+#21 76.73 github.com/rabbitmq/amqp091-go: mkdir /tmp/go-build2308082038/b1208/: input/output error
+#21 76.73 github.com/minio/pkg/v3/sys/cgroup: mkdir /tmp/go-build2308082038/b1264/: input/output error
+#21 76.74 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf: mkdir /tmp/go-build2308082038/b1260/: input/output error
+#21 76.74 github.com/kr/fs: mkdir /tmp/go-build2308082038/b1269/: input/output error
+#21 76.74 # github.com/googleapis/gax-go/v2/apierror/internal/proto
+#21 76.74 can't create $WORK/b306/_pkg_.a: open $WORK/b306/_pkg_.a: input/output error
+#21 76.74 github.com/minio/xxml: mkdir /tmp/go-build2308082038/b1266/: input/output error
+#21 76.74 github.com/pkg/sftp/internal/encoding/ssh/filexfer: mkdir /tmp/go-build2308082038/b1270/: input/output error
+#21 76.74 github.com/minio/minio/internal/init: mkdir /tmp/go-build2308082038/b1277/: input/output error
+#21 76.74 goftp.io/server/v2: mkdir /tmp/go-build2308082038/b1275/: input/output error
+#21 76.74 go.uber.org/atomic: mkdir /tmp/go-build2308082038/b1274/: input/output error
+#21 76.76 # google.golang.org/genproto/googleapis/rpc/errdetails
+#21 76.76 can't create $WORK/b310/_pkg_.a: open $WORK/b310/_pkg_.a: input/output error
+#21 76.76 # github.com/google/s2a-go/internal/proto/common_go_proto
+#21 76.76 can't create $WORK/b390/_pkg_.a: open $WORK/b390/_pkg_.a: input/output error
+#21 76.82 # google.golang.org/grpc/internal/binarylog
+#21 76.82 can't create $WORK/b265/_pkg_.a: open $WORK/b265/_pkg_.a: input/output error
+#21 76.90 # go.mongodb.org/mongo-driver/bson/bsoncodec
+#21 76.90 can't create $WORK/b712/_pkg_.a: open $WORK/b712/_pkg_.a: input/output error
+#21 76.96 # github.com/json-iterator/go
+#21 76.96 can't create $WORK/b721/_pkg_.a: open $WORK/b721/_pkg_.a: input/output error
+#21 77.28 google.golang.org/protobuf/types/descriptorpb: write /tmp/go-build2308082038/b214/_pkg_.a: input/output error
+#21 77.41 # net/http
+#21 77.41 can't create $WORK/b086/_pkg_.a: open $WORK/b086/_pkg_.a: input/output error
+#21 77.43 go: failed to trim cache: open /root/.cache/go-build/trim.txt: input/output error
+#21 77.43 go: unlinkat /tmp/go-build2308082038/b013/importcfg: input/output error
+#21 ERROR: error committing tiy7w08f8hppd35xyf8bd7zz9: write /var/lib/buildkit/runc-overlayfs/metadata_v2.db: input/output error
+------
+ > [minio build 4/4] RUN tar -xzf /source.tar.gz --strip-components=1     && go mod download     && go mod verify     && go build -mod=readonly -trimpath -buildvcs=false        -ldflags='-s -w -X github.com/minio/minio/cmd.Version=2025-04-22T22:12:26Z -X github.com/minio/minio/cmd.ReleaseTag=DEVELOPMENT.2025-04-22T22-12-26Z -X github.com/minio/minio/cmd.CommitID=0d7408fc9969caf07de6a8c3a84f9fbb10a6739e -X github.com/minio/minio/cmd.ShortCommitID=0d7408fc9969 -X github.com/minio/minio/cmd.CopyrightYear=2025'        -o /out/minio .:
+76.82 can't create $WORK/b265/_pkg_.a: open $WORK/b265/_pkg_.a: input/output error
+76.90 # go.mongodb.org/mongo-driver/bson/bsoncodec
+76.90 can't create $WORK/b712/_pkg_.a: open $WORK/b712/_pkg_.a: input/output error
+76.96 # github.com/json-iterator/go
+76.96 can't create $WORK/b721/_pkg_.a: open $WORK/b721/_pkg_.a: input/output error
+77.28 google.golang.org/protobuf/types/descriptorpb: write /tmp/go-build2308082038/b214/_pkg_.a: input/output error
+77.41 # net/http
+77.41 can't create $WORK/b086/_pkg_.a: open $WORK/b086/_pkg_.a: input/output error
+77.43 go: failed to trim cache: open /root/.cache/go-build/trim.txt: input/output error
+77.43 go: unlinkat /tmp/go-build2308082038/b013/importcfg: input/output error
+------
+Dockerfile:7
+
+--------------------
+
+   6 |     ADD --checksum=sha256:7eb30a913fea30f18069abf194e1e78e4983b558cc526911ae1c11396a9859a5 https://codeload.github.com/minio/minio/tar.gz/0d7408fc9969caf07de6a8c3a84f9fbb10a6739e /source.tar.gz
+
+   7 | >>> RUN tar -xzf /source.tar.gz --strip-components=1 \
+
+   8 | >>>     && go mod download \
+
+   9 | >>>     && go mod verify \
+
+  10 | >>>     && go build -mod=readonly -trimpath -buildvcs=false \
+
+  11 | >>>        -ldflags='-s -w -X github.com/minio/minio/cmd.Version=2025-04-22T22:12:26Z -X github.com/minio/minio/cmd.ReleaseTag=DEVELOPMENT.2025-04-22T22-12-26Z -X github.com/minio/minio/cmd.CommitID=0d7408fc9969caf07de6a8c3a84f9fbb10a6739e -X github.com/minio/minio/cmd.ShortCommitID=0d7408fc9969 -X github.com/minio/minio/cmd.CopyrightYear=2025' \
+
+  12 | >>>        -o /out/minio .
+
+  13 |     
+
+--------------------
+
+target minio: failed to solve: Internal: error committing tiy7w08f8hppd35xyf8bd7zz9: write /var/lib/buildkit/runc-overlayfs/metadata_v2.db: input/output error
+

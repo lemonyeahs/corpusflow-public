@@ -1,5 +1,5 @@
 COMPOSE = docker compose --env-file .env -f infra/compose.yaml
-.PHONY: install init-env up down dev migrate check test integration openapi
+.PHONY: install init-env up down dev migrate check test integration openapi verify-environment
 install:
 	uv sync --locked
 init-env:
@@ -23,3 +23,5 @@ integration:
 	uv run --locked pytest -m integration -q
 openapi:
 	uv run --locked python scripts/export_openapi.py
+verify-environment:
+	python3 scripts/verify_environment.py $(VERIFY_ARGS)

@@ -1,0 +1,6 @@
+[('b59aed07-1d61-40aa-aefc-a43d238e5057', 'queued'), ('93208d43-4560-46e8-b96b-879c0a55d145', 'queued'), ('5c5084bb-96ae-4293-a749-d7c1b6641b2d', 'queued')]
+[('b59aed07-1d61-40aa-aefc-a43d238e5057', 'succeeded'), ('93208d43-4560-46e8-b96b-879c0a55d145', 'succeeded'), ('5c5084bb-96ae-4293-a749-d7c1b6641b2d', 'failed')]
+logs
+b59aed07-1d61-40aa-aefc-a43d238e5057 {'items': [{'level': 'INFO', 'message': 'parsed builtin.html sections=1 bytes=35', 'attempt': 1, 'created_at': '2026-10-24T03:41:24.187566+00:00'}]}
+93208d43-4560-46e8-b96b-879c0a55d145 {'items': [{'level': 'INFO', 'message': 'parsed builtin.pdf sections=1 bytes=628', 'attempt': 1, 'created_at': '2026-10-24T03:41:24.216259+00:00'}]}
+5c5084bb-96ae-4293-a749-d7c1b6641b2d {'items': [{'level': 'ERROR', 'message': 'parser failure CORRUPT_PDF', 'attempt': 1, 'created_at': '2026-10-24T03:41:24.231659+00:00'}]}

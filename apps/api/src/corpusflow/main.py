@@ -13,6 +13,7 @@ from starlette.responses import Response
 
 from corpusflow.adapters.readiness import DependencyProbe
 from corpusflow.api.health import router
+from corpusflow.api.v1.business import router as business_router
 from corpusflow.core.config import Settings, load_settings
 from corpusflow.core.errors import ErrorResponse, error_response
 from corpusflow.core.logging import configure_logging
@@ -26,6 +27,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         engine = build_engine(config)
+        app.state.config = config
         app.state.sessions = sessionmaker(engine, expire_on_commit=False)
         app.state.probe = DependencyProbe(config, engine)
         try:
@@ -38,7 +40,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         title="CorpusFlow API",
         version="0.1.0",
         lifespan=lifespan,
-        description="P0-A only. No business endpoints or authentication implemented.",
+        description="CorpusFlow modular monolith P0 business loop with server-side policy gates.",
         responses={
             404: {"model": ErrorResponse},
             422: {"model": ErrorResponse},
@@ -58,6 +60,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             response = await call_next(request)
         except Exception:
+            logging.getLogger("corpusflow").exception("request_failed")
             response = error_response(request, 500, "INTERNAL_ERROR", "服务内部错误")
         response.headers["X-Request-ID"] = request.state.request_id
         logging.getLogger("corpusflow").info(
@@ -74,10 +77,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.exception_handler(HTTPException)
     async def http_error(request: Request, exc: HTTPException) -> Response:
         codes = {404: "NOT_FOUND", 405: "METHOD_NOT_ALLOWED"}
+        detail = exc.detail if isinstance(exc.detail, str) else ""
+        known = {
+            "UNAUTHENTICATED",
+            "PERMISSION_DENIED",
+            "INVALID_STATE_TRANSITION",
+            "RUN_REVIEW_BLOCKED",
+            "SELF_APPROVAL_FORBIDDEN",
+            "RELEASE_GATE_FAILED",
+            "CHECKSUM_MISMATCH",
+            "UPLOAD_NOT_VERIFIED",
+            "NOT_FOUND",
+            "INVALID_ARGUMENT",
+            "ADAPTER_UNAVAILABLE",
+        }
         return error_response(
             request,
             exc.status_code,
-            codes.get(exc.status_code, "HTTP_ERROR"),
+            detail if detail in known else codes.get(exc.status_code, "HTTP_ERROR"),
             "请求路径不存在或方法不受支持",
         )
 
@@ -92,4 +109,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
 
     app.include_router(router)
+    app.include_router(business_router)
     return app
