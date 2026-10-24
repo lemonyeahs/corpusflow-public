@@ -18,6 +18,7 @@ import boto3
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from corpusflow.db.models import (
@@ -55,6 +56,7 @@ from corpusflow.db.models import (
     Workspace,
     uid,
 )
+from corpusflow.services.dataset_materializer import MaterializationError, materialize
 from corpusflow.worker.outbox import enqueue_run
 
 router = APIRouter(prefix="/api/v1", tags=["business"])
@@ -1091,6 +1093,17 @@ def validate_build(build_id: str, request: Request, session: Session = Depends(d
         )
     ok = bool(samples) and all(c["ok"] for c in checks)
     build.status = "validated" if ok else "awaiting_review"
+    build.validated_by = user if ok else None
+    build.validated_snapshot_hash = (
+        digest(
+            {
+                "config_hash": build.config_hash,
+                "samples": sorted((s.id, s.payload_hash, s.status) for s in samples),
+            }
+        )
+        if ok
+        else None
+    )
     session.commit()
     return {
         "build_id": build.id,
@@ -1153,7 +1166,9 @@ def publish(
         raise HTTPException(404, "NOT_FOUND")
     existing = session.scalar(
         select(DatasetVersion).where(
-            DatasetVersion.dataset_id == dataset_id, DatasetVersion.version == body.version
+            DatasetVersion.dataset_id == dataset_id,
+            DatasetVersion.workspace_id == wid,
+            DatasetVersion.version == body.version,
         )
     )
     if existing:
@@ -1174,32 +1189,15 @@ def publish(
     }
     if user in reviewer_ids:
         raise HTTPException(409, "SELF_APPROVAL_FORBIDDEN")
-    manifest = {
-        "dataset_id": dataset_id,
-        "build_id": build.id,
-        "samples": [s.payload for s in samples],
-    }
-    manifest_hash = digest(manifest)
-    version = DatasetVersion(
-        workspace_id=wid,
-        dataset_id=dataset_id,
-        build_id=build.id,
-        version=body.version,
-        manifest_sha256=manifest_hash,
-        content_sha256=manifest_hash,
-        status="published",
-        published_by=user,
-    )
-    session.add(version)
-    session.flush()
-    for i, s in enumerate(samples):
-        session.add(
-            DatasetVersionSample(
-                dataset_version_id=version.id, candidate_sample_id=s.id, split="train"
-            )
+    try:
+        version, object_keys = materialize(
+            session, request.app.state.config, wid, dataset, build, samples, user, body.version
         )
-        edge(session, wid, "CandidateSample", s.id, "DatasetVersion", version.id, "included_in")
-    build.status = "published"
+    except MaterializationError as exc:
+        raise HTTPException(409, exc.code) from exc
+    except IntegrityError as exc:
+        session.rollback()
+        raise HTTPException(409, "VERSION_CONFLICT") from exc
     audit(
         session,
         request,
@@ -1210,12 +1208,193 @@ def publish(
         version.id,
         {"version": body.version},
     )
-    session.commit()
+    try:
+        session.commit()
+    except Exception:
+        session.rollback()
+        store = request.app.state.config
+        from corpusflow.adapters.storage import S3ObjectStore
+
+        storage = S3ObjectStore(
+            store.object_store_endpoint,
+            store.object_store_bucket,
+            store.object_store_access_key.get_secret_value(),
+            store.object_store_secret_key.get_secret_value(),
+        )
+        for key in object_keys:
+            try:
+                storage.delete(key)
+            except Exception:
+                pass
+        raise
+    from corpusflow.adapters.storage import S3ObjectStore
+
+    storage = S3ObjectStore(
+        request.app.state.config.object_store_endpoint,
+        request.app.state.config.object_store_bucket,
+        request.app.state.config.object_store_access_key.get_secret_value(),
+        request.app.state.config.object_store_secret_key.get_secret_value(),
+    )
+    for key in object_keys[:2]:
+        try:
+            storage.delete(key)
+        except Exception:
+            pass
     return {
         "dataset_version_id": version.id,
         "status": version.status,
-        "manifest_sha256": manifest_hash,
-        "sample_count": len(samples),
+        "manifest_sha256": version.manifest_sha256,
+        "content_sha256": version.content_sha256,
+        "sample_count": version.sample_count,
+        "content_storage_key": version.content_storage_key,
+    }
+
+
+def _version_authorized(session: Session, wid: str, version: DatasetVersion, purpose: str) -> bool:
+    samples = session.scalars(
+        select(CandidateSample)
+        .join(DatasetVersionSample, DatasetVersionSample.candidate_sample_id == CandidateSample.id)
+        .where(DatasetVersionSample.dataset_version_id == version.id)
+    ).all()
+    assets: list[Asset] = []
+    seen: set[str] = set()
+    for sample in samples:
+        for evidence_id in sample.payload.get("evidence_ids", []):
+            asset = session.scalar(
+                select(Asset)
+                .join(Document, Document.asset_id == Asset.id)
+                .join(DocumentVersion, DocumentVersion.document_id == Document.id)
+                .join(Segment, Segment.document_version_id == DocumentVersion.id)
+                .where(Segment.id == str(evidence_id), Asset.workspace_id == wid)
+            )
+            if asset and asset.id not in seen:
+                seen.add(asset.id)
+                assets.append(asset)
+    if not assets:
+        return False
+    return all(
+        session.scalar(
+            select(LicenseGrant.id).where(
+                LicenseGrant.workspace_id == wid,
+                LicenseGrant.asset_id == asset.id,
+                LicenseGrant.purpose == purpose,
+                LicenseGrant.status == "confirmed",
+            )
+        )
+        for asset in assets
+    )
+
+
+@router.get("/datasets/{dataset_id}/versions")
+def list_versions(dataset_id: str, request: Request, session: Session = Depends(db)):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    if not session.scalar(
+        select(Dataset).where(Dataset.id == dataset_id, Dataset.workspace_id == wid)
+    ):
+        raise HTTPException(404, "NOT_FOUND")
+    rows = session.scalars(
+        select(DatasetVersion)
+        .where(DatasetVersion.dataset_id == dataset_id, DatasetVersion.workspace_id == wid)
+        .order_by(DatasetVersion.created_at.desc())
+    ).all()
+    return {
+        "items": [
+            {
+                "dataset_version_id": row.id,
+                "version": row.version,
+                "status": row.status,
+                "sample_count": row.sample_count,
+                "content_sha256": row.content_sha256,
+                "manifest_sha256": row.manifest_sha256,
+                "published_at": row.published_at.isoformat() if row.published_at else None,
+            }
+            for row in rows
+        ]
+    }
+
+
+@router.get("/datasets/{dataset_id}/versions/{version}/manifest")
+def get_manifest(dataset_id: str, version: str, request: Request, session: Session = Depends(db)):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    row = session.scalar(
+        select(DatasetVersion).where(
+            DatasetVersion.dataset_id == dataset_id,
+            DatasetVersion.version == version,
+            DatasetVersion.workspace_id == wid,
+            DatasetVersion.status == "published",
+        )
+    )
+    if not row:
+        raise HTTPException(404, "DATASET_VERSION_NOT_FOUND")
+    try:
+        from corpusflow.adapters.storage import S3ObjectStore
+
+        storage = S3ObjectStore(
+            request.app.state.config.object_store_endpoint,
+            request.app.state.config.object_store_bucket,
+            request.app.state.config.object_store_access_key.get_secret_value(),
+            request.app.state.config.object_store_secret_key.get_secret_value(),
+        )
+        return json.loads(storage.get(row.manifest_storage_key))
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(503, "ADAPTER_UNAVAILABLE") from exc
+
+
+@router.get("/datasets/{dataset_id}/versions/{version}/download")
+def get_download(
+    dataset_id: str,
+    version: str,
+    request: Request,
+    session: Session = Depends(db),
+    purpose: str = "training",
+):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    row = session.scalar(
+        select(DatasetVersion).where(
+            DatasetVersion.dataset_id == dataset_id,
+            DatasetVersion.version == version,
+            DatasetVersion.workspace_id == wid,
+            DatasetVersion.status == "published",
+        )
+    )
+    if not row:
+        raise HTTPException(404, "DATASET_VERSION_NOT_FOUND")
+    if not _version_authorized(session, wid, row, purpose):
+        raise HTTPException(403, "DOWNLOAD_NOT_AUTHORIZED")
+    from corpusflow.adapters.storage import S3ObjectStore
+
+    storage = S3ObjectStore(
+        request.app.state.config.object_store_endpoint,
+        request.app.state.config.object_store_bucket,
+        request.app.state.config.object_store_access_key.get_secret_value(),
+        request.app.state.config.object_store_secret_key.get_secret_value(),
+    )
+    try:
+        url = storage.presign_get(row.content_storage_key, 300)
+    except Exception as exc:
+        raise HTTPException(503, "ADAPTER_UNAVAILABLE") from exc
+    audit(
+        session,
+        request,
+        wid,
+        user,
+        "dataset.version.download",
+        "dataset_version",
+        row.id,
+        {"purpose": purpose},
+    )
+    session.commit()
+    return {
+        "dataset_version_id": row.id,
+        "version": row.version,
+        "url": url,
+        "expires_in": 300,
+        "purpose": purpose,
     }
 
 

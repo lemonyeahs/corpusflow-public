@@ -1,6 +1,6 @@
 # CorpusFlow
 
-当前交付包含 **P0-A 以及 P0-B～P0-F 的最小真实业务闭环**：FastAPI、真实依赖探活、版本化迁移、空间与用途授权、真实字节上传登记、批量 Run/质检恢复、SFT 构建/不可变发布、血缘和审计。V3.1 仍是独立浏览器 DEMO，不能代表正式 Web UI 已完成。
+当前交付包含 **P0-A～P0-G 的本地可验收真实业务闭环**：FastAPI、版本化迁移、空间与用途授权、真实字节上传、异步 Run、PDF/HTML 解析、SFT 构建审核、JSONL/Manifest 数据集物化、不可变发布、签名下载、血缘和审计。V3.1 仍是独立浏览器 DEMO，不能代表正式 Web UI 已完成。
 
 ## 本地启动
 
@@ -44,7 +44,7 @@ export CF_TEST_ADMIN_DATABASE_URL="$DATABASE_URL"
 make integration
 ```
 
-无 `CF_TEST_ADMIN_DATABASE_URL` 时集成测试显示 SKIP，不算通过。生产数据库禁止运行上述测试。初始化迁移为 `0001_p0a`，业务表在 `0002_business`、发布不可变保护在 `0003_immutable_release`；均需在本地测试库执行迁移检查，不对生产自动运行。
+无 `CF_TEST_ADMIN_DATABASE_URL` 时集成测试显示 SKIP，不算通过。生产数据库禁止运行上述测试。初始化迁移为 `0001_p0a`，业务表在 `0002_business`、发布不可变保护在 `0003_immutable_release`、异步执行在 `0004_async_processing`、数据集物化与交付在 `0005_dataset_materialization`；均需在本地测试库执行迁移检查，不对生产自动运行。
 
 ```sh
 make down                 # 停服务并保留所有 named volumes
@@ -57,12 +57,12 @@ P0-A 回滚：停止 API，备份开发数据库后可在本地执行 `uv run --
 - `apps/api/src/corpusflow`：API、配置/错误/日志、DB、业务路由与策略、真实依赖探测；`modules/*` 保留后续扩展边界。
 - `apps/api/alembic`：版本化迁移。业务 Service 持有事务边界，禁止 ORM event 复制业务策略。
 - `apps/web`：P0-F 前端对接边界；`docs/prototype` 为原型只读参考副本。
-- `infra`：PostgreSQL 16、Redis、MinIO 和 API 的本地 Compose；无正式 Worker。
+- `infra`：PostgreSQL 16、Redis、MinIO、API、Worker 和 Outbox Dispatcher 的本地 Compose。
 - `tests`：单元、契约、独立临时 PostgreSQL 迁移测试；`scripts/verify_business_loop.py` 覆盖 P0-B～F 业务门禁。
 - `docs/plans`：现状、分阶段任务、追踪矩阵、待确认决策。
-- `docs/reports/P0-A_ACCEPTANCE.md`：实际执行证据与限制。
+- `docs/reports/P0_DATASET_MATERIALIZATION_ACCEPTANCE.md`：P0-G 数据集物化、发布和交付证据。
 
-分层：Router → Application Service → Domain Policy → Repository / Adapter。当前开发身份 session、内置 parser 和同步 API 是受控本地实现；生产 OIDC、Celery/Outbox、外部 parser/generation、对象发布物化和正式 Web UI 仍未接入。请求 JSON 日志不能替代不可变业务审计。
+分层：Router → Application Service → Domain Policy → Repository / Adapter。当前开发身份 session、内置 parser、Celery/Outbox 和本地数据集物化是受控本地实现；生产 OIDC、外部 parser/generation 和正式 Web UI 仍未接入。请求 JSON 日志不能替代不可变业务审计。
 
 项目仓库：[lemonyeahs/corpusflow](https://github.com/lemonyeahs/corpusflow)（私有）。默认分支为 `main`。P0-A 验收报告记录首次发布前的本地验收状态；远程 CI 结果以 GitHub Actions 为准。首次远程运行的镜像拉取限制见 [GitHub 上传记录](docs/reports/GITHUB_UPLOAD.md)。
 

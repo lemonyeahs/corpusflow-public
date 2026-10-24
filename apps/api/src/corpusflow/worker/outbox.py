@@ -35,6 +35,29 @@ def enqueue_run(session: Session, workspace_id: str, run_id: str) -> OutboxEvent
     return event
 
 
+def enqueue_delivery(session: Session, workspace_id: str, version_id: str) -> OutboxEvent:
+    existing = session.scalar(
+        select(OutboxEvent).where(
+            OutboxEvent.aggregate_type == "DatasetVersion",
+            OutboxEvent.aggregate_id == version_id,
+            OutboxEvent.event_type == "dataset.version.deliver",
+        )
+    )
+    if existing:
+        if existing.status in {"failed", "pending"}:
+            existing.status = "pending"
+        return existing
+    event = OutboxEvent(
+        workspace_id=workspace_id,
+        aggregate_type="DatasetVersion",
+        aggregate_id=version_id,
+        event_type="dataset.version.deliver",
+        payload={"dataset_version_id": version_id},
+    )
+    session.add(event)
+    return event
+
+
 def publish_pending(session: Session, dispatcher: Dispatcher, limit: int = 100) -> int:
     now = datetime.now(UTC)
     rows = session.scalars(

@@ -5,7 +5,7 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from corpusflow.core.config import Settings
 
-SCHEMA_REVISION = "0004_async_processing"
+SCHEMA_REVISION = "0005_dataset_materialization"
 
 
 class Base(DeclarativeBase):

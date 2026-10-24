@@ -1,0 +1,2 @@
+WORKER_RECOVERY PASS
+{"run_count": 3, "statuses": ["succeeded", "succeeded", "succeeded"], "worker_restarted": true}

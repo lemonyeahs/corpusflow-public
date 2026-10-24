@@ -6,7 +6,7 @@
 
 独立报告：[P0-B](../reports/P0-B_ACCEPTANCE_FINAL.md)、[P0-C](../reports/P0-C_ACCEPTANCE.md)、[P0-D](../reports/P0-D_ACCEPTANCE.md)、[P0-E](../reports/P0-E_ACCEPTANCE.md)、[P0-F](../reports/P0-F_ACCEPTANCE.md)。可重复入口为 `scripts/verify_business_loop.py`。
 
-当前实现仍是受控最小闭环：开发身份 session、内置 parser、数据库字节暂存和同步 API；OIDC、Celery/Outbox、病毒扫描、外部 parser/generation、S3 发布物化、正式 Web UI/E2E 和 P1 能力保持明确未完成。没有 push 或生产迁移，V3.1 原型未覆盖。
+当前实现已包含受控的真实异步处理和 P0-G 数据集物化：开发身份 session、内置 PDF/HTML parser、Celery/Outbox、MinIO JSONL/Manifest、签名下载和发布血缘；OIDC、病毒扫描、外部 parser/generation、正式 Web UI 和 P1 能力保持明确未完成。没有 push 或生产迁移，V3.1 原型未覆盖。
 
 ## 本轮复验状态
 

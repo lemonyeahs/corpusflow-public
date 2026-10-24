@@ -90,6 +90,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "NOT_FOUND",
             "INVALID_ARGUMENT",
             "ADAPTER_UNAVAILABLE",
+            "BUILD_SNAPSHOT_CHANGED",
+            "SAMPLE_NOT_APPROVED",
+            "INVALID_SAMPLE_FORMAT",
+            "INVALID_SAMPLE_EVIDENCE",
+            "PURPOSE_GRANT_MISSING",
+            "VERSION_CONFLICT",
+            "MATERIALIZATION_HASH_MISMATCH",
+            "DATASET_VERSION_NOT_FOUND",
+            "DOWNLOAD_NOT_AUTHORIZED",
         }
         return error_response(
             request,

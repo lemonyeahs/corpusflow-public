@@ -273,6 +273,8 @@ class DatasetBuild(Timestamped):
     config_json: Mapped[dict[str, Any]] = mapped_column(JSON)
     config_hash: Mapped[str] = mapped_column(String(64))
     status: Mapped[str] = mapped_column(String(40), default="snapshot_locked")
+    validated_snapshot_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    validated_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
 
 class BuildInput(Timestamped):
@@ -319,6 +321,16 @@ class DatasetVersion(Timestamped):
     content_sha256: Mapped[str] = mapped_column(String(64))
     status: Mapped[str] = mapped_column(String(30), default="published")
     published_by: Mapped[str] = mapped_column(String(36))
+    manifest_storage_key: Mapped[str] = mapped_column(Text, default="")
+    content_storage_key: Mapped[str] = mapped_column(Text, default="")
+    content_bytes: Mapped[int] = mapped_column(Integer, default=0)
+    sample_count: Mapped[int] = mapped_column(Integer, default=0)
+    train_count: Mapped[int] = mapped_column(Integer, default=0)
+    validation_count: Mapped[int] = mapped_column(Integer, default=0)
+    test_count: Mapped[int] = mapped_column(Integer, default=0)
+    token_count: Mapped[int] = mapped_column(Integer, default=0)
+    tokenizer_version: Mapped[str] = mapped_column(String(80), default="builtin-whitespace-1")
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     __table_args__ = (UniqueConstraint("dataset_id", "version", name="uq_dataset_version"),)
 
 
@@ -327,6 +339,17 @@ class DatasetVersionSample(Timestamped):
     dataset_version_id: Mapped[str] = mapped_column(ForeignKey("dataset_versions.id"), index=True)
     candidate_sample_id: Mapped[str] = mapped_column(ForeignKey("candidate_samples.id"), index=True)
     split: Mapped[str] = mapped_column(String(20))
+
+
+class DatasetVersionArtifact(Timestamped):
+    __tablename__ = "dataset_version_artifacts"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    dataset_version_id: Mapped[str] = mapped_column(ForeignKey("dataset_versions.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(40))
+    storage_key: Mapped[str] = mapped_column(Text, unique=True)
+    content_sha256: Mapped[str] = mapped_column(String(64))
+    byte_size: Mapped[int] = mapped_column(Integer)
+    immutable: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
 class LineageEdge(Timestamped):
