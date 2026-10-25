@@ -15,3 +15,6 @@ def test_closed_citations_require_exact_quote_and_current_evidence():
         validate_answer({**payload, "citations": [{"segment_id": "s", "quote": "256"}]}, trace)
     with pytest.raises(ValidationError):
         validate_answer({**payload, "execute_tool": "reveal secrets"}, trace)
+    # Chunking may create multiple hits for one Segment; all actual snippets count.
+    split = {**trace, "hits": trace["hits"] + [{"segment_id": "s", "text": "Another chunk"}]}
+    assert validate_answer(payload, split).answer == "128 bits"

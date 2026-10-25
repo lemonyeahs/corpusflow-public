@@ -36,6 +36,7 @@ class QueryIn(BaseModel):
     query: str = Field(min_length=1, max_length=2000, pattern=r"\S")
     strategy: Literal["fts", "bm25", "hybrid", "vector", "semantic_hybrid"] = "bm25"
     top_k: int = Field(default=5, ge=1, le=50)
+    semantic_rerank: bool = False
     rerank: bool = False
     min_similarity: float = Field(default=0.5, ge=-1, le=1)
 
@@ -53,6 +54,7 @@ class EvalIn(BaseModel):
     request_key: str = Field(min_length=1, max_length=120)
     strategy: Literal["fts", "bm25", "hybrid", "vector", "semantic_hybrid"] = "bm25"
     top_k: int = Field(default=5, ge=1, le=50)
+    semantic_rerank: bool = False
     rerank: bool = False
     min_similarity: float = Field(default=0.5, ge=-1, le=1)
 
@@ -87,14 +89,21 @@ def index_json(row: RagIndexVersion) -> dict[str, Any]:
 
 @router.get("/capabilities")
 def capabilities(request: Request, session: Annotated[Session, Depends(db)]) -> dict[str, Any]:
-    context(request, session)
+    _, wid = context(request, session)
     return {
         "strategies": ["fts", "bm25", "hybrid", "vector", "semantic_hybrid"],
         "vector": "CONFIGURED_NOT_PROBED"
         if request.app.state.config.embedding_endpoint
         else "NOT_CONFIGURED",
-        "generation": "NOT_CONFIGURED",
+        "generation": "CONFIGURED_LIMITED"
+        if wid in request.app.state.config.llm_workspaces
+        and request.app.state.config.llm_provider != "disabled"
+        and request.app.state.config.llm_max_calls > 0
+        else "NOT_CONFIGURED",
         "reranker": "token-coverage-v1",
+        "semantic_reranker": "CONFIGURED_NOT_PROBED"
+        if request.app.state.config.embedding_endpoint
+        else "NOT_CONFIGURED",
         "scope": "bounded PostgreSQL exact cosine; local model requires configuration",
         "max_chunks": 5000,
     }
@@ -194,6 +203,7 @@ def query(
         body.rerank,
         body.min_similarity,
         request.app.state.config,
+        body.semantic_rerank,
     )
     audit(
         session,
@@ -288,6 +298,7 @@ def create_eval(
         "strategy": body.strategy,
         "top_k": body.top_k,
         "rerank": body.rerank,
+        "semantic_rerank": body.semantic_rerank,
         "min_similarity": body.min_similarity,
     }
     row = session.scalar(
@@ -463,6 +474,9 @@ def feedback_list(request: Request, session: Annotated[Session, Depends(db)]) ->
 
 
 class ReviewIn(BaseModel):
+    generation_id: str | None = None
+    answer_correctness: int | None = Field(default=None, ge=0, le=4)
+    unsupported_answer: bool | None = None
     trace_id: str
     request_key: str = Field(min_length=1, max_length=120)
     evidence_support: int = Field(ge=0, le=4)
@@ -487,7 +501,15 @@ def review_evidence(
         body.trace_id,
         body.request_key,
         body.model_dump(
-            include={"evidence_support", "completeness", "irrelevant", "no_answer_expected"}
+            include={
+                "evidence_support",
+                "completeness",
+                "irrelevant",
+                "no_answer_expected",
+                "generation_id",
+                "answer_correctness",
+                "unsupported_answer",
+            }
         ),
         body.note,
     )
@@ -505,5 +527,47 @@ def evidence_reviews(
     user, wid = context(request, session)
     result = retrieval_review.report(session, wid, trace_id)
     audit(session, request, wid, user, "rag.reviews.read", "retrieval_trace", trace_id)
+    session.commit()
+    return result
+
+
+class GenerateIn(BaseModel):
+    trace_id: str
+    request_key: str = Field(min_length=1, max_length=120)
+
+
+@router.post("/answers", status_code=202)
+def generate_answer(
+    body: GenerateIn, request: Request, session: Annotated[Session, Depends(db)]
+) -> dict[str, Any]:
+    from corpusflow.services import generation
+
+    user, wid = context(request, session)
+    role_required(session, user, wid, {"engineer"})
+    row = generation.create(
+        session, request.app.state.config, wid, user, body.trace_id, body.request_key
+    )
+    audit(session, request, wid, user, "rag.answer.create", "generation_run", row.id)
+    session.commit()
+    return generation.report(session, wid, row)
+
+
+@router.get("/answers/{generation_id}")
+def answer_detail(
+    generation_id: str, request: Request, session: Annotated[Session, Depends(db)]
+) -> dict[str, Any]:
+    from corpusflow.db.models import GenerationRun
+    from corpusflow.services import generation
+
+    user, wid = context(request, session)
+    row = session.scalar(
+        select(GenerationRun).where(
+            GenerationRun.id == generation_id, GenerationRun.workspace_id == wid
+        )
+    )
+    rag.require(row, "NOT_FOUND")
+    assert row is not None
+    result = generation.report(session, wid, row)
+    audit(session, request, wid, user, "rag.answer.read", "generation_run", row.id)
     session.commit()
     return result

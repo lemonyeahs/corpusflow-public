@@ -1,0 +1,110 @@
+{
+  "results": [
+    {
+      "generation_id": "d312afcf-bc72-4fc0-bd56-08dacb7121f3",
+      "trace_id": "4621a20a-a364-41e8-83c6-07b3c495a4c9",
+      "status": "succeeded",
+      "config": {
+        "cost": "PROVIDER_PRICE_NOT_KNOWN",
+        "model": "gpt-6.1-sol",
+        "tools": [],
+        "retries": 0,
+        "timeout": 45,
+        "endpoint": "https://taiba.cyou/v1",
+        "provider": "openai_compatible",
+        "temperature": 0,
+        "model_version": "PROVIDER_NOT_VERIFIED",
+        "prompt_version": "closed-evidence.v1",
+        "max_completion_tokens": 512
+      },
+      "result": {
+        "usage": {
+          "total_tokens": 419,
+          "prompt_tokens": 360,
+          "completion_tokens": 59
+        },
+        "answer": "AES block size is 128 bits.",
+        "citations": [
+          {
+            "quote": "Its block size is 128 bits.",
+            "segment_id": "cc9e96a1-a25d-42db-a007-2de826c26370"
+          }
+        ],
+        "elapsed_ms": 8292.083836015081,
+        "input_sha256": "651bc91cd4c9d296594c492a84ac24863171bc995b4f1d839110ff8866153613",
+        "monetary_cost": "NOT_MEASURED",
+        "reported_model": "gpt-6.1-sol",
+        "evidence_trace_id": "4621a20a-a364-41e8-83c6-07b3c495a4c9",
+        "provider_response_id": "resp_0441bd003d900c1c016addde9aee2c819b9fe8184a5063c33e",
+        "semantic_faithfulness": "REQUIRES_HUMAN_REVIEW"
+      },
+      "error_code": null,
+      "call_reserved": true
+    },
+    {
+      "generation_id": "9792d330-25d9-43d5-9130-9fac0a9e4f0b",
+      "trace_id": "ff4a3e0b-5130-43b8-ab6b-c78cba1f1f11",
+      "status": "refused",
+      "config": {
+        "cost": "PROVIDER_PRICE_NOT_KNOWN",
+        "model": "gpt-6.1-sol",
+        "tools": [],
+        "retries": 0,
+        "timeout": 45,
+        "endpoint": "https://taiba.cyou/v1",
+        "provider": "openai_compatible",
+        "temperature": 0,
+        "model_version": "PROVIDER_NOT_VERIFIED",
+        "prompt_version": "closed-evidence.v1",
+        "max_completion_tokens": 512
+      },
+      "result": {
+        "usage": {
+          "total_tokens": 327,
+          "prompt_tokens": 312,
+          "completion_tokens": 15
+        },
+        "reason": "insufficient evidence",
+        "elapsed_ms": 1562.2176670003682,
+        "input_sha256": "c598d5d5b5088169f6d84021a24f546c0c59d8c8db7eb4fa98b2b5d01c66a5df",
+        "monetary_cost": "NOT_MEASURED",
+        "reported_model": "gpt-6.1-sol",
+        "provider_response_id": "resp_0d959e81ea0d567b016adddea1f2e0819989f32ccce99418ac"
+      },
+      "error_code": null,
+      "call_reserved": true
+    },
+    {
+      "generation_id": "a50cb2cb-1ca0-41eb-8cb0-8498e1e40cdb",
+      "trace_id": "73f51973-373a-4dc4-9cad-48b8a322ee6e",
+      "status": "refused",
+      "config": {
+        "provider": "openai_compatible",
+        "endpoint": "https://taiba.cyou/v1",
+        "model": "gpt-6.1-sol",
+        "model_version": "PROVIDER_NOT_VERIFIED",
+        "prompt_version": "closed-evidence.v1",
+        "temperature": 0,
+        "max_completion_tokens": 512,
+        "timeout": 45,
+        "retries": 0,
+        "tools": [],
+        "cost": "PROVIDER_PRICE_NOT_KNOWN"
+      },
+      "result": {
+        "reason": "ANSWER_EVIDENCE_INSUFFICIENT",
+        "external_calls": 0
+      },
+      "error_code": null,
+      "call_reserved": false
+    }
+  ],
+  "reserved_calls": 2,
+  "max_calls": 10,
+  "max_output_tokens": 512,
+  "dataset": "self-authored CC0 P1-D fixture only",
+  "checks": [
+    "duplicate message no extra reservation",
+    "no evidence no provider call"
+  ]
+}

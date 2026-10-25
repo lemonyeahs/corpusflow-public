@@ -1,0 +1,82 @@
+{
+  "generation_id": "d312afcf-bc72-4fc0-bd56-08dacb7121f3",
+  "report": {
+    "trace_id": "4621a20a-a364-41e8-83c6-07b3c495a4c9",
+    "rubric_version": "evidence-review.v1",
+    "scope": "individual retrieval/answer assessments; not verified expert judgments",
+    "answer_reviews": [
+      {
+        "generation_id": "d312afcf-bc72-4fc0-bd56-08dacb7121f3",
+        "ratings": [
+          {
+            "reviewer_id": "cc802a89-9da1-4db2-9d4f-51322ef921c8",
+            "irrelevant": false,
+            "completeness": 4,
+            "generation_id": "d312afcf-bc72-4fc0-bd56-08dacb7121f3",
+            "evidence_support": 4,
+            "answer_correctness": 4,
+            "no_answer_expected": false,
+            "unsupported_answer": false
+          },
+          {
+            "reviewer_id": "802470bc-91c3-4f1f-9ebe-8db7ee1cbd9a",
+            "irrelevant": false,
+            "completeness": 4,
+            "generation_id": "d312afcf-bc72-4fc0-bd56-08dacb7121f3",
+            "evidence_support": 4,
+            "answer_correctness": 4,
+            "no_answer_expected": false,
+            "unsupported_answer": false
+          }
+        ]
+      }
+    ],
+    "reviewer_count": 0,
+    "annotation_count": 2,
+    "support_range": null,
+    "disagreement": null,
+    "items": [
+      {
+        "review_id": "898ea70e-08b4-42c8-92ca-77d964d3c334",
+        "reviewer_id": "cc802a89-9da1-4db2-9d4f-51322ef921c8",
+        "ratings": {
+          "irrelevant": false,
+          "completeness": 4,
+          "generation_id": "d312afcf-bc72-4fc0-bd56-08dacb7121f3",
+          "evidence_support": 4,
+          "answer_correctness": 4,
+          "no_answer_expected": false,
+          "unsupported_answer": false
+        },
+        "note": "Synthetic UI workflow check against quoted AES fixture; not expert judgment",
+        "created_at": "2026-10-25T11:05:35.699193+00:00"
+      },
+      {
+        "review_id": "a3737609-d58f-4e2d-aa32-90779280ca61",
+        "reviewer_id": "802470bc-91c3-4f1f-9ebe-8db7ee1cbd9a",
+        "ratings": {
+          "irrelevant": false,
+          "completeness": 4,
+          "generation_id": "d312afcf-bc72-4fc0-bd56-08dacb7121f3",
+          "evidence_support": 4,
+          "answer_correctness": 4,
+          "no_answer_expected": false,
+          "unsupported_answer": false
+        },
+        "note": "Fixture workflow check, NOT expert judgment",
+        "created_at": "2026-10-25T11:06:16.888604+00:00"
+      }
+    ],
+    "expert_credentials": "NOT_VERIFIED"
+  },
+  "checks": [
+    "review idempotency",
+    "conflicting score denied",
+    "unknown answer denied",
+    "terminal answer update denied",
+    "budget reservation reset denied",
+    "deletion denied"
+  ],
+  "provider_calls": 0,
+  "expert_participation": "NOT_RUN"
+}

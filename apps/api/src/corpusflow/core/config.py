@@ -21,6 +21,34 @@ class Settings(BaseSettings):
     object_store_secret_key: SecretStr
     dependency_timeout: int = Field(default=2, ge=1, le=10)
 
+    llm_provider: Literal["disabled", "openai_compatible"] = "disabled"
+    llm_base_url: str = ""
+    llm_model: str = ""
+    llm_api_key: SecretStr = SecretStr("")
+    llm_workspaces: list[str] = Field(default_factory=list)
+    llm_max_calls: int = Field(default=0, ge=0, le=10)
+    llm_max_tokens: int = Field(default=512, ge=1, le=512)
+    llm_timeout: int = Field(default=45, ge=1, le=60)
+
+    @field_validator("llm_base_url")
+    @classmethod
+    def llm_endpoint(cls, value: str) -> str:
+        from urllib.parse import urlsplit
+
+        if not value:
+            return value
+        url = urlsplit(value)
+        if (
+            url.scheme != "https"
+            or not url.hostname
+            or url.username
+            or url.password
+            or url.query
+            or url.fragment
+        ):
+            raise ValueError("Explicit HTTPS provider URL without credentials required")
+        return value.rstrip("/")
+
     acquisition_hosts: list[str] = Field(default_factory=list)
     embedding_endpoint: str = ""
     embedding_timeout: int = Field(default=30, ge=1, le=60)

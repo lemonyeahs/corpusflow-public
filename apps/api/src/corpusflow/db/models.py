@@ -640,3 +640,19 @@ class IngestPlan(Timestamped):
     __table_args__ = (
         UniqueConstraint("workspace_id", "request_key", name="uq_ingest_plan_request"),
     )
+
+
+class GenerationRun(Timestamped):
+    __tablename__ = "generation_runs"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    trace_id: Mapped[str] = mapped_column(ForeignKey("retrieval_traces.id"))
+    created_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    request_key: Mapped[str] = mapped_column(String(120))
+    status: Mapped[str] = mapped_column(String(30), default="queued")
+    config_snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    call_reserved: Mapped[bool] = mapped_column(Boolean, default=False)
+    result: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    error_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "request_key", name="uq_generation_request"),
+    )

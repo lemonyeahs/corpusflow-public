@@ -5,7 +5,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from corpusflow.db.models import RetrievalReview, RetrievalTrace
+from corpusflow.db.models import GenerationRun, RetrievalReview, RetrievalTrace
 from corpusflow.services import rag
 from corpusflow.services.quality_governance import lock
 
@@ -30,8 +30,26 @@ def submit(
     ratings: dict[str, Any],
     note: str,
 ) -> RetrievalReview:
+    # Newly optional answer fields must not invalidate old retrieval-only request keys.
+    ratings = {key: value for key, value in ratings.items() if value is not None}
     lock(session, f"retrieval-review:{wid}:{key}")
     trace_for_review(session, wid, tid)
+    if ratings.get("generation_id"):
+        answer = session.scalar(
+            select(GenerationRun).where(
+                GenerationRun.id == ratings["generation_id"],
+                GenerationRun.workspace_id == wid,
+                GenerationRun.trace_id == tid,
+                GenerationRun.status.in_(["succeeded", "refused"]),
+            )
+        )
+        rag.require(answer, "NOT_FOUND")
+        rag.require(ratings.get("answer_correctness") is not None, "INVALID_ARGUMENT")
+    else:
+        rag.require(
+            ratings.get("answer_correctness") is None and ratings.get("unsupported_answer") is None,
+            "INVALID_ARGUMENT",
+        )
     existing = session.scalar(
         select(RetrievalReview).where(
             RetrievalReview.workspace_id == wid, RetrievalReview.request_key == key
@@ -41,7 +59,8 @@ def submit(
         rag.require(
             existing.trace_id == tid
             and existing.reviewer_id == reviewer
-            and existing.ratings == ratings
+            and {key: value for key, value in existing.ratings.items() if value is not None}
+            == ratings
             and existing.note == note,
             "IDEMPOTENCY_KEY_REUSED",
         )
@@ -66,12 +85,26 @@ def report(session: Session, wid: str, tid: str) -> dict[str, Any]:
         .where(RetrievalReview.workspace_id == wid, RetrievalReview.trace_id == tid)
         .order_by(RetrievalReview.created_at, RetrievalReview.id)
     ).all()
-    latest = {row.reviewer_id: row for row in rows}
+    latest = {row.reviewer_id: row for row in rows if not row.ratings.get("generation_id")}
+    answers = {
+        str(row.ratings["generation_id"]) for row in rows if row.ratings.get("generation_id")
+    }
     scores = [row.ratings["evidence_support"] for row in latest.values()]
     return {
         "trace_id": tid,
         "rubric_version": "evidence-review.v1",
-        "scope": "retrieval evidence only; generated answer NOT_EVALUATED",
+        "scope": "individual retrieval/answer assessments; not verified expert judgments",
+        "answer_reviews": [
+            {
+                "generation_id": aid,
+                "ratings": [
+                    {"reviewer_id": r.reviewer_id, **r.ratings}
+                    for r in rows
+                    if r.ratings.get("generation_id") == aid
+                ],
+            }
+            for aid in sorted(answers)
+        ],
         "reviewer_count": len(latest),
         "annotation_count": len(rows),
         "support_range": [min(scores), max(scores)] if scores else None,

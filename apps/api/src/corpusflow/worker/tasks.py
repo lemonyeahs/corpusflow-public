@@ -637,3 +637,54 @@ def collect(self: Any, plan_id: str) -> dict[str, str]:
             row.error_code = code
             session.commit()
             return {"plan_id": plan_id, "status": "failed", "error_code": code}
+
+
+@celery_app.task(bind=True, name="corpusflow.generate", max_retries=20, acks_late=True)  # type: ignore[untyped-decorator]
+def generate(self: Any, generation_id: str) -> dict[str, str]:
+    from sqlalchemy import text
+
+    from corpusflow.db.models import GenerationRun
+    from corpusflow.services import generation
+
+    settings = load_settings()
+    engine = build_engine(settings)
+    try:
+        with engine.connect() as connection:
+            # Session-level lock pins one connection through reservation commits.
+            # Serial provider calls bound concurrency without retrying HTTP requests.
+            acquired = connection.scalar(
+                text("SELECT pg_try_advisory_lock(hashtext('cf-generation-provider'))")
+            )
+            connection.commit()
+            if not acquired:
+                raise self.retry(exc=RuntimeError("GENERATION_PROVIDER_BUSY"), countdown=5)
+            try:
+                with Session(bind=connection, expire_on_commit=False) as session:
+                    row = session.get(GenerationRun, generation_id)
+                    if row is None:
+                        return {"id": generation_id, "status": "missing"}
+                    if row.status in {"succeeded", "refused", "failed"}:
+                        return {"id": row.id, "status": row.status}
+                    try:
+                        if row.call_reserved:
+                            raise ValueError("GENERATION_CALL_OUTCOME_UNKNOWN")
+                        generation.execute(session, settings, row)
+                        session.commit()
+                    except Exception as exc:
+                        session.rollback()
+                        code = str(exc) if isinstance(exc, ValueError) else "GENERATION_FAILED"
+                        if not code.isupper() or len(code) > 100:
+                            code = "GENERATION_FAILED"
+                        row = session.get(GenerationRun, generation_id)
+                        assert row is not None
+                        row.status = "failed"
+                        row.error_code = code
+                        session.commit()
+                    return {"id": row.id, "status": row.status}
+            finally:
+                connection.execute(
+                    text("SELECT pg_advisory_unlock(hashtext('cf-generation-provider'))")
+                )
+                connection.commit()
+    finally:
+        engine.dispose()

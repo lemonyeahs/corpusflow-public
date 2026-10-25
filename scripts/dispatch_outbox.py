@@ -15,6 +15,7 @@ class Dispatcher:
         task_name = {
             "pipeline.run.execute": "corpusflow.execute_pipeline_run",
             "collection.plan.execute": "corpusflow.collect",
+            "rag.answer.generate": "corpusflow.generate",
             "rag.index.build": "corpusflow.rag_job",
             "rag.evaluation.execute": "corpusflow.rag_job",
             "dataset.version.deliver": "corpusflow.deliver_dataset_version",

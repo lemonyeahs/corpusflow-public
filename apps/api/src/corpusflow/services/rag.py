@@ -16,6 +16,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from corpusflow.adapters.embedding import EmbeddingAdapter, cosine
+from corpusflow.adapters.reranker import RerankerAdapter
 from corpusflow.adapters.retrieval import TOKENIZER, bm25, metrics, reciprocal_rank, tokens
 from corpusflow.core.config import Settings, load_settings
 from corpusflow.db.models import (
@@ -362,6 +363,7 @@ def retrieve(
     rerank: bool = False,
     min_similarity: float = 0.5,
     settings: Settings | None = None,
+    semantic_rerank: bool = False,
 ) -> RetrievalTrace:
     member(session, wid, actor)
     require(
@@ -416,6 +418,14 @@ def retrieve(
     }
     if rerank:
         ranking.sort(key=lambda key: (-coverage[key], -scores[key], key))
+    reranker_scores: dict[str, float] = {}
+    reranker_metadata: dict[str, Any] = {}
+    if semantic_rerank and ranking:
+        candidates = ranking[: max(top_k, 20)]
+        reranker_scores, reranker_metadata = RerankerAdapter(settings or load_settings()).rerank(
+            query, {key: documents[key] for key in candidates}
+        )
+        ranking = sorted(candidates, key=lambda key: (-reranker_scores[key], original_ranks[key]))
     by_id = {c.id: c for c in chunks}
     hits = [
         {
@@ -431,6 +441,7 @@ def retrieve(
                 "bm25": sparse.get(key),
                 "fts": fts.get(key),
                 "rrf": fused.get(key),
+                "rerank_semantic_cosine": reranker_scores.get(key),
                 "rerank_coverage": coverage[key] if rerank else None,
                 "query_coverage": coverage[key],
             },
@@ -449,7 +460,12 @@ def retrieve(
             "min_similarity": min_similarity,
             "rrf_constant": 60,
             "embedding": index.config.get("embedding"),
-            "reranker": "token-coverage-v1" if rerank else None,
+            "reranker": "bi-encoder-cosine.v1"
+            if semantic_rerank
+            else "token-coverage-v1"
+            if rerank
+            else None,
+            "reranker_metadata": reranker_metadata,
         },
         result={
             "status": (

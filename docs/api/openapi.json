@@ -1318,6 +1318,133 @@
         }
       }
     },
+    "/api/v1/rag/answers": {
+      "post": {
+        "tags": [
+          "rag"
+        ],
+        "summary": "Generate Answer",
+        "operationId": "generate_answer_api_v1_rag_answers_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Generate Answer Api V1 Rag Answers Post"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rag/answers/{generation_id}": {
+      "get": {
+        "tags": [
+          "rag"
+        ],
+        "summary": "Answer Detail",
+        "operationId": "answer_detail_api_v1_rag_answers__generation_id__get",
+        "parameters": [
+          {
+            "name": "generation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Generation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Answer Detail Api V1 Rag Answers  Generation Id  Get"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -5050,6 +5177,11 @@
             "title": "Top K",
             "default": 5
           },
+          "semantic_rerank": {
+            "type": "boolean",
+            "title": "Semantic Rerank",
+            "default": false
+          },
           "rerank": {
             "type": "boolean",
             "title": "Rerank",
@@ -5132,6 +5264,26 @@
           "note"
         ],
         "title": "FeedbackIn"
+      },
+      "GenerateIn": {
+        "properties": {
+          "trace_id": {
+            "type": "string",
+            "title": "Trace Id"
+          },
+          "request_key": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Request Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "trace_id",
+          "request_key"
+        ],
+        "title": "GenerateIn"
       },
       "GrantIn": {
         "properties": {
@@ -5514,6 +5666,11 @@
             "title": "Top K",
             "default": 5
           },
+          "semantic_rerank": {
+            "type": "boolean",
+            "title": "Semantic Rerank",
+            "default": false
+          },
           "rerank": {
             "type": "boolean",
             "title": "Rerank",
@@ -5707,6 +5864,41 @@
       },
       "corpusflow__api__v1__rag__ReviewIn": {
         "properties": {
+          "generation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generation Id"
+          },
+          "answer_correctness": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 4.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer Correctness"
+          },
+          "unsupported_answer": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unsupported Answer"
+          },
           "trace_id": {
             "type": "string",
             "title": "Trace Id"

@@ -1,0 +1,32 @@
+import {expect,test} from '@playwright/test';
+import fs from 'node:fs';
+import path from 'node:path';
+
+test('P2-B actual provider answer, citations and refusal history without new billable calls',async({page})=>{
+ const root=path.resolve(process.cwd(),'../..');
+ const fixture=JSON.parse(fs.readFileSync(path.join(root,'.local/p2/llm-fixture.json'),'utf8'));
+ const evidence=JSON.parse(fs.readFileSync(path.join(root,'.local/p2/generation-evidence.json'),'utf8'));
+ await page.goto('/');
+ await page.evaluate(s=>localStorage.setItem('corpusflow.p0h.session',JSON.stringify(s)),fixture.session);
+ await page.reload();
+ await page.getByRole('button',{name:'下游验证',exact:true}).click();
+ await page.getByLabel('回答任务 ID',{exact:true}).fill(evidence.results[0].generation_id);
+ await page.getByRole('button',{name:'查看回答任务',exact:true}).click();
+ await expect(page.getByTestId('generation-result')).toContainText('128');
+ await expect(page.getByTestId('generation-result')).toContainText(evidence.results[0].result.citations[0].segment_id);
+ await page.getByRole('button',{name:'查看回答证据与评分',exact:true}).click();
+ await page.getByLabel('回答正确性',{exact:true}).fill('4');
+ await page.getByLabel('证据支持性',{exact:true}).fill('4');
+ await page.getByLabel('证据完整性',{exact:true}).fill('4');
+ await page.getByLabel('核对依据 / 反馈说明',{exact:true}).fill('Synthetic UI workflow check against quoted AES fixture; not expert judgment');
+ await page.getByRole('button',{name:'提交证据评分',exact:true}).click();
+ await expect(page.getByTestId('review-report')).toContainText(evidence.results[0].generation_id);
+ await expect(page.getByTestId('review-report')).toContainText('answer_correctness');
+ fs.mkdirSync(path.join(root,'.local/demo'),{recursive:true});
+ await page.screenshot({path:path.join(root,'.local/demo/evidence-answer.png'),fullPage:true});
+ await page.getByLabel('回答任务 ID',{exact:true}).fill(evidence.results[1].generation_id);
+ await page.getByRole('button',{name:'查看回答任务',exact:true}).click();
+ await expect(page.getByTestId('generation-result')).toContainText('insufficient evidence');
+ await page.setViewportSize({width:390,height:844});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();
+});

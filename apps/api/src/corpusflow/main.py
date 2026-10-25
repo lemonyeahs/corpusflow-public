@@ -13,6 +13,7 @@ from starlette.responses import Response
 
 from corpusflow.adapters.acquisition import AcquisitionError
 from corpusflow.adapters.embedding import EmbeddingError
+from corpusflow.adapters.generation import GenerationError
 from corpusflow.adapters.readiness import DependencyProbe
 from corpusflow.api.health import router
 from corpusflow.api.v1.business import router as business_router
@@ -140,6 +141,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             [{"location": list(e["loc"]), "type": e["type"]} for e in exc.errors()],
         )
 
+    @app.exception_handler(GenerationError)
     @app.exception_handler(AcquisitionError)
     @app.exception_handler(EmbeddingError)
     @app.exception_handler(RagError)
@@ -149,7 +151,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             404
             if code == "NOT_FOUND"
             else 403
-            if code in {"PERMISSION_DENIED", "PURPOSE_GRANT_MISSING"}
+            if code
+            in {"PERMISSION_DENIED", "PURPOSE_GRANT_MISSING", "GENERATION_EGRESS_NOT_AUTHORIZED"}
             else 409
         )
         return error_response(request, status, code, "RAG 操作未完成，请检查索引、用途授权或配置")

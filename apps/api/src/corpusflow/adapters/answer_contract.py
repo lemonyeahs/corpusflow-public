@@ -22,8 +22,12 @@ def validate_answer(payload: dict[str, Any], visible_trace: dict[str, Any]) -> E
     if visible_trace.get("status") != "EVIDENCE_FOUND":
         raise ValueError("ANSWER_EVIDENCE_INSUFFICIENT")
     result = EvidenceAnswer.model_validate(payload)
-    hits = {h["segment_id"]: h["text"] for h in visible_trace.get("hits", [])}
+    hits: dict[str, list[str]] = {}
+    for hit in visible_trace.get("hits", []):
+        hits.setdefault(hit["segment_id"], []).append(hit["text"])
     for citation in result.citations:
-        if citation.segment_id not in hits or citation.quote not in hits[citation.segment_id]:
+        if citation.segment_id not in hits or not any(
+            citation.quote in text for text in hits[citation.segment_id]
+        ):
             raise ValueError("ANSWER_CITATION_INVALID")
     return result

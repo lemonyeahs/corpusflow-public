@@ -1,4 +1,5 @@
 import { request, type ApiContext } from './client';
+export interface GeneratedAnswer {generation_id:string;trace_id:string;status:string;error_code:string|null;result:{answer?:string;citations?:Array<{segment_id:string;quote:string}>;reason?:string;usage?:Record<string,unknown>}}
 export interface RagVersion { dataset_version_id: string; dataset_id: string; version: string; product_type: string }
 export interface RagIndex { index_version_id: string; dataset_version_id: string; status: string; chunk_count: number; error_code: string | null; config: Record<string, unknown> }
 export interface RagHit { chunk_id: string; segment_id: string; source_id: string; asset_id: string; document_version_id: string; text: string; rank: number; location: Record<string, unknown>; scores: Record<string, number | null> }
@@ -8,6 +9,8 @@ export interface RagEvaluation { evaluation_id: string; status: string; error_co
 export interface RagFeedback { feedback_id: string; quality_issue_id: string; segment_id: string; status: string; note: string; category: string; run_id: string }
 const post = (body: unknown) => ({method: 'POST', body: JSON.stringify(body)});
 export const ragApi = {
+ generate: (ctx:ApiContext,trace_id:string)=>request<GeneratedAnswer>('/rag/answers',ctx,post({trace_id,request_key:crypto.randomUUID()})),
+ answer: (ctx:ApiContext,id:string)=>request<GeneratedAnswer>(`/rag/answers/${id}`,ctx),
  review: (ctx: ApiContext, body: unknown) => request<{review_id:string}>('/rag/reviews',ctx,post(body)),
  reviews: (ctx: ApiContext, id: string) => request<{reviewer_count:number;disagreement:number|null;items:unknown[];scope:string}>(`/rag/traces/${id}/reviews`,ctx),
  versions: (ctx: ApiContext) => request<{items: RagVersion[]}>('/rag/versions',ctx),

@@ -5,7 +5,7 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from corpusflow.core.config import Settings
 
-SCHEMA_REVISION = "0015_ingest_plans"
+SCHEMA_REVISION = "0017_generation_guards"
 
 
 class Base(DeclarativeBase):
