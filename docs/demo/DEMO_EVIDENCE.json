@@ -1,0 +1,115 @@
+[
+  {
+    "group": "normal",
+    "sha256": "07e7c6d6e62dee92e2d7745de37337c8da0f0d046609a45ec23d6124c6367b7a",
+    "bytes": 709,
+    "license": "repository-authored synthetic fixture; demo only",
+    "workspace_id": "22b8fad3-b431-4360-8113-6db21b07940e",
+    "asset_id": "f8420d73-fced-41ee-8b82-b046e15bf40e",
+    "runs": [
+      {
+        "run_id": "cca78520-7c8f-4b96-95f9-ac2181dcecd7",
+        "status": "succeeded",
+        "config": {},
+        "nodes": [
+          {
+            "node_run_id": "f598e16c-31dd-4c4a-8bb2-2a79be77600d",
+            "status": "succeeded"
+          },
+          {
+            "node_run_id": "4a51eca7-f67b-4c55-8d19-70c6f597a1bf",
+            "status": "succeeded"
+          },
+          {
+            "node_run_id": "5146dad3-3f34-4e4d-abc9-f7b7c948db4a",
+            "status": "succeeded"
+          },
+          {
+            "node_run_id": "ed2827ca-6aff-446f-9b60-05d699d4788a",
+            "status": "succeeded"
+          }
+        ]
+      }
+    ],
+    "document_version_ids": [
+      "2a25dbf1-5871-428e-8e07-0fb029cdcec9"
+    ]
+  },
+  {
+    "group": "failure",
+    "sha256": "c01c3f7725b397f3f7ea20c67b71c56b1e5ea4f45809a4a46867e7c0ff4bda7a",
+    "bytes": 17,
+    "license": "repository-authored synthetic fixture; demo only",
+    "workspace_id": "cc7f8525-cc11-4582-af23-b324b08cc7bd",
+    "asset_id": "2c133bfd-a3e9-42fd-961d-30dfb4873aea",
+    "runs": [
+      {
+        "run_id": "6667ccb3-b347-4bc6-9d53-628c1a3a11ad",
+        "status": "awaiting_review",
+        "config": {
+          "p0i": true
+        },
+        "nodes": [
+          {
+            "node_run_id": "690c3177-8cc9-4b1e-aaf7-713f98bad69a",
+            "status": "failed"
+          }
+        ]
+      }
+    ],
+    "document_version_ids": []
+  },
+  {
+    "group": "retrieval",
+    "sha256": "4a804b45eb920436e310d3c9118d021deae29e86fe4641ce502d5d9e159aef23",
+    "bytes": 2471,
+    "license": "repository-authored synthetic fixture; demo only",
+    "workspace_id": "028144cb-000f-4d7b-a65e-1aa18b904df3",
+    "asset_id": "ff348caa-43df-4eca-9c10-140fb0a8a344",
+    "runs": [
+      {
+        "run_id": "cb0755d7-8d4e-4d00-87ec-dd8040e8384d",
+        "status": "awaiting_review",
+        "config": {},
+        "nodes": [
+          {
+            "node_run_id": "892b2b48-6bbd-4af4-88cc-9e8d2086f87e",
+            "status": "succeeded"
+          },
+          {
+            "node_run_id": "70815a0b-4aff-4e8e-84f6-12c9a7ed60c7",
+            "status": "succeeded"
+          },
+          {
+            "node_run_id": "428b163d-e7ff-473a-9cdb-c8fddca32548",
+            "status": "succeeded"
+          },
+          {
+            "node_run_id": "0843b956-d640-41cc-99c7-4c1149840763",
+            "status": "succeeded"
+          },
+          {
+            "node_run_id": "cb6101c1-627e-4df5-bc15-1fe09f5fbb70",
+            "status": "succeeded"
+          },
+          {
+            "node_run_id": "a3012ac1-fc7b-41d1-9a0d-546136f2b6c5",
+            "status": "succeeded"
+          },
+          {
+            "node_run_id": "65c2b636-461f-4613-a874-9856184213e7",
+            "status": "succeeded"
+          },
+          {
+            "node_run_id": "79c974e3-cc47-471a-8adf-108e6ae1eb7a",
+            "status": "succeeded"
+          }
+        ]
+      }
+    ],
+    "document_version_ids": [
+      "7e440793-61de-4438-99c3-2b4dc586c1fe",
+      "265d94b1-a29f-46dc-af2e-59e9feb77f88"
+    ]
+  }
+]
