@@ -43,6 +43,8 @@ test('P1-D real index, queries, evaluation history and quality feedback',async({
  await page.getByLabel('核对依据 / 反馈说明',{exact:true}).fill('Web fixture feedback: inspect actual Merkle segment');
  await page.getByRole('button',{name:'记录质量反馈',exact:true}).first().click();
  await expect(page.getByText('retrieval · Web fixture feedback:',{exact:false})).toBeVisible();
+ fs.mkdirSync(path.join(root,'.local/demo'),{recursive:true});
+ await page.screenshot({path:path.join(root,'.local/demo/retrieval.png'),fullPage:true});
  await page.setViewportSize({width:390,height:844});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();
 });
