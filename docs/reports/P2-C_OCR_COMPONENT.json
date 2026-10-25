@@ -1,0 +1,123 @@
+{
+  "text": "CorpusFlow OCR evidence: AES block size is 128 bits.",
+  "sha256": "8dbaa199863c7d4eeb96eaaa360d5e6ba0adf2357e68bc17cad0c1bebd6ce2cc",
+  "structured": {
+    "engine": "tesseract 5.5.1",
+    "language": "eng",
+    "psm": 3,
+    "scale_to": 2400,
+    "words": [
+      {
+        "text": "CorpusFlow",
+        "page": 1,
+        "bbox": [
+          123,
+          251,
+          340,
+          61
+        ],
+        "confidence": 91.145264,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "OCR",
+        "page": 1,
+        "bbox": [
+          484,
+          250,
+          138,
+          50
+        ],
+        "confidence": 95.758675,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "evidence:",
+        "page": 1,
+        "bbox": [
+          644,
+          252,
+          268,
+          47
+        ],
+        "confidence": 95.937492,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "AES",
+        "page": 1,
+        "bbox": [
+          935,
+          251,
+          125,
+          49
+        ],
+        "confidence": 96.519501,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "block",
+        "page": 1,
+        "bbox": [
+          1084,
+          252,
+          146,
+          47
+        ],
+        "confidence": 96.684593,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "size",
+        "page": 1,
+        "bbox": [
+          1250,
+          252,
+          110,
+          47
+        ],
+        "confidence": 96.66391,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "is",
+        "page": 1,
+        "bbox": [
+          1384,
+          252,
+          41,
+          47
+        ],
+        "confidence": 95.553284,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "128",
+        "page": 1,
+        "bbox": [
+          1451,
+          252,
+          98,
+          47
+        ],
+        "confidence": 96.810951,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "bits.",
+        "page": 1,
+        "bbox": [
+          1574,
+          252,
+          108,
+          47
+        ],
+        "confidence": 96.87233,
+        "unit": "rendered_pixel"
+      }
+    ],
+    "page_count": 1,
+    "formula_structure": "NOT_EVALUATED",
+    "table_structure": "NOT_EVALUATED"
+  }
+}
