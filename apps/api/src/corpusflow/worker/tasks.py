@@ -10,6 +10,8 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from corpusflow.adapters.parser import HTMLParserAdapter, ParserError, PDFParserAdapter
+from corpusflow.adapters.parser.base import ParserAdapter
+from corpusflow.adapters.parser.ocr import OCRParserAdapter
 from corpusflow.adapters.processing import ProcessingError
 from corpusflow.adapters.storage import S3ObjectStore
 from corpusflow.core.config import Settings, load_settings
@@ -277,12 +279,26 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                 settings.object_store_access_key.get_secret_value(),
                 settings.object_store_secret_key.get_secret_value(),
             ).get(blob.storage_key)
-            parser = (
+            parser: ParserAdapter = (
                 PDFParserAdapter()
                 if asset.format.lower() == "pdf" or blob.media_type == "application/pdf"
                 else HTMLParserAdapter()
             )
+            parser_kind = run.config_snapshot.get("parser", "builtin")
+            if parser_kind not in {"builtin", "ocr"}:
+                raise ParserError("PARSER_CONFIG_INVALID", "Unknown parser")
+            if parser_kind == "ocr":
+                if asset.format.lower() != "pdf":
+                    raise ParserError("UNSUPPORTED_FORMAT", "OCR requires PDF")
+                parser = OCRParserAdapter()
+            node.operator_key = parser.name
+            node.operator_version = parser.version
+            node.config_snapshot = {"parser": parser_kind, "version": parser.version}
+            parse_started = datetime.now(UTC)
             result = parser.parse(content, asset.filename, blob.media_type)
+            node.duration_ms = (datetime.now(UTC) - parse_started).total_seconds() * 1000
+            node.input_count = 1
+            node.output_count = len(result.sections)
             prefix = (
                 f"artifacts/{run.id}" if attempt == 1 else f"artifacts/{run.id}/attempt-{attempt}"
             )
@@ -303,6 +319,11 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                     Document.workspace_id == run.workspace_id,
                     DocumentVersion.content_sha256 == result.input_sha256,
                     DocumentVersion.parser_version == result.parser_version,
+                    DocumentVersion.parser_name == result.parser,
+                    DocumentVersion.config_hash
+                    == hashlib.sha256(
+                        json.dumps(run.config_snapshot, sort_keys=True).encode()
+                    ).hexdigest(),
                 )
             )
             if existing and attempt == 1:
@@ -464,6 +485,7 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
             session.commit()
             return {"run_id": run.id, "status": run.status, "parser": result.parser}
         except (ParserError, ProcessingError) as exc:
+            node.failure_code = exc.code
             node.status = "failed"
             run.status = "failed"
             run.error_code = exc.code
@@ -575,3 +597,43 @@ def rag_job(self: Any, object_id: str) -> dict[str, str]:
                 failed_target.error_code = safe
                 session.commit()
             return {"id": object_id, "status": "failed", "error_code": safe}
+
+
+@celery_app.task(bind=True, name="corpusflow.collect", max_retries=2, acks_late=True)  # type: ignore[untyped-decorator]
+def collect(self: Any, plan_id: str) -> dict[str, str]:
+    from corpusflow.db.models import IngestPlan
+    from corpusflow.services import acquisition
+
+    with _session()() as session:
+        row = session.scalar(select(IngestPlan).where(IngestPlan.id == plan_id).with_for_update())
+        if row is None:
+            return {"plan_id": plan_id, "status": "missing"}
+        if row.status not in {"queued", "running"}:
+            return {"plan_id": plan_id, "status": row.status}
+        try:
+            # Single transaction: no partially registered successful plan. Object
+            # writes are conditional and content-addressed; retries cannot overwrite.
+            row.status = "running"
+            session.commit()
+            session.refresh(row, with_for_update=True)
+            if row.status not in {"queued", "running"}:
+                return {"plan_id": plan_id, "status": row.status}
+            acquisition.execute(session, load_settings(), row)
+            session.commit()
+            return {"plan_id": plan_id, "status": "succeeded"}
+        except Exception as exc:
+            session.rollback()
+            code = str(exc) if isinstance(exc, ValueError) else "ACQUISITION_EXECUTION_FAILED"
+            if not code.isupper() or len(code) > 100:
+                code = "ACQUISITION_EXECUTION_FAILED"
+            if (
+                code in {"ACQUISITION_NETWORK_FAILED", "ACQUISITION_EXECUTION_FAILED"}
+                and self.request.retries < 2
+            ):
+                raise self.retry(exc=RuntimeError(code), countdown=2) from None
+            row = session.get(IngestPlan, plan_id)
+            assert row is not None
+            row.status = "failed"
+            row.error_code = code
+            session.commit()
+            return {"plan_id": plan_id, "status": "failed", "error_code": code}

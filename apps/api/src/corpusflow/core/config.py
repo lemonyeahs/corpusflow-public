@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     object_store_secret_key: SecretStr
     dependency_timeout: int = Field(default=2, ge=1, le=10)
 
+    acquisition_hosts: list[str] = Field(default_factory=list)
     embedding_endpoint: str = ""
     embedding_timeout: int = Field(default=30, ge=1, le=60)
     embedding_retries: int = Field(default=1, ge=0, le=2)

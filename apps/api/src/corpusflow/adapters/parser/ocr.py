@@ -6,6 +6,7 @@ import io
 import shutil
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 
 from pypdf import PdfReader
@@ -34,6 +35,14 @@ class OCRParserAdapter:
         renderer, ocr = shutil.which("pdftoppm"), shutil.which("tesseract")
         if not renderer or not ocr:
             raise ParserError("ADAPTER_UNAVAILABLE", "OCR executables not installed")
+        deadline = time.monotonic() + 180
+
+        def remaining() -> float:
+            value = deadline - time.monotonic()
+            if value <= 0:
+                raise ParserError("OCR_TIMEOUT", "Total OCR budget exhausted")
+            return min(30.0, value)
+
         sections = []
         words = []
         try:
@@ -63,13 +72,13 @@ class OCRParserAdapter:
                         ],
                         capture_output=True,
                         check=True,
-                        timeout=30,
+                        timeout=remaining(),
                     )
                     result = subprocess.run(
                         [ocr, prefix + ".png", "stdout", "-l", "eng", "--psm", "3", "tsv"],
                         capture_output=True,
                         check=True,
-                        timeout=30,
+                        timeout=remaining(),
                     )
                     page_words = []
                     for row in csv.DictReader(io.StringIO(result.stdout.decode()), delimiter="\t"):

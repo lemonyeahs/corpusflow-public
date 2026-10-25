@@ -1,0 +1,31 @@
+{
+  "plan": {
+    "plan_id": "182acd51-d270-4a78-9971-59a463e991bf",
+    "status": "failed",
+    "config": {
+      "schema": "ingest-plan.v1",
+      "entries": [
+        {
+          "url": "https://api.crossref.org/works/10.1038/s41586-020-2649-2",
+          "title": "Crossref metadata only; not document license",
+          "candidate_id": "b5d270b1-eda6-454f-987a-cb4fa572243f"
+        }
+      ],
+      "purpose_grants": "NONE"
+    },
+    "created_by": "814c3cf8-5b22-4b13-8618-0617b42f7e75",
+    "reviewed_by": "e832140d-a4d1-4a3b-91ed-4e3f5cdd993c",
+    "review_note": "Public Crossref metadata only; no abstract, fulltext or purpose grant",
+    "results": [],
+    "error_code": "ACQUISITION_ADDRESS_REJECTED"
+  },
+  "checks": [
+    "separation of duties",
+    "idempotency",
+    "workspace isolation",
+    "actual outbox and Worker denial",
+    "no asset or purpose grant",
+    "rejected plan cannot reopen"
+  ],
+  "external_success": "NOT_RUN: local DNS maps public hosts to non-global 198.18.0.x"
+}

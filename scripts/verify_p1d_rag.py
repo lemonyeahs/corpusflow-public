@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -17,7 +18,7 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = "http://127.0.0.1:58000/api/v1"
+BASE = os.environ.get("CF_API_URL", "http://127.0.0.1:58000/api/v1")
 
 
 def main():
@@ -368,7 +369,7 @@ def main():
     with Session(engine) as db:
         db.get(LicenseGrant, grant_id).status = "confirmed"
         db.commit()
-    out = ROOT / ".local/p1d"
+    out = ROOT / os.environ.get("CF_RAG_EVIDENCE_DIR", ".local/p1d")
     out.mkdir(parents=True, exist_ok=True)
     (out / "evidence.json").write_text(json.dumps(evidence, ensure_ascii=False, indent=2))
     (out / "web.json").write_text(

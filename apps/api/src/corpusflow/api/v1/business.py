@@ -984,6 +984,7 @@ def get_run(run_id: str, request: Request, session: Session = Depends(db)):
         "asset_id": run.asset_id,
         "status": run.status,
         "snapshot_hash": run.snapshot_hash,
+        "error_code": run.error_code,
         "revision": run.revision,
         "nodes": [
             {

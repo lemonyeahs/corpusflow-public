@@ -1,5 +1,7 @@
-# P2-C 计划与安全门禁
+# P2-C 实施计划与边界
 
-先核验现有 docreader 版本/协议/许可，独立 OCR Adapter 使用真实图片型 PDF；随后锁定 Worker 运行环境、增加 OCR 模板与原文对照。采集必须实施 URL/DNS/重定向/大小/超时校验，候选审核和用途证据通过后才能形成 Asset。生产认证与 HA 未验证不得开放生产。
+复用现有 ParserAdapter、Run、Artifact、发现候选和用途授权。英文 OCR 接入冻结的 `config.parser=ocr`；原内置解析器继续作为基线。Docker 锁定 Tesseract/Poppler 直接包版本，输出实际文字和像素坐标，表格/公式识别不虚报。
 
-已完成本机 OCR Adapter、输入边界与真实 OCR 测试；Worker 集成、采集和生产化尚未交付。
+采集增加 IngestPlan（0015），候选 URL 与来源冻结；不同身份审核后经 Outbox/Worker 读取真实文件并登记资产。不自动授予用途。网络仅接受管理员白名单 HTTPS/443、全部 DNS 地址公网、固定已验证 IP、TLS 主机名验证、拒绝重定向与压缩、20 MiB/15 秒上限、有限 DNS 并发与超时。每批最多 10，内容地址对象条件写入，数据库事务避免部分成功及重复消息。
+
+验证顺序：SSRF 边界单元测试 → 迁移往返 → 真实 Docker OCR → 采集审核与失败路径 → Web → 隔离 Worker 强杀恢复。当前 Fake-IP DNS 将公网域名解析成 198.18.0.x，外网成功采集被安全规则阻断；不放宽门控。正式 OIDC、HA、复杂公式/表格/多栏人工标注属于尚未通过项。

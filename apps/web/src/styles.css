@@ -131,3 +131,8 @@ td small, .list-row small, .candidate small, .audit-row small { display: block; 
 .rag-content pre { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; max-height: 320px; overflow: auto; font-size: 12px; }
 .rag-content .field, .rag-content select { min-width: 0; max-width: 100%; }
 .rag-content .button { white-space: normal; overflow-wrap: anywhere; }
+.collection-content { min-width: 0; width: 100%; }
+.collection-content .card, .collection-content .issue-card { min-width: 0; max-width: 100%; }
+.collection-content pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.collection-content .list-row { overflow-wrap: anywhere; flex-wrap: wrap; }
+.collection-content input:not([type=checkbox]), .collection-content select { max-width: 100%; min-width: 0; }

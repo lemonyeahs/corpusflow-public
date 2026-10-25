@@ -623,3 +623,20 @@ class RetrievalReview(Timestamped):
     __table_args__ = (
         UniqueConstraint("workspace_id", "request_key", name="uq_retrieval_review_request"),
     )
+
+
+class IngestPlan(Timestamped):
+    __tablename__ = "ingest_plans"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    source_id: Mapped[str] = mapped_column(ForeignKey("sources.id"))
+    created_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    reviewed_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    request_key: Mapped[str] = mapped_column(String(120))
+    config_snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(String(30), default="draft")
+    review_note: Mapped[str] = mapped_column(Text, default="")
+    results: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    error_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "request_key", name="uq_ingest_plan_request"),
+    )

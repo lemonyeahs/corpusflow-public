@@ -1,3 +1,5 @@
+import os
+
 from celery import Celery  # type: ignore[import-untyped]
 
 from corpusflow.core.config import load_settings
@@ -9,6 +11,7 @@ celery_app = Celery(
     backend=settings.redis_url.get_secret_value(),
 )
 celery_app.conf.update(
+    task_default_queue=os.environ.get("CF_TASK_QUEUE", "celery"),
     task_serializer="json",
     result_serializer="json",
     accept_content=["json"],

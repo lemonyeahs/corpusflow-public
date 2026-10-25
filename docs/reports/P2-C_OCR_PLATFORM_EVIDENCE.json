@@ -1,0 +1,158 @@
+{
+  "input_sha256": "8dbaa199863c7d4eeb96eaaa360d5e6ba0adf2357e68bc17cad0c1bebd6ce2cc",
+  "baseline": {
+    "run_id": "e9162928-70e1-4217-8eac-b889f94a8a16",
+    "asset_id": "29c74086-0653-4bc1-ba63-f5997db71c6c",
+    "status": "failed",
+    "snapshot_hash": "986b39e9393a42261c7b1cc8a384522f3d75ced3f5ccbc250b49189b09846184",
+    "error_code": "SCANNED_PDF_UNSUPPORTED",
+    "revision": 1,
+    "nodes": [
+      {
+        "node_id": "parse",
+        "status": "failed",
+        "attempt": 1,
+        "operator_key": "builtin.pdf",
+        "operator_version": "1.1.0",
+        "input_count": 0,
+        "output_count": 0,
+        "filtered_count": 0,
+        "duration_ms": null,
+        "failure_code": "SCANNED_PDF_UNSUPPORTED",
+        "config": {
+          "parser": "builtin",
+          "version": "1.1.0"
+        },
+        "log_ref": null
+      }
+    ]
+  },
+  "ocr": {
+    "run_id": "484858b4-66e9-4b36-b0ba-42bec9767317",
+    "asset_id": "29c74086-0653-4bc1-ba63-f5997db71c6c",
+    "status": "succeeded",
+    "snapshot_hash": "7e9fa41d0211c5169f6c8e13948b65f44bbecd33a84af966f405643d2c6ec542",
+    "error_code": null,
+    "revision": 1,
+    "nodes": [
+      {
+        "node_id": "parse",
+        "status": "succeeded",
+        "attempt": 1,
+        "operator_key": "local.tesseract",
+        "operator_version": "1.0.0",
+        "input_count": 1,
+        "output_count": 1,
+        "filtered_count": 0,
+        "duration_ms": 290.202,
+        "failure_code": null,
+        "config": {
+          "parser": "ocr",
+          "version": "1.0.0"
+        },
+        "log_ref": null
+      },
+      {
+        "node_id": "clean",
+        "status": "succeeded",
+        "attempt": 1,
+        "operator_key": "builtin.clean",
+        "operator_version": "1.0.0",
+        "input_count": 1,
+        "output_count": 1,
+        "filtered_count": 0,
+        "duration_ms": 1.554,
+        "failure_code": null,
+        "config": {},
+        "log_ref": "artifacts/484858b4-66e9-4b36-b0ba-42bec9767317/clean/output.json"
+      },
+      {
+        "node_id": "deduplicate",
+        "status": "succeeded",
+        "attempt": 1,
+        "operator_key": "builtin.deduplicate",
+        "operator_version": "1.0.0",
+        "input_count": 1,
+        "output_count": 1,
+        "filtered_count": 0,
+        "duration_ms": 0.603,
+        "failure_code": null,
+        "config": {},
+        "log_ref": "artifacts/484858b4-66e9-4b36-b0ba-42bec9767317/deduplicate/output.json"
+      },
+      {
+        "node_id": "quality",
+        "status": "succeeded",
+        "attempt": 1,
+        "operator_key": "builtin.quality",
+        "operator_version": "1.0.0",
+        "input_count": 1,
+        "output_count": 1,
+        "filtered_count": 0,
+        "duration_ms": 0.91,
+        "failure_code": null,
+        "config": {},
+        "log_ref": "artifacts/484858b4-66e9-4b36-b0ba-42bec9767317/quality/output.json"
+      }
+    ]
+  },
+  "asset": {
+    "asset_id": "29c74086-0653-4bc1-ba63-f5997db71c6c",
+    "filename": "raster.pdf",
+    "format": "pdf",
+    "source": {
+      "source_id": "dd9bbcda-7af5-43d1-94df-6552abd049a0",
+      "name": "Original CC0 raster fixture",
+      "kind": "upload"
+    },
+    "blob": {
+      "storage_key": "uploads/b882f11d-27a1-4e14-a651-b3cbe2d0fbbc/raster.pdf",
+      "sha256": "8dbaa199863c7d4eeb96eaaa360d5e6ba0adf2357e68bc17cad0c1bebd6ce2cc",
+      "byte_size": 38625,
+      "media_type": "application/pdf"
+    },
+    "ingestion_status": "registered",
+    "quality_status": "unreviewed",
+    "language": null,
+    "metadata": {},
+    "document": {
+      "document_id": "cd5fd079-e01a-4e2d-bc2a-fe37c49d817a",
+      "title": "raster.pdf",
+      "parse_status": "succeeded"
+    },
+    "versions": [
+      {
+        "document_version_id": "992d3dab-6883-4729-9b2b-d801c8544f7d",
+        "version_no": 1,
+        "content_sha256": "8dbaa199863c7d4eeb96eaaa360d5e6ba0adf2357e68bc17cad0c1bebd6ce2cc",
+        "parser_name": "local.tesseract",
+        "parser_version": "1.0.0",
+        "config_hash": "00f614ec10572c519e4725ccf5c192986157e4e5b8a84c2adab7ff8d02211d78",
+        "run_id": "484858b4-66e9-4b36-b0ba-42bec9767317",
+        "status": "succeeded",
+        "segments": [
+          {
+            "segment_id": "56922be0-ff56-4af8-a946-fb6c7add1c23",
+            "source_id": "dd9bbcda-7af5-43d1-94df-6552abd049a0",
+            "content_hash": "4cededc9542df930fa4743513d8a652777dcc82fbcab25b33124689086d7dd94",
+            "text": "CorpusFlow OCR evidence: AES block size is 128 bits.",
+            "quality_state": "reviewed",
+            "location": {
+              "page": 1,
+              "method": "ocr"
+            },
+            "token_count": 9,
+            "section_title": "Page 1"
+          }
+        ]
+      }
+    ]
+  },
+  "checks": [
+    "real raster upload",
+    "builtin explicitly fails",
+    "Docker OCR actual text",
+    "frozen parser config",
+    "duplicate delivery no new versions"
+  ]
+}

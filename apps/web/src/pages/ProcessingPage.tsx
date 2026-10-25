@@ -12,6 +12,7 @@ export function ProcessingPage({ ctx }: { ctx: ApiContext }) {
   const [logs, setLogs] = useState<Record<string, string[]>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [parserKind,setParserKind] = useState('builtin');
   const [config, setConfig] = useState('{"operators":[{"key":"builtin.clean","config":{}},{"key":"builtin.deduplicate","config":{}},{"key":"builtin.quality","config":{}}]}');
   const polling = useRef<number | undefined>(undefined);
 
@@ -47,7 +48,7 @@ export function ProcessingPage({ ctx }: { ctx: ApiContext }) {
     setError("");
     try {
       const parsed = JSON.parse(config) as Record<string, unknown>;
-      const result = await api.createRuns(ctx, { asset_ids: selected, config: parsed });
+      const result = await api.createRuns(ctx, { asset_ids: selected, config: {...parsed,parser:parserKind} });
       const createdRuns = result.accepted.map(item => ({
         run_id: item.run_id,
         asset_id: item.asset_id,
@@ -106,6 +107,7 @@ export function ProcessingPage({ ctx }: { ctx: ApiContext }) {
             {!assets.length && <Empty>请先完成文件接入。</Empty>}
           </div>
           <Field label="算子参数 JSON（提交后形成不可变 Run 快照）">
+            <label>解析器<select aria-label="解析器" value={parserKind} onChange={e=>setParserKind(e.target.value)}><option value="builtin">内置 PDF / HTML</option><option value="ocr">英文扫描 PDF · 真实 OCR（最多 10 页）</option></select></label>
             <textarea value={config} onChange={event => setConfig(event.target.value)} rows={8} />
           </Field>
           {error && <ErrorBox message={error} />}
