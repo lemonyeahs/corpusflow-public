@@ -1,0 +1,53 @@
+{
+  "isolated_database": "cf_crash_fbaa67910529",
+  "isolated_queue": "cf-crash-fbaa67910529",
+  "owned_worker": "cf-crash-worker-fbaa67910529",
+  "observed_before_kill": {
+    "state": "active",
+    "wait_event": "relation",
+    "operation": "INSERT INTO rag_chunks"
+  },
+  "before": {
+    "index_version_id": "9ef8e768-8ae9-4689-b5bf-4a56ac9e7522",
+    "dataset_version_id": "1f8b4c89-cc7a-466c-a3ba-700692ef60b7",
+    "status": "running",
+    "chunk_count": 0,
+    "config": {
+      "fts": "postgresql-simple",
+      "schema": "rag-index.v1",
+      "embedding": null,
+      "tokenizer": "unicode-cjk-bigram-latin-v1",
+      "dimensions": null,
+      "vector_store": null
+    },
+    "content_sha256": "6d1cf260f5de29e41661ff35dc0747fada2723d205288d8c2a1029547c86513c",
+    "error_code": null
+  },
+  "after_restart": {
+    "index_version_id": "9ef8e768-8ae9-4689-b5bf-4a56ac9e7522",
+    "dataset_version_id": "1f8b4c89-cc7a-466c-a3ba-700692ef60b7",
+    "status": "succeeded",
+    "chunk_count": 26,
+    "config": {
+      "fts": "postgresql-simple",
+      "schema": "rag-index.v1",
+      "embedding": null,
+      "tokenizer": "unicode-cjk-bigram-latin-v1",
+      "dimensions": null,
+      "build_stats": {
+        "usage": {},
+        "elapsed_ms": 300.2210420090705,
+        "vectors_reused": 0,
+        "vectors_encoded": 0,
+        "vector_bytes_float32": 0
+      },
+      "vector_store": null
+    },
+    "content_sha256": "6d1cf260f5de29e41661ff35dc0747fada2723d205288d8c2a1029547c86513c",
+    "error_code": null
+  },
+  "chunks_after_kill": 0,
+  "chunks_after_recovery": 26,
+  "recovery": "Redis visibility timeout redelivery; no manually republished task",
+  "shared_worker_killed": false
+}

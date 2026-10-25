@@ -12,6 +12,10 @@ celery_app = Celery(
 )
 celery_app.conf.update(
     task_default_queue=os.environ.get("CF_TASK_QUEUE", "celery"),
+    broker_transport_options={
+        "visibility_timeout": int(os.environ.get("CF_VISIBILITY_TIMEOUT", "3600")),
+        "global_keyprefix": os.environ.get("CF_BROKER_PREFIX", ""),
+    },
     task_serializer="json",
     result_serializer="json",
     accept_content=["json"],

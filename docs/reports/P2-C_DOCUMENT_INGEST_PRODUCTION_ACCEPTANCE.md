@@ -29,3 +29,15 @@ Crossref 元数据许可与协议参考：[官方 REST API](https://www.crossref
 - 外网成功采集、完整复杂文档指标、OIDC/SSO、多节点 HA、真实生产压力、依赖漏洞治理仍 NOT RUN / 未完成，不能宣称生产就绪。
 
 失败事务不暴露成功 Asset；对象先写、数据库提交失败可能留下 acquisition 前缀下孤儿对象，按计划 ID 可诊断，尚无自动垃圾回收。回退停用采集/模型入口并保留数据；0015 downgrade 删除新计划表，须先备份，不自动执行。既有发布文件不变。
+
+
+## 最终独立故障与备份恢复
+
+- `scripts/verify_p2_worker_crash.py`：PASS。随机独立数据库、Redis 队列和键前缀、自建 Worker 容器；通过 PostgreSQL 活动视图确认任务正在 INSERT，强杀后数据库 0 行，重启后依靠 Redis visibility timeout 自动恢复为 26 行，无手工重新投递。共享 Worker 未被终止。证据 `P2-C_WORKER_RECOVERY_EVIDENCE.json`。此验证针对索引写入边界，不扩大解释为所有任务/LLM 故障都已覆盖。
+- `scripts/verify_local_restore.py`：PASS。对自建临时库实际 pg_dump/pg_restore，146,896 字节；恢复到 0017、真实 fixture 行和 14 个用户触发器。证据 `P2-C_RESTORE_EVIDENCE.json`。生产 RPO/RTO、MinIO 备份恢复未验证。
+- 迁移中补齐的 0017 保护真实生成结果与调用预留，防止重置预算造成重复费用；真实 PostgreSQL 拒绝变更测试通过。
+- 最终后端 92 passed，Web 全套 11 passed（额外回答评分用例复验 1 passed），ruff/mypy/typecheck/lint/build/契约/迁移检查均 PASS。全部本地执行，远程 CI 未运行。
+
+曾出现测试夹具并发覆盖（10 passed / 1 failed），原因是多个 spec 共用生成的会话文件；Playwright 改为单 Worker 后完整复验 11 passed。断言和真实服务未替换。第一次故障脚本使用旧镜像，参数不兼容，未达到强杀边界；重建后完成上述真实恢复，失败未计入成功。
+
+当前不存在从公网获取原件后贯通 OCR、发布、问答的成功证据。该全链路仍 BLOCKED，不能用本地上传和 SSRF 拒绝测试替代公网采集成功。

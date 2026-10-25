@@ -1,0 +1,9 @@
+{
+  "source_database": "cf_backup_d92e0a0de3b9",
+  "restored_database": "cf_restore_d92e0a0de3b9",
+  "snapshot_bytes": 146896,
+  "snapshot_sha256": "4eff3251816ef523f0c66c16bea0c9a2739ac0ac947bda6a6fd12c7c7b17ed9a",
+  "revision": "0017_generation_guards",
+  "restored_user_triggers": 14,
+  "scope": "local schema/fixture restore; production RPO/RTO/MinIO NOT_VERIFIED"
+}
