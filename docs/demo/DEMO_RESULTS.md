@@ -1,7 +1,11 @@
 # 演示复验记录
 
-2026-10-25：真实 Docker Web E2E 7 passed；pytest 69 passed。三组资产由 prepare_demo_manifest.py 实际查询，完整 ID、哈希、处理状态见 DEMO_EVIDENCE.json。
+2026-10-25 最终：后端 92 passed，真实 Docker Web 全套 11 passed；回答评分补充用例 1 passed，复用已有回答，不触发新模型调用。三组真实原件、哈希、Run、NodeRun、文档版本见 DEMO_EVIDENCE.json，来源均为仓库自制测试资料。
 
-31 条查询与六组实验复现通过；BM25 有答案召回率 1.0，但无答案空召回率 0.75，不代表专业问答质量满分。开发 reviewer 不等于真实专家。
+31 条检索问题、六组历史实验复现通过。P2-A 四组真实向量/混合对照，P2-B 四组重排对照均保存逐条 Trace；词法基线无答案误命中 1/4，向量无阈值误命中 4/4，未隐藏负面结果。
 
-截图：本轮真实 Playwright 导出 `.local/demo/retrieval.png`，已目视检查；展示真实查询、评测记录和反馈。生成仍为 NOT_CONFIGURED，排队任务没有伪装为成功。该临时截图不纳入 Git。跨三个样本组的单一工作空间连续演示尚未验收；现阶段提供可复现步骤和独立真实链路，演示整体为 PARTIAL。
+真实模型只执行 2 次：AES 问题得到有精确引文的 128 bits 回答；文档提示注入样本拒答。另一个无证据问题服务端直接拒答。评分是开发测试身份操作，不是专家评测结论。
+
+实际截图：`.local/demo/retrieval.png` 和 `.local/demo/evidence-answer-detail.png`，后者来自真实 Playwright 答案/评分页面，已目视检查。原图 `.local/demo/evidence-answer.png`。截图没有替换页面数据，不含密钥；临时会话及截图不提交 Git。
+
+跨三个样本组的单一工作空间连续演示尚未验收。三组可复现独立链路及真实模型历史可展示，公网采集成功链路 BLOCKED；演示整体 PARTIAL。重置创建新工作空间，不删除历史版本。正常和损坏样本不能凭空填充不存在的发布/检索记录。

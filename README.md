@@ -50,19 +50,19 @@ make integration
 make down                 # 停服务并保留所有 named volumes
 ```
 
-P0-A 回滚：停止 API，备份开发数据库后可在本地执行 `uv run --locked alembic downgrade base`，只回退版本标记。原型原件未修改，无需回滚。没有自动删卷或生产迁移命令。
+回滚：停止新增功能并保留数据。当前业务迁移 downgrade 会删除表或字段，绝非只回退版本标记；仅能在独立临时测试库验证。实际部署须先完成备份恢复验证和数据导出，不提供自动清库回滚。原型原件未修改。
 
 ## 目录与边界
 
 - `apps/api/src/corpusflow`：API、配置/错误/日志、DB、业务路由与策略、真实依赖探测；`modules/*` 保留后续扩展边界。
 - `apps/api/alembic`：版本化迁移。业务 Service 持有事务边界，禁止 ORM event 复制业务策略。
-- `apps/web`：P0-F 前端对接边界；`docs/prototype` 为原型只读参考副本。
+- `apps/web`：React/Vite 真实业务工作台；`docs/prototype` 为原型只读参考副本。
 - `infra`：PostgreSQL 16、Redis、MinIO、API、Worker 和 Outbox Dispatcher 的本地 Compose。
 - `tests`：单元、契约、独立临时 PostgreSQL 迁移测试；`scripts/verify_business_loop.py` 覆盖 P0-B～F 业务门禁。
 - `docs/plans`：现状、分阶段任务、追踪矩阵、待确认决策。
 - `docs/reports/P0_DATASET_MATERIALIZATION_ACCEPTANCE.md`：P0-G 数据集物化、发布和交付证据。
 
-分层：Router → Application Service → Domain Policy → Repository / Adapter。当前开发身份 session、内置 parser、Celery/Outbox 和本地数据集物化是受控本地实现；生产 OIDC、外部 parser/generation 和正式 Web UI 仍未接入。请求 JSON 日志不能替代不可变业务审计。
+分层：Router → Application Service → Domain Policy → Repository / Adapter。当前开发身份 session、内置 parser、Celery/Outbox 和本地数据集物化是受控本地实现；生产 OIDC 尚未接入；React Web、本地 OCR、语义模型和受控外部生成已按以下 P2 范围接入。请求 JSON 日志不能替代不可变业务审计。
 
 项目仓库：[lemonyeahs/corpusflow](https://github.com/lemonyeahs/corpusflow)（私有）。默认分支为 `main`。P0-A 验收报告记录首次发布前的本地验收状态；远程 CI 结果以 GitHub Actions 为准。首次远程运行的镜像拉取限制见 [GitHub 上传记录](docs/reports/GITHUB_UPLOAD.md)。
 
@@ -90,7 +90,7 @@ P0-H 交付报告见 [`docs/reports/P0-H_WEB_ACCEPTANCE.md`](docs/reports/P0-H_W
 
 ## P1-D 真实检索与评测
 
-“下游验证”页面现提供真实发布 RAG 索引、PostgreSQL FTS/Unicode BM25、词法混合与词项重排、固定评测和质量反馈重工。向量与模型生成未配置，界面明确显示不可用，不提供预设回答。
+“下游验证”页面现提供真实发布 RAG 索引、PostgreSQL FTS/Unicode BM25、词法混合与词项重排、固定评测和质量反馈重工。未配置模型时明确显示不可用；P2 增量配置见下文，不提供预设回答。
 
 ```bash
 # 在根目录执行，已有 .env 不覆盖；先等待依赖启动，再运行测试。
@@ -100,4 +100,31 @@ docker compose --env-file .env -f infra/compose.yaml up -d --build --wait api wo
 cd apps/web && npm run e2e
 ```
 
-详见 [P1-D 验收](docs/reports/P1-D_RAG_EVALUATION_ACCEPTANCE.md)、[检索基准](docs/reports/P1-D_RETRIEVAL_BENCHMARK.md) 和 [反馈闭环](docs/reports/P1-D_FEEDBACK_LOOP.md)。当前结论仅覆盖开发/演示环境；专业标注、向量/生成效果和生产认证未验收。
+详见 [P1-D 验收](docs/reports/P1-D_RAG_EVALUATION_ACCEPTANCE.md)、[检索基准](docs/reports/P1-D_RETRIEVAL_BENCHMARK.md) 和 [反馈闭环](docs/reports/P1-D_FEEDBACK_LOOP.md)。当前结论仅覆盖开发/演示环境；专业专家标注和生产认证未验收；P2 模型实测范围见总验收。
+
+
+## P2 开发环境增量
+
+当前迁移 `0017_generation_guards`。见 [总验收](docs/reports/CORPUSFLOW_FINAL_ACCEPTANCE.md)、[演示指南](docs/demo/DEMO_GUIDE.md)。完整 P2 和生产门禁尚未通过：公网采集受 DNS 限制，复杂版面和真实专家评测未验收。
+
+1. 已有 `.env` 不覆盖。新环境使用 `make install`、`make init-env`，再启动本地依赖。
+2. 按 [本地模型说明](tools/semantic/README.md) 用独立锁文件启动已许可的模型；不自动下载大型权重。Docker Desktop 的 `.env` 可设 `EMBEDDING_ENDPOINT=http://host.docker.internal:58110`；宿主测试设为 `http://127.0.0.1:58110`。
+3. `docker compose --env-file .env -f infra/compose.yaml up -d --build --wait api worker dispatcher`。只适用于本地开发；init 会升级本地数据库并创建对象桶。
+4. `npm --prefix apps/web ci`，`npm --prefix apps/web run dev -- --host 127.0.0.1`，访问 http://127.0.0.1:5173。API 健康检查 http://127.0.0.1:58000/ready。
+5. OCR 已进入 Worker 镜像，流水线选择 OCR；默认内置解析仍明确拒绝扫描件。采集主机白名单默认空，审批不自动授权训练用途。
+
+外部生成默认禁用。明确授权后才在被忽略的本地环境文件设置 `LLM_PROVIDER`、`LLM_BASE_URL`、`LLM_MODEL`、`LLM_API_KEY`、`LLM_WORKSPACES`、`LLM_MAX_CALLS`。不要将密钥写入前端、Git 或命令输出。当前授权仅一个自制测试工作空间、最多 10 次、每次 512 输出 Token，已用 2 次；预算持久化，不靠 Worker 重启清零。
+
+```sh
+EMBEDDING_ENDPOINT=http://127.0.0.1:58110 .venv/bin/python scripts/verify_p1d_environment.py
+make check
+.venv/bin/alembic check
+npm --prefix apps/web run typecheck
+npm --prefix apps/web run lint
+npm --prefix apps/web run build
+npm --prefix apps/web run e2e
+.venv/bin/python scripts/verify_p2_worker_crash.py
+.venv/bin/python scripts/verify_local_restore.py
+```
+
+完整 Playwright 依赖已保存的受控生成 fixture；新部署没有模型授权/历史答案时，不应伪造数据来通过该用例。可单独运行其他 spec，缺失生成证据明确记录 NOT RUN。故障脚本只操作自己创建的随机数据库、独立队列和 Worker，不停止共享 Worker；备份测试不代表生产 RPO/RTO 或对象桶灾备已验收。

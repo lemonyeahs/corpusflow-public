@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-25",
+  "code_commit": "a5997ed2add634d8b17ec4daf53de437fc3cab13",
+  "logs": {
+    "final-pytest.log": {
+      "sha256": "ea6f8f543e8e6f07d7297edb76a8dc246e2354a5ec3d4598d780faf85e1e0fdd",
+      "result_lines": [
+        "92 passed, 2253 warnings in 8.69s"
+      ]
+    },
+    "final-check.log": {
+      "sha256": "6b9487f5a08e4659e197892de91b995c4b4141bc247e287cb848ffbc6933ee03",
+      "result_lines": [
+        "All checks passed!",
+        "117 files already formatted",
+        "Success: no issues found in 48 source files",
+        "85 passed, 7 deselected, 2253 warnings in 2.44s"
+      ]
+    },
+    "final-alembic.log": {
+      "sha256": "43d345b67ace77ab8c4cbf575a3baddf66e8623cf7d1e0b78e602b1d641ecf50",
+      "result_lines": [
+        "No new upgrade operations detected."
+      ]
+    },
+    "final-playwright.log": {
+      "sha256": "371b963f35062da3f8665f98a7e38a0194cad8c45e998352dd323ef44220772a",
+      "result_lines": [
+        "  11 passed (1.2m)"
+      ]
+    },
+    "final-focused-playwright.log": {
+      "sha256": "6774a1304919a35640de5ff72010822c376ddc5f9f2c2e9a3d7474646e10a5c6",
+      "result_lines": [
+        "  2 passed (3.9s)"
+      ]
+    },
+    "worker-crash.log": {
+      "sha256": "9ce526f97ce9fe9fd3042e5c22603e67b2252732cb71f76e8be8aad2a235f821",
+      "result_lines": [
+        "PASS: owned worker killed during INSERT; rollback=0; automatic recovery=26 chunks"
+      ]
+    }
+  }
+}
