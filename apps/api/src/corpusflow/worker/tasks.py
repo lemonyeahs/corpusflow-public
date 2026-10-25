@@ -356,6 +356,29 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                     )
                     session.add(seg)
                     session.flush()
+                    if attempt > 1:
+                        previous = session.scalars(
+                            select(Segment)
+                            .join(DocumentVersion)
+                            .where(
+                                DocumentVersion.document_id == doc.id,
+                                Segment.document_version_id != dv.id,
+                                Segment.content_hash == seg.content_hash,
+                                Segment.workspace_id == run.workspace_id,
+                            )
+                        ).all()
+                        for old_segment in previous:
+                            if old_segment.location_json == seg.location_json:
+                                session.add(
+                                    LineageEdge(
+                                        workspace_id=run.workspace_id,
+                                        from_type="Segment",
+                                        from_id=old_segment.id,
+                                        to_type="Segment",
+                                        to_id=seg.id,
+                                        relation="reprocessed_equivalent",
+                                    )
+                                )
                     session.add(
                         LineageEdge(
                             workspace_id=run.workspace_id,
@@ -487,3 +510,68 @@ def deliver_dataset_version(dataset_version_id: str) -> dict[str, str]:
         if version.status != "published":
             return {"dataset_version_id": version.id, "status": version.status}
         return {"dataset_version_id": version.id, "status": "delivered"}
+
+
+@celery_app.task(bind=True, name="corpusflow.rag_job", max_retries=3, acks_late=True)  # type: ignore[untyped-decorator]
+def rag_job(self: Any, object_id: str) -> dict[str, str]:
+    """Atomic bounded job: lock, compute and commit; crashes roll back partial rows.
+
+    Redelivery resumes queued/running work. Terminal failures require a new request
+    key, preserving the failed attempt for diagnostics.
+    """
+    from corpusflow.db.models import RagEvaluationRun, RagIndexVersion
+    from corpusflow.services import rag
+
+    factory = _session()
+    with factory() as session:
+        row = session.scalar(
+            select(RagIndexVersion).where(RagIndexVersion.id == object_id).with_for_update()
+        )
+        if row is None:
+            evaluation = session.scalar(
+                select(RagEvaluationRun).where(RagEvaluationRun.id == object_id).with_for_update()
+            )
+            target: RagIndexVersion | RagEvaluationRun | None = evaluation
+        else:
+            target = row
+        if target is None:
+            return {"id": object_id, "status": "missing"}
+        if target.status in {"succeeded", "failed"}:
+            return {"id": object_id, "status": target.status}
+        try:
+            target.status = "running"
+            session.commit()
+            # Reacquire after making running visible. A duplicate worker waits here;
+            # a killed worker leaves recoverable running state and no partial output.
+            model = type(target)
+            locked_target = session.scalar(
+                select(model)
+                .where(model.id == object_id)
+                .with_for_update()
+                .execution_options(populate_existing=True)
+            )
+            assert isinstance(locked_target, (RagIndexVersion, RagEvaluationRun))
+            target = locked_target
+            if target.status in {"succeeded", "failed"}:
+                return {"id": object_id, "status": target.status}
+            if isinstance(target, RagIndexVersion):
+                rag.build_index(session, load_settings(), target)
+            else:
+                rag.evaluate(session, target)
+            session.commit()
+            return {"id": object_id, "status": "succeeded"}
+        except Exception as exc:
+            session.rollback()
+            code = (
+                str(exc) if isinstance(exc, (rag.RagError, ValueError)) else "RAG_EXECUTION_ERROR"
+            )
+            safe = code if code.isupper() and len(code) <= 100 else "RAG_EXECUTION_ERROR"
+            retries = int(getattr(getattr(self, "request", None), "retries", 0))
+            if safe in {"ADAPTER_UNAVAILABLE", "RAG_EXECUTION_ERROR"} and retries < 3:
+                raise self.retry(exc=RuntimeError(safe), countdown=2**retries) from None
+            failed_target = session.get(type(target), object_id)
+            if isinstance(failed_target, (RagIndexVersion, RagEvaluationRun)):
+                failed_target.status = "failed"
+                failed_target.error_code = safe
+                session.commit()
+            return {"id": object_id, "status": "failed", "error_code": safe}

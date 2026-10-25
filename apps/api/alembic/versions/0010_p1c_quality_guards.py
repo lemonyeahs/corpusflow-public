@@ -1,7 +1,7 @@
 """Complete P1-C indexes and protect append-only quality snapshots."""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "0010_p1c_quality_guards"
 down_revision = "0009_p1c_quality_governance"
@@ -43,7 +43,8 @@ def upgrade() -> None:
         """)
         for table in TABLES:
             op.execute(
-                f"CREATE TRIGGER quality_immutable BEFORE UPDATE OR DELETE ON {table} FOR EACH ROW EXECUTE FUNCTION cf_quality_immutable()"
+                f"CREATE TRIGGER quality_immutable BEFORE UPDATE OR DELETE ON {table} "
+                "FOR EACH ROW EXECUTE FUNCTION cf_quality_immutable()"
             )
 
 

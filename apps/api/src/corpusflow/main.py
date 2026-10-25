@@ -14,10 +14,12 @@ from starlette.responses import Response
 from corpusflow.adapters.readiness import DependencyProbe
 from corpusflow.api.health import router
 from corpusflow.api.v1.business import router as business_router
+from corpusflow.api.v1.rag import router as rag_router
 from corpusflow.core.config import Settings, load_settings
 from corpusflow.core.errors import ErrorResponse, error_response
 from corpusflow.core.logging import configure_logging
 from corpusflow.db.session import build_engine
+from corpusflow.services.rag import RagError
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -135,6 +137,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             [{"location": list(e["loc"]), "type": e["type"]} for e in exc.errors()],
         )
 
+    @app.exception_handler(RagError)
+    async def rag_error(request: Request, exc: RagError) -> Response:
+        code = str(exc)
+        status = (
+            404
+            if code == "NOT_FOUND"
+            else 403
+            if code in {"PERMISSION_DENIED", "PURPOSE_GRANT_MISSING"}
+            else 409
+        )
+        return error_response(request, status, code, "RAG 操作未完成，请检查索引、用途授权或配置")
+
+    app.include_router(rag_router)
     app.include_router(router)
     app.include_router(business_router)
     return app

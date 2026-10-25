@@ -1,11 +1,10 @@
 """Dataset materialization, manifest and immutable delivery metadata."""
 
-from alembic import op
-from sqlalchemy import inspect
 import sqlalchemy as sa
-
+from alembic import op
 from corpusflow.db import models
 from corpusflow.db.session import Base
+from sqlalchemy import inspect
 
 revision = "0005_dataset_materialization"
 down_revision = "0004_async_processing"
@@ -18,7 +17,9 @@ def upgrade() -> None:
     inspector = inspect(bind)
     columns = {c["name"] for c in inspector.get_columns("dataset_builds")}
     if "validated_snapshot_hash" not in columns:
-        op.add_column("dataset_builds", models.DatasetBuild.__table__.c.validated_snapshot_hash.copy())
+        op.add_column(
+            "dataset_builds", models.DatasetBuild.__table__.c.validated_snapshot_hash.copy()
+        )
     if "validated_by" not in columns:
         op.add_column("dataset_builds", models.DatasetBuild.__table__.c.validated_by.copy())
     version_columns = {c["name"] for c in inspector.get_columns("dataset_versions")}
@@ -39,7 +40,11 @@ def upgrade() -> None:
             op.add_column("dataset_versions", sa.Column(name, column_type, nullable=True))
             if name in {"manifest_storage_key", "content_storage_key", "tokenizer_version"}:
                 default = "builtin-whitespace-1" if name == "tokenizer_version" else ""
-                op.execute(sa.text(f"UPDATE dataset_versions SET {name} = :value").bindparams(value=default))
+                op.execute(
+                    sa.text(f"UPDATE dataset_versions SET {name} = :value").bindparams(
+                        value=default
+                    )
+                )
             elif name != "published_at":
                 op.execute(sa.text(f"UPDATE dataset_versions SET {name} = 0"))
             if name != "published_at":
@@ -47,7 +52,8 @@ def upgrade() -> None:
     Base.metadata.create_all(bind=bind, tables=[models.DatasetVersionArtifact.__table__])
     if bind.dialect.name == "postgresql":
         op.execute(
-            """CREATE OR REPLACE FUNCTION corpusflow_immutable_dataset_version() RETURNS trigger AS $$
+            """CREATE OR REPLACE FUNCTION corpusflow_immutable_dataset_version()
+            RETURNS trigger AS $$
             BEGIN
               IF OLD.status = 'published' AND NEW IS DISTINCT FROM OLD THEN
                 RAISE EXCEPTION 'published dataset version is immutable';
@@ -64,8 +70,15 @@ def downgrade() -> None:
     if "dataset_version_artifacts" in inspector.get_table_names():
         op.drop_table("dataset_version_artifacts")
     for name in (
-        "published_at", "tokenizer_version", "token_count", "test_count", "validation_count",
-        "train_count", "sample_count", "content_bytes", "content_storage_key",
+        "published_at",
+        "tokenizer_version",
+        "token_count",
+        "test_count",
+        "validation_count",
+        "train_count",
+        "sample_count",
+        "content_bytes",
+        "content_storage_key",
         "manifest_storage_key",
     ):
         if name in {c["name"] for c in inspector.get_columns("dataset_versions")}:

@@ -1,7 +1,7 @@
 """Versioned quality rules, evaluations, reports and dataset comparisons."""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "0009_p1c_quality_governance"
 down_revision = "0008_p1a_processing"

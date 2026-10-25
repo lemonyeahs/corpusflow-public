@@ -1,7 +1,7 @@
 """P0-I execution timing fields for operational metrics."""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "0007_execution_timing"
 down_revision = "0006_system_hardening"
@@ -14,7 +14,9 @@ def upgrade() -> None:
     columns = {column["name"] for column in sa.inspect(bind).get_columns("pipeline_runs")}
     for name in ("started_at", "finished_at"):
         if name not in columns:
-            op.add_column("pipeline_runs", sa.Column(name, sa.DateTime(timezone=True), nullable=True))
+            op.add_column(
+                "pipeline_runs", sa.Column(name, sa.DateTime(timezone=True), nullable=True)
+            )
 
 
 def downgrade() -> None:

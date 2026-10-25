@@ -1176,6 +1176,8 @@ def review_issue(
     )
     if not issue:
         raise HTTPException(404, "NOT_FOUND")
+    if issue.status in {"rejected", "isolated", "resolved"}:
+        raise HTTPException(409, "INVALID_STATE_TRANSITION")
     issue.status = body.decision
     session.add(
         QualityReview(issue_id=issue.id, reviewer_id=user, decision=body.decision, note=body.note)

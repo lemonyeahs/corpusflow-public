@@ -24,9 +24,10 @@ class PDFParserAdapter:
                 text = (page.extract_text() or "").strip()
                 if text:
                     for line_no, line in enumerate(text.splitlines(), start=1):
-                        if "|" in line and len(
-                            [cell for cell in line.split("|") if cell.strip()]
-                        ) >= 2:
+                        if (
+                            "|" in line
+                            and len([cell for cell in line.split("|") if cell.strip()]) >= 2
+                        ):
                             table_rows.append({"page": idx + 1, "line": line_no, "raw": line})
                         if re.search(r"(?:\\[a-zA-Z]+|\b[A-Za-z]\s*[=<>]\s*|\^|_[{])", line):
                             formula_markers.append({"page": idx + 1, "line": line_no, "raw": line})

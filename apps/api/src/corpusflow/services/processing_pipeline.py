@@ -59,15 +59,18 @@ def create_derived_version(
     result: ProcessingResult,
     operator_config: dict[str, Any],
 ) -> DocumentVersion:
-    next_no = int(
-        session.scalar(
-            select(func.coalesce(func.max(DocumentVersion.version_no), 0)).where(
-                DocumentVersion.document_id == source_version.document_id,
-                DocumentVersion.workspace_id == workspace_id,
+    next_no = (
+        int(
+            session.scalar(
+                select(func.coalesce(func.max(DocumentVersion.version_no), 0)).where(
+                    DocumentVersion.document_id == source_version.document_id,
+                    DocumentVersion.workspace_id == workspace_id,
+                )
             )
+            or 0
         )
-        or 0
-    ) + 1
+        + 1
+    )
     content = "\n\n".join(str(record["text"]) for record in result.records)
     derived = DocumentVersion(
         workspace_id=workspace_id,

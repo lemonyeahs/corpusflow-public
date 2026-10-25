@@ -40,7 +40,9 @@ def main() -> None:
     factory = sessionmaker(build_engine(settings), expire_on_commit=False)
     with factory() as session:
         admin = session.scalar(
-            select(User).where(User.oidc_sub.like("acceptance-admin-%")).order_by(User.created_at.desc())
+            select(User)
+            .where(User.oidc_sub.like("acceptance-admin-%"))
+            .order_by(User.created_at.desc())
         )
         memberships = session.scalars(
             select(Membership).where(Membership.user_id == admin.id, Membership.role == "admin")
@@ -61,11 +63,15 @@ def main() -> None:
             )
             .order_by(User.created_at.desc())
         )
-        segment = session.scalar(
-            select(Segment)
-            .where(Segment.workspace_id == latest.workspace_id)
-            .order_by(Segment.created_at.desc())
-        ) if latest else None
+        segment = (
+            session.scalar(
+                select(Segment)
+                .where(Segment.workspace_id == latest.workspace_id)
+                .order_by(Segment.created_at.desc())
+            )
+            if latest
+            else None
+        )
         assert admin and reviewer and latest and segment
         workspace = latest.workspace_id
     admin_token, reviewer_token = admin.oidc_sub, reviewer.oidc_sub
@@ -86,13 +92,16 @@ def main() -> None:
         "GET", f"/dataset-builds/{build['build_id']}/candidates", admin_token, workspace
     )[1]
     sample_id = candidates["items"][0]["sample_id"]
-    assert call(
-        "POST",
-        f"/candidate-samples/{sample_id}/reviews",
-        reviewer_token,
-        workspace,
-        {"decision": "approved", "note": "concurrency test"},
-    )[0] == 200
+    assert (
+        call(
+            "POST",
+            f"/candidate-samples/{sample_id}/reviews",
+            reviewer_token,
+            workspace,
+            {"decision": "approved", "note": "concurrency test"},
+        )[0]
+        == 200
+    )
     assert call(
         "POST", f"/dataset-builds/{build['build_id']}/validate", admin_token, workspace, {}
     )[1]["ok"]

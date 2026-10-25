@@ -222,9 +222,10 @@ def main() -> None:
             "config": {},
         },
     )
-    assert (
-        mismatch_status == 409 and mismatch["error"]["code"] == "PRODUCT_PURPOSE_MISMATCH"
-    ), (mismatch_status, mismatch)
+    assert mismatch_status == 409 and mismatch["error"]["code"] == "PRODUCT_PURPOSE_MISMATCH", (
+        mismatch_status,
+        mismatch,
+    )
     outsider_status, outsider = call(
         "POST",
         "/auth/session",

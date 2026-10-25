@@ -35,9 +35,56 @@ def test_upgrade_downgrade_reupgrade(monkeypatch):
                 with engine.connect() as conn:
                     assert (
                         conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
-                        == "0010_p1c_quality_guards"
+                        == "0012_legacy_schema_alignment"
                     )
                 command.check(config)
+                # Reproduce an incremental legacy schema; empty-bootstrap success
+                # alone cannot detect JSON/JSONB, nullability or missing-index drift.
+                command.downgrade(config, "0011_p1d_rag")
+                with engine.begin() as conn:
+                    conn.execute(
+                        text(
+                            "ALTER TABLE operator_definitions ALTER COLUMN "
+                            "input_schema TYPE json USING input_schema::json"
+                        )
+                    )
+                    conn.execute(
+                        text(
+                            "ALTER TABLE operator_definitions ALTER COLUMN created_at DROP NOT NULL"
+                        )
+                    )
+                    conn.execute(text("DROP INDEX ix_document_versions_run_id"))
+                    conn.execute(
+                        text("""INSERT INTO operator_definitions
+                        (id, operator_key, version, adapter_kind, input_schema, output_schema,
+                         params_schema, created_at, updated_at, revision)
+                        VALUES ('legacy-check', 'fixture', '1', 'builtin',
+                                json_build_object('text','原文','count',3),
+                                '{}', '{}', NULL, now(), 1)
+                    """)
+                    )
+                with pytest.raises(RuntimeError, match="LEGACY_TIMESTAMP_MISSING"):
+                    command.upgrade(config, "head")
+                with engine.begin() as conn:
+                    assert (
+                        conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
+                        == "0011_p1d_rag"
+                    )
+                    # The test owns this row and has its known fixture timestamp.
+                    conn.execute(
+                        text(
+                            "UPDATE operator_definitions SET created_at=updated_at "
+                            "WHERE id='legacy-check'"
+                        )
+                    )
+                command.upgrade(config, "head")
+                command.check(config)
+                with engine.connect() as conn:
+                    assert conn.execute(
+                        text(
+                            "SELECT input_schema FROM operator_definitions WHERE id='legacy-check'"
+                        )
+                    ).scalar_one() == {"text": "原文", "count": 3}
                 command.downgrade(config, "base")
                 with engine.connect() as conn:
                     assert conn.execute(text("SELECT count(*) FROM alembic_version")).scalar() == 0

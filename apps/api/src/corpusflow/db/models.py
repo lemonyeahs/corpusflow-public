@@ -20,6 +20,7 @@ from sqlalchemy import (
     UniqueConstraint,
     text,
 )
+from sqlalchemy import text as sql_text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -526,3 +527,84 @@ class ExecutionLog(Timestamped):
     level: Mapped[str] = mapped_column(String(20), default="INFO")
     message: Mapped[str] = mapped_column(Text)
     attempt_no: Mapped[int] = mapped_column(Integer, default=1)
+
+
+class RagIndexVersion(Timestamped):
+    __tablename__ = "rag_index_versions"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    dataset_version_id: Mapped[str] = mapped_column(ForeignKey("dataset_versions.id"))
+    request_key: Mapped[str] = mapped_column(String(120))
+    config: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    status: Mapped[str] = mapped_column(String(30), default="queued")
+    chunk_count: Mapped[int] = mapped_column(Integer, default=0)
+    content_sha256: Mapped[str] = mapped_column(String(64))
+    error_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    created_by: Mapped[str] = mapped_column(String(36))
+    __table_args__ = (UniqueConstraint("workspace_id", "request_key", name="uq_rag_index_request"),)
+
+
+class RagChunk(Timestamped):
+    __tablename__ = "rag_chunks"
+    index_version_id: Mapped[str] = mapped_column(ForeignKey("rag_index_versions.id"), index=True)
+    sample_id: Mapped[str] = mapped_column(ForeignKey("candidate_samples.id"))
+    segment_id: Mapped[str] = mapped_column(ForeignKey("segments.id"))
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id"))
+    text: Mapped[str] = mapped_column(Text)
+    content_sha256: Mapped[str] = mapped_column(String(64))
+    provenance: Mapped[dict[str, Any]] = mapped_column(JSON)
+    __table_args__ = (
+        UniqueConstraint("index_version_id", "sample_id", name="uq_rag_chunk"),
+        Index(
+            "ix_rag_chunks_fts", sql_text("to_tsvector('simple', text)"), postgresql_using="gin"
+        ).ddl_if(dialect="postgresql"),
+    )
+
+
+class RetrievalTrace(Timestamped):
+    __tablename__ = "retrieval_traces"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    index_version_id: Mapped[str] = mapped_column(ForeignKey("rag_index_versions.id"))
+    created_by: Mapped[str] = mapped_column(String(36))
+    query: Mapped[str] = mapped_column(Text)
+    config: Mapped[dict[str, Any]] = mapped_column(JSON)
+    result: Mapped[dict[str, Any]] = mapped_column(JSON)
+
+
+class RagEvaluationSuite(Timestamped):
+    __tablename__ = "rag_evaluation_suites"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    dataset_version_id: Mapped[str] = mapped_column(ForeignKey("dataset_versions.id"))
+    name: Mapped[str] = mapped_column(String(160))
+    cases: Mapped[list[dict[str, Any]]] = mapped_column(JSON)
+    content_sha256: Mapped[str] = mapped_column(String(64))
+    reviewed_by: Mapped[str] = mapped_column(String(36))
+    annotation_note: Mapped[str] = mapped_column(Text)
+
+
+class RagEvaluationRun(Timestamped):
+    __tablename__ = "rag_evaluation_runs"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    suite_id: Mapped[str] = mapped_column(ForeignKey("rag_evaluation_suites.id"))
+    index_version_id: Mapped[str] = mapped_column(ForeignKey("rag_index_versions.id"))
+    request_key: Mapped[str] = mapped_column(String(120))
+    created_by: Mapped[str] = mapped_column(String(36))
+    config: Mapped[dict[str, Any]] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(String(30), default="queued")
+    report: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    error_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    __table_args__ = (UniqueConstraint("workspace_id", "request_key", name="uq_rag_eval_request"),)
+
+
+class RagFeedback(Timestamped):
+    __tablename__ = "rag_feedback"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    trace_id: Mapped[str] = mapped_column(ForeignKey("retrieval_traces.id"))
+    evaluation_run_id: Mapped[str | None] = mapped_column(
+        ForeignKey("rag_evaluation_runs.id"), nullable=True
+    )
+    case_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    segment_id: Mapped[str] = mapped_column(ForeignKey("segments.id"))
+    quality_issue_id: Mapped[str] = mapped_column(ForeignKey("quality_issues.id"))
+    category: Mapped[str] = mapped_column(String(40))
+    note: Mapped[str] = mapped_column(Text)
+    created_by: Mapped[str] = mapped_column(String(36))

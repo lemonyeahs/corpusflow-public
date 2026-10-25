@@ -176,9 +176,7 @@ class RagDatasetBuilder:
             while start < len(parts):
                 end = min(start + chunk_size, len(parts))
                 chunk = (
-                    " ".join(parts[start:end])
-                    if unit == "tokens"
-                    else "".join(parts[start:end])
+                    " ".join(parts[start:end]) if unit == "tokens" else "".join(parts[start:end])
                 )
                 if len(chunk.strip()) >= int(config.get("min_chunk_chars", 1)):
                     candidates.append(
@@ -302,4 +300,3 @@ BUILDERS: dict[str, DatasetBuilder] = {
 
 def builder_for(product_type: str) -> DatasetBuilder | None:
     return BUILDERS.get(product_type)
-

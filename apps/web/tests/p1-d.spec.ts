@@ -1,0 +1,48 @@
+import { expect, test } from '@playwright/test';
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+
+test('P1-D real index, queries, evaluation history and quality feedback',async({page})=>{
+ test.setTimeout(240_000);
+ const root=path.resolve(process.cwd(),'../..');
+ execFileSync(path.join(root,'.venv/bin/python'),['scripts/verify_p1d_rag.py'],{cwd:root,timeout:180_000});
+ const state=JSON.parse(fs.readFileSync(path.join(root,'.local/p1d/web.json'),'utf8')) as {
+  session:{token:string;workspace_id:string};index_id:string;suite_id:string;dataset_version_id:string;
+ };
+ await page.goto('/');
+ await page.evaluate(s=>localStorage.setItem('corpusflow.p0h.session',JSON.stringify(s)),state.session);
+ await page.reload();
+ await page.getByRole('button',{name:'下游验证',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'版本化索引',exact:true})).toBeVisible();
+ await page.getByLabel('RAG 发布版本',{exact:true}).selectOption(state.dataset_version_id);
+ await page.getByRole('button',{name:'异步建立新索引',exact:true}).click();
+ await expect(page.getByText('"status": "succeeded"',{exact:false})).toBeVisible();
+ await page.getByLabel('查询',{exact:true}).fill('AES block size');
+ await page.getByRole('button',{name:'执行真实查询',exact:true}).click();
+ await expect(page.getByTestId('rag-result-status')).toContainText('EVIDENCE_FOUND');
+ await expect(page.getByText('AES is a symmetric block cipher.',{exact:false}).first()).toBeVisible();
+ await expect(page.getByTestId('rag-result-status')).toContainText('NOT_CONFIGURED');
+ await page.getByLabel('检索策略',{exact:true}).selectOption('fts');
+ await expect(page.getByTestId('rag-result-status')).toHaveCount(0);
+ await page.getByLabel('检索策略',{exact:true}).selectOption('bm25');
+ await page.getByLabel('查询',{exact:true}).fill('quantumunicornplanet');
+ await expect(page.getByTestId('rag-result-status')).toHaveCount(0);
+ await page.getByRole('button',{name:'执行真实查询',exact:true}).click();
+ await expect(page.getByTestId('rag-result-status')).toContainText('NO_EVIDENCE');
+ await page.getByLabel('评测集',{exact:true}).selectOption(state.suite_id);
+ await page.getByRole('button',{name:'异步执行评测',exact:true}).click();
+ await expect(page.getByText('"recall"',{exact:false}).first()).toBeVisible();
+ await page.reload();
+ await page.getByRole('button',{name:'下游验证',exact:true}).click();
+ await expect(page.getByText('"recall"',{exact:false}).first()).toBeVisible();
+ await page.getByLabel('检索索引',{exact:true}).selectOption(state.index_id);
+ await page.getByLabel('查询',{exact:true}).fill('Merkle root');
+ await page.getByRole('button',{name:'执行真实查询',exact:true}).click();
+ await expect(page.getByText('A Merkle tree aggregates',{exact:false}).first()).toBeVisible();
+ await page.getByLabel('核对依据 / 反馈说明',{exact:true}).fill('Web fixture feedback: inspect actual Merkle segment');
+ await page.getByRole('button',{name:'记录质量反馈',exact:true}).first().click();
+ await expect(page.getByText('retrieval · Web fixture feedback:',{exact:false})).toBeVisible();
+ await page.setViewportSize({width:390,height:844});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();
+});

@@ -1,7 +1,7 @@
 """P1-A operator registry, node metrics and immutable document processing versions."""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "0008_p1a_processing"
 down_revision = "0007_execution_timing"
@@ -35,7 +35,9 @@ def upgrade() -> None:
             sa.Column("params_schema", sa.JSON(), nullable=False, server_default="{}"),
             sa.UniqueConstraint("operator_key", "version", name="uq_operator_version"),
         )
-        op.create_index("ix_operator_definitions_operator_key", "operator_definitions", ["operator_key"])
+        op.create_index(
+            "ix_operator_definitions_operator_key", "operator_definitions", ["operator_key"]
+        )
     for name, column in (
         ("operator_key", sa.Column("operator_key", sa.String(120), nullable=True)),
         ("operator_version", sa.Column("operator_version", sa.String(40), nullable=True)),
@@ -65,23 +67,43 @@ def upgrade() -> None:
         op.execute(sa.text("UPDATE node_runs SET input_count=0 WHERE input_count IS NULL"))
         op.execute(sa.text("UPDATE node_runs SET output_count=0 WHERE output_count IS NULL"))
         op.execute(sa.text("UPDATE node_runs SET filtered_count=0 WHERE filtered_count IS NULL"))
-        op.execute(sa.text("UPDATE node_runs SET config_snapshot='{}'::jsonb WHERE config_snapshot IS NULL"))
-        op.execute(sa.text("UPDATE document_versions SET parser_name='builtin' WHERE parser_name IS NULL"))
+        op.execute(
+            sa.text(
+                "UPDATE node_runs SET config_snapshot='{}'::jsonb WHERE config_snapshot IS NULL"
+            )
+        )
+        op.execute(
+            sa.text("UPDATE document_versions SET parser_name='builtin' WHERE parser_name IS NULL")
+        )
         op.execute(sa.text("UPDATE document_versions SET config_hash='' WHERE config_hash IS NULL"))
         op.execute(sa.text("UPDATE document_versions SET status='succeeded' WHERE status IS NULL"))
-        op.execute(sa.text("UPDATE segments SET location_json='{}'::jsonb WHERE location_json IS NULL"))
+        op.execute(
+            sa.text("UPDATE segments SET location_json='{}'::jsonb WHERE location_json IS NULL")
+        )
         op.execute(sa.text("UPDATE segments SET token_count=0 WHERE token_count IS NULL"))
     else:
         for table, column, value in (
-            ("node_runs", "input_count", 0), ("node_runs", "output_count", 0),
-            ("node_runs", "filtered_count", 0), ("node_runs", "config_snapshot", {}),
-            ("document_versions", "parser_name", "builtin"), ("document_versions", "config_hash", ""),
-            ("document_versions", "status", "succeeded"), ("segments", "location_json", {}),
+            ("node_runs", "input_count", 0),
+            ("node_runs", "output_count", 0),
+            ("node_runs", "filtered_count", 0),
+            ("node_runs", "config_snapshot", {}),
+            ("document_versions", "parser_name", "builtin"),
+            ("document_versions", "config_hash", ""),
+            ("document_versions", "status", "succeeded"),
+            ("segments", "location_json", {}),
             ("segments", "token_count", 0),
         ):
-            op.execute(sa.text(f"UPDATE {table} SET {column} = :value WHERE {column} IS NULL").bindparams(value=value))
-    for table, name in (("node_runs", "input_count"), ("node_runs", "output_count"),
-                        ("node_runs", "filtered_count"), ("segments", "token_count")):
+            op.execute(
+                sa.text(f"UPDATE {table} SET {column} = :value WHERE {column} IS NULL").bindparams(
+                    value=value
+                )
+            )
+    for table, name in (
+        ("node_runs", "input_count"),
+        ("node_runs", "output_count"),
+        ("node_runs", "filtered_count"),
+        ("segments", "token_count"),
+    ):
         op.alter_column(table, name, nullable=False)
     op.alter_column("node_runs", "config_snapshot", nullable=False, server_default="{}")
     op.alter_column("document_versions", "parser_name", nullable=False, server_default="builtin")
@@ -92,14 +114,24 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     bind = op.get_bind()
-    for table, name in (("segments", "section_title"), ("segments", "token_count"),
-                        ("segments", "location_json"), ("document_versions", "status"),
-                        ("document_versions", "artifact_id"), ("document_versions", "run_id"),
-                        ("document_versions", "config_hash"), ("document_versions", "parser_name"),
-                        ("node_runs", "failure_code"), ("node_runs", "duration_ms"),
-                        ("node_runs", "filtered_count"), ("node_runs", "output_count"),
-                        ("node_runs", "input_count"), ("node_runs", "config_snapshot"),
-                        ("node_runs", "operator_version"), ("node_runs", "operator_key")):
+    for table, name in (
+        ("segments", "section_title"),
+        ("segments", "token_count"),
+        ("segments", "location_json"),
+        ("document_versions", "status"),
+        ("document_versions", "artifact_id"),
+        ("document_versions", "run_id"),
+        ("document_versions", "config_hash"),
+        ("document_versions", "parser_name"),
+        ("node_runs", "failure_code"),
+        ("node_runs", "duration_ms"),
+        ("node_runs", "filtered_count"),
+        ("node_runs", "output_count"),
+        ("node_runs", "input_count"),
+        ("node_runs", "config_snapshot"),
+        ("node_runs", "operator_version"),
+        ("node_runs", "operator_key"),
+    ):
         if name in _columns(bind, table):
             op.drop_column(table, name)
     if "operator_definitions" in sa.inspect(bind).get_table_names():

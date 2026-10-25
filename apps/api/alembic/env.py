@@ -14,8 +14,10 @@ if context.is_offline_mode():
         context.run_migrations()
 else:
     engine = build_engine(settings)
-    with engine.connect() as connection:
-        context.configure(connection=connection, target_metadata=Base.metadata)
-        with context.begin_transaction():
-            context.run_migrations()
-    engine.dispose()
+    try:
+        with engine.connect() as connection:
+            context.configure(connection=connection, target_metadata=Base.metadata)
+            with context.begin_transaction():
+                context.run_migrations()
+    finally:
+        engine.dispose()

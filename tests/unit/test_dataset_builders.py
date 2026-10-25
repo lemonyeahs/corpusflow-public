@@ -53,4 +53,3 @@ def test_evaluation_builder_requires_reference_and_evidence():
     )
     assert len(result.candidates) == 1
     assert result.excluded[0]["reason"] == "reference_answer_missing,evidence_missing"
-

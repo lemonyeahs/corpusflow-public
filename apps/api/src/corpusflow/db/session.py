@@ -5,7 +5,7 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from corpusflow.core.config import Settings
 
-SCHEMA_REVISION = "0010_p1c_quality_guards"
+SCHEMA_REVISION = "0012_legacy_schema_alignment"
 
 
 class Base(DeclarativeBase):

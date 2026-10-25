@@ -23,7 +23,7 @@ export class ApiError extends Error {
 
 export interface ApiContext { token: string; workspaceId: string }
 
-async function request<T>(path: string, context?: ApiContext, init: RequestInit = {}): Promise<T> {
+export async function request<T>(path: string, context?: ApiContext, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
   if (context?.token) headers.set("Authorization", `Bearer ${context.token}`);

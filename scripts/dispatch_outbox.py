@@ -14,6 +14,8 @@ class Dispatcher:
     def publish(self, event) -> object:
         task_name = {
             "pipeline.run.execute": "corpusflow.execute_pipeline_run",
+            "rag.index.build": "corpusflow.rag_job",
+            "rag.evaluation.execute": "corpusflow.rag_job",
             "dataset.version.deliver": "corpusflow.deliver_dataset_version",
         }.get(event.event_type)
         if not task_name:

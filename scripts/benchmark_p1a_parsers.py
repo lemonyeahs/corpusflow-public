@@ -1,4 +1,5 @@
 """Run the P1-A parser benchmark against the checked-in synthetic fixtures."""
+
 from __future__ import annotations
 
 import json
@@ -20,37 +21,51 @@ def main() -> None:
         started = time.perf_counter()
         try:
             parser = PDFParserAdapter() if expected["kind"] == "pdf" else HTMLParserAdapter()
-            result = parser.parse(path.read_bytes(), filename, "application/pdf" if expected["kind"] == "pdf" else "text/html")
+            result = parser.parse(
+                path.read_bytes(),
+                filename,
+                "application/pdf" if expected["kind"] == "pdf" else "text/html",
+            )
             elapsed = round((time.perf_counter() - started) * 1000, 2)
             markers = [marker for marker in expected.get("markers", []) if marker in result.text]
-            rows.append({
-                "file": filename,
-                "expected": expected["expected"],
-                "actual": "success",
-                "success": expected["expected"] == "success",
-                "text_completeness": round(len(markers) / len(expected.get("markers", []) or [1]), 3),
-                "heading_count": len(result.sections),
-                "formula_markers": len(result.structured.get("formula_markers", [])),
-                "table_rows": len(result.structured.get("table_rows", [])),
-                "location_coverage": round(sum(bool(section.location) for section in result.sections) / len(result.sections), 3),
-                "elapsed_ms": elapsed,
-                "failure_type": "",
-            })
+            rows.append(
+                {
+                    "file": filename,
+                    "expected": expected["expected"],
+                    "actual": "success",
+                    "success": expected["expected"] == "success",
+                    "text_completeness": round(
+                        len(markers) / len(expected.get("markers", []) or [1]), 3
+                    ),
+                    "heading_count": len(result.sections),
+                    "formula_markers": len(result.structured.get("formula_markers", [])),
+                    "table_rows": len(result.structured.get("table_rows", [])),
+                    "location_coverage": round(
+                        sum(bool(section.location) for section in result.sections)
+                        / len(result.sections),
+                        3,
+                    ),
+                    "elapsed_ms": elapsed,
+                    "failure_type": "",
+                }
+            )
         except ParserError as exc:
             elapsed = round((time.perf_counter() - started) * 1000, 2)
-            rows.append({
-                "file": filename,
-                "expected": expected["expected"],
-                "actual": exc.code,
-                "success": False,
-                "text_completeness": 0,
-                "heading_count": 0,
-                "formula_markers": 0,
-                "table_rows": 0,
-                "location_coverage": 0,
-                "elapsed_ms": elapsed,
-                "failure_type": exc.code,
-            })
+            rows.append(
+                {
+                    "file": filename,
+                    "expected": expected["expected"],
+                    "actual": exc.code,
+                    "success": False,
+                    "text_completeness": 0,
+                    "heading_count": 0,
+                    "formula_markers": 0,
+                    "table_rows": 0,
+                    "location_coverage": 0,
+                    "elapsed_ms": elapsed,
+                    "failure_type": exc.code,
+                }
+            )
     successful = [row for row in rows if row["actual"] == "success"]
     expected_success = [row for row in rows if row["expected"] == "success"]
     success_rate = sum(row["actual"] == row["expected"] for row in rows) / len(rows)
@@ -74,18 +89,30 @@ def main() -> None:
             f"{row['heading_count']} | {row['formula_markers']} | {row['table_rows']} | "
             f"{float(row['location_coverage']):.1%} | {row['elapsed_ms']} | {row['failure_type'] or '—'} |"
         )
-    lines.extend([
-        "",
-        "## 解读",
-        "",
-        "- 普通文本、公式 marker、技术表格和 HTML 的实际文本层可被内置解析器提取；PDF 定位为页码/行号，HTML 定位为行号。",
-        "- 扫描版 PDF、加密 PDF、损坏 PDF 分别得到 `SCANNED_PDF_UNSUPPORTED`、`ENCRYPTED_PDF`、`CORRUPT_PDF`，没有生成成功 DocumentVersion。",
-        "- 多栏 PDF 仅能在当前文本层样本中验证页级顺序；没有版面模型或 OCR 的文档不宣称已经解决多栏重排。",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "## 解读",
+            "",
+            "- 普通文本、公式 marker、技术表格和 HTML 的实际文本层可被内置解析器提取；PDF 定位为页码/行号，HTML 定位为行号。",
+            "- 扫描版 PDF、加密 PDF、损坏 PDF 分别得到 `SCANNED_PDF_UNSUPPORTED`、`ENCRYPTED_PDF`、`CORRUPT_PDF`，没有生成成功 DocumentVersion。",
+            "- 多栏 PDF 仅能在当前文本层样本中验证页级顺序；没有版面模型或 OCR 的文档不宣称已经解决多栏重排。",
+            "",
+        ]
+    )
     OUTPUT.write_text("\n".join(lines), encoding="utf-8")
     print("P1-A PARSER BENCHMARK PASS")
-    print(json.dumps({"samples": len(rows), "success_rate": success_rate, "average_ms": average_ms, "rows": rows}, ensure_ascii=False))
+    print(
+        json.dumps(
+            {
+                "samples": len(rows),
+                "success_rate": success_rate,
+                "average_ms": average_ms,
+                "rows": rows,
+            },
+            ensure_ascii=False,
+        )
+    )
 
 
 if __name__ == "__main__":

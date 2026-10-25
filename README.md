@@ -87,3 +87,17 @@ npm run e2e
 ```
 
 P0-H 交付报告见 [`docs/reports/P0-H_WEB_ACCEPTANCE.md`](docs/reports/P0-H_WEB_ACCEPTANCE.md)。
+
+## P1-D 真实检索与评测
+
+“下游验证”页面现提供真实发布 RAG 索引、PostgreSQL FTS/Unicode BM25、词法混合与词项重排、固定评测和质量反馈重工。向量与模型生成未配置，界面明确显示不可用，不提供预设回答。
+
+```bash
+# 在根目录执行，已有 .env 不覆盖；先等待依赖启动，再运行测试。
+docker compose --env-file .env -f infra/compose.yaml up -d --build --wait api worker dispatcher
+.venv/bin/python scripts/verify_p1d_environment.py
+.venv/bin/python scripts/verify_p1d_rag.py
+cd apps/web && npm run e2e
+```
+
+详见 [P1-D 验收](docs/reports/P1-D_RAG_EVALUATION_ACCEPTANCE.md)、[检索基准](docs/reports/P1-D_RETRIEVAL_BENCHMARK.md) 和 [反馈闭环](docs/reports/P1-D_FEEDBACK_LOOP.md)。当前结论仅覆盖开发/演示环境；专业标注、向量/生成效果和生产认证未验收。

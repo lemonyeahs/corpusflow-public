@@ -69,10 +69,7 @@ def publish_pending(session: Session, dispatcher: Dispatcher, limit: int = 100) 
     rows = session.scalars(
         select(OutboxEvent)
         .where(
-            (
-                (OutboxEvent.status == "pending")
-                & (OutboxEvent.available_at <= now)
-            )
+            ((OutboxEvent.status == "pending") & (OutboxEvent.available_at <= now))
             | ((OutboxEvent.status == "processing") & (OutboxEvent.locked_at < stale_before))
         )
         .order_by(OutboxEvent.created_at)

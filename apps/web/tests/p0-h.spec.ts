@@ -15,8 +15,9 @@ test.describe("P0-H 真实 Web 联调", () => {
     await expect(page.getByRole("heading", { name: "工作台总览" })).toBeVisible();
 
     await page.getByRole("button", { name: "数据接入" }).click();
-    await page.getByRole("button", { name: "创建来源" }).click();
     await page.locator('input[type="file"]').setInputFiles(path.join(process.cwd(), "tests/fixtures/corpusflow-e2e.pdf"));
+    await expect(page.getByRole("button", { name: "上传并登记批次" })).toBeDisabled();
+    await page.getByRole("button", { name: "创建来源" }).click();
     await page.getByRole("button", { name: "上传并登记批次" }).click();
     await expect(page.getByText("succeeded", { exact: true })).toBeVisible({ timeout: 30_000 });
 

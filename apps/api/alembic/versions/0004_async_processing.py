@@ -1,10 +1,9 @@
 """Transactional outbox and execution logs."""
 
 from alembic import op
-from sqlalchemy import inspect
-
-from corpusflow.db.session import Base
 from corpusflow.db import models  # noqa: F401
+from corpusflow.db.session import Base
+from sqlalchemy import inspect
 
 revision = "0004_async_processing"
 down_revision = "0003_immutable_release"
@@ -15,7 +14,9 @@ depends_on = None
 def upgrade() -> None:
     bind = op.get_bind()
     # create_all is safe for the newly introduced tables and preserves all P0 data.
-    Base.metadata.create_all(bind=bind, tables=[models.OutboxEvent.__table__, models.ExecutionLog.__table__])
+    Base.metadata.create_all(
+        bind=bind, tables=[models.OutboxEvent.__table__, models.ExecutionLog.__table__]
+    )
 
 
 def downgrade() -> None:
