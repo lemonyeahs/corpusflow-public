@@ -1,0 +1,278 @@
+{
+  "text": "3. Mathematical notation\nE = mc 2\nP(X = x) = 1 / N\na + b\nc",
+  "structured": {
+    "pages": [
+      {
+        "page": 1,
+        "lines": [
+          {
+            "text": "3. Mathematical notation",
+            "words": [
+              {
+                "text": "3.",
+                "xMin": 40.0,
+                "yMin": 32.076,
+                "xMax": 55.012,
+                "yMax": 48.726
+              },
+              {
+                "text": "Mathematical",
+                "xMin": 60.016,
+                "yMin": 32.076,
+                "xMax": 174.046,
+                "yMax": 48.726
+              },
+              {
+                "text": "notation",
+                "xMin": 179.05,
+                "yMin": 32.076,
+                "xMax": 250.042,
+                "yMax": 48.726
+              }
+            ],
+            "xMin": 40.0,
+            "yMin": 32.076,
+            "xMax": 250.042,
+            "yMax": 48.726,
+            "heading": true
+          },
+          {
+            "text": "E = mc 2",
+            "words": [
+              {
+                "text": "E",
+                "xMin": 40.0,
+                "yMin": 98.512,
+                "xMax": 50.672,
+                "yMax": 113.312
+              },
+              {
+                "text": "=",
+                "xMin": 55.12,
+                "yMin": 98.512,
+                "xMax": 64.464,
+                "yMax": 113.312
+              },
+              {
+                "text": "mc",
+                "xMin": 68.912,
+                "yMin": 98.512,
+                "xMax": 90.24,
+                "yMax": 113.312
+              },
+              {
+                "text": "2",
+                "xMin": 91.0,
+                "yMin": 95.82,
+                "xMax": 96.56,
+                "yMax": 105.07
+              }
+            ],
+            "xMin": 40.0,
+            "yMin": 95.82,
+            "xMax": 96.56,
+            "yMax": 113.312,
+            "heading": false
+          },
+          {
+            "text": "P(X = x) = 1 / N",
+            "words": [
+              {
+                "text": "P(X",
+                "xMin": 40.0,
+                "yMin": 153.512,
+                "xMax": 66.672,
+                "yMax": 168.312
+              },
+              {
+                "text": "=",
+                "xMin": 71.12,
+                "yMin": 153.512,
+                "xMax": 80.464,
+                "yMax": 168.312
+              },
+              {
+                "text": "x)",
+                "xMin": 84.912,
+                "yMin": 153.512,
+                "xMax": 98.24,
+                "yMax": 168.312
+              },
+              {
+                "text": "=",
+                "xMin": 102.688,
+                "yMin": 153.512,
+                "xMax": 112.032,
+                "yMax": 168.312
+              },
+              {
+                "text": "1",
+                "xMin": 116.48,
+                "yMin": 153.512,
+                "xMax": 125.376,
+                "yMax": 168.312
+              },
+              {
+                "text": "/",
+                "xMin": 129.824,
+                "yMin": 153.512,
+                "xMax": 134.272,
+                "yMax": 168.312
+              },
+              {
+                "text": "N",
+                "xMin": 138.72,
+                "yMin": 153.512,
+                "xMax": 150.272,
+                "yMax": 168.312
+              }
+            ],
+            "xMin": 40.0,
+            "yMin": 153.512,
+            "xMax": 150.272,
+            "yMax": 168.312,
+            "heading": false
+          },
+          {
+            "text": "a + b",
+            "words": [
+              {
+                "text": "a",
+                "xMin": 40.0,
+                "yMin": 218.512,
+                "xMax": 48.896,
+                "yMax": 233.312
+              },
+              {
+                "text": "+",
+                "xMin": 53.344,
+                "yMin": 218.512,
+                "xMax": 62.688,
+                "yMax": 233.312
+              },
+              {
+                "text": "b",
+                "xMin": 67.136,
+                "yMin": 218.512,
+                "xMax": 76.032,
+                "yMax": 233.312
+              }
+            ],
+            "xMin": 40.0,
+            "yMin": 218.512,
+            "xMax": 76.032,
+            "yMax": 233.312,
+            "heading": false
+          },
+          {
+            "text": "c",
+            "words": [
+              {
+                "text": "c",
+                "xMin": 54.0,
+                "yMin": 243.512,
+                "xMax": 62.0,
+                "yMax": 258.312
+              }
+            ],
+            "xMin": 54.0,
+            "yMin": 243.512,
+            "xMax": 62.0,
+            "yMax": 258.312,
+            "heading": false
+          }
+        ],
+        "two_column_heuristic": false
+      }
+    ],
+    "headings": [
+      {
+        "page": 1,
+        "text": "3. Mathematical notation"
+      }
+    ],
+    "tables": [],
+    "engine": "pdftotext version 26.03.0",
+    "formula_structure": "NOT_EVALUATED",
+    "image_semantics": "NOT_EVALUATED",
+    "reading_order": "bounded two-column heuristic"
+  },
+  "sections": [
+    {
+      "title": "3. Mathematical notation",
+      "text": "3. Mathematical notation",
+      "location": {
+        "page": 1,
+        "bbox": [
+          40.0,
+          32.076,
+          250.042,
+          48.726
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 1
+      }
+    },
+    {
+      "title": "Page 1 line 2",
+      "text": "E = mc 2",
+      "location": {
+        "page": 1,
+        "bbox": [
+          40.0,
+          95.82,
+          96.56,
+          113.312
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 2
+      }
+    },
+    {
+      "title": "Page 1 line 3",
+      "text": "P(X = x) = 1 / N",
+      "location": {
+        "page": 1,
+        "bbox": [
+          40.0,
+          153.512,
+          150.272,
+          168.312
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 3
+      }
+    },
+    {
+      "title": "Page 1 line 4",
+      "text": "a + b",
+      "location": {
+        "page": 1,
+        "bbox": [
+          40.0,
+          218.512,
+          76.032,
+          233.312
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 4
+      }
+    },
+    {
+      "title": "Page 1 line 5",
+      "text": "c",
+      "location": {
+        "page": 1,
+        "bbox": [
+          54.0,
+          243.512,
+          62.0,
+          258.312
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 5
+      }
+    }
+  ],
+  "error": null
+}

@@ -1,0 +1,46 @@
+{
+  "host_addresses": {
+    "api.crossref.org": [
+      "198.18.0.117"
+    ],
+    "www.rfc-editor.org": [
+      "198.18.0.118"
+    ],
+    "example.com": [
+      "198.18.0.123"
+    ]
+  },
+  "container_addresses": {
+    "api.crossref.org": [
+      "198.18.0.117"
+    ],
+    "www.rfc-editor.org": [
+      "198.18.0.118"
+    ],
+    "example.com": [
+      "198.18.0.123"
+    ]
+  },
+  "public_attempts": [
+    {
+      "url": "https://api.crossref.org/works/10.1038/s41586-020-2649-2",
+      "status": "BLOCKED",
+      "code": "ACQUISITION_ADDRESS_REJECTED"
+    },
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc20.html",
+      "status": "BLOCKED",
+      "code": "ACQUISITION_ADDRESS_REJECTED"
+    },
+    {
+      "url": "https://example.com/",
+      "status": "BLOCKED",
+      "code": "ACQUISITION_ADDRESS_REJECTED"
+    }
+  ],
+  "dns_configuration_modified": false,
+  "proxy_bypass_added": false,
+  "interpretation": "198.18.x.x synthesis observed; precise interception software not attributed",
+  "direct_configured_resolver": "\n; <<>> DiG 9.10.6 <<>> +time=2 +tries=1 @223.5.5.5 api.crossref.org A +noall +answer\n; (1 server found)\n;; global options: +cmd\napi.crossref.org.\t1\tIN\tA\t198.18.0.117\n",
+  "cname_query": "\n; <<>> DiG 9.10.6 <<>> +time=2 +tries=1 api.crossref.org CNAME +noall +answer\n;; global options: +cmd\n"
+}

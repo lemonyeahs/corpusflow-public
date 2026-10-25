@@ -1,0 +1,445 @@
+{
+  "text": "1. Layout and cryptanalysis LEFT-ONE AES uses fixed blocks. RIGHT-ONE RSA is asymmetric. LEFT-TWO A key selects a permutation. RIGHT-TWO Public keys may be shared. LEFT-THREE Evidence must be traceable. RIGHT-THREE Private keys stay private.",
+  "structured": {
+    "engine": "tesseract 5.5.1",
+    "language": "eng",
+    "psm": 3,
+    "scale_to": 2400,
+    "words": [
+      {
+        "text": "1.",
+        "page": 1,
+        "bbox": [
+          125,
+          97,
+          35,
+          38
+        ],
+        "confidence": 95.795868,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "Layout",
+        "page": 1,
+        "bbox": [
+          184,
+          96,
+          169,
+          51
+        ],
+        "confidence": 96.311951,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "and",
+        "page": 1,
+        "bbox": [
+          374,
+          96,
+          88,
+          40
+        ],
+        "confidence": 96.248383,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "cryptanalysis",
+        "page": 1,
+        "bbox": [
+          485,
+          96,
+          338,
+          51
+        ],
+        "confidence": 96.025841,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "LEFT-ONE",
+        "page": 1,
+        "bbox": [
+          123,
+          273,
+          173,
+          28
+        ],
+        "confidence": 91.140099,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "AES",
+        "page": 1,
+        "bbox": [
+          309,
+          274,
+          69,
+          27
+        ],
+        "confidence": 95.949211,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "uses",
+        "page": 1,
+        "bbox": [
+          392,
+          281,
+          73,
+          20
+        ],
+        "confidence": 92.9039,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "fixed",
+        "page": 1,
+        "bbox": [
+          476,
+          274,
+          74,
+          27
+        ],
+        "confidence": 96.513725,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "blocks.",
+        "page": 1,
+        "bbox": [
+          564,
+          274,
+          107,
+          27
+        ],
+        "confidence": 96.513725,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "RIGHT-ONE",
+        "page": 1,
+        "bbox": [
+          963,
+          273,
+          196,
+          28
+        ],
+        "confidence": 90.961662,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "RSA",
+        "page": 1,
+        "bbox": [
+          1175,
+          274,
+          70,
+          27
+        ],
+        "confidence": 91.390793,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "is",
+        "page": 1,
+        "bbox": [
+          1258,
+          274,
+          23,
+          27
+        ],
+        "confidence": 95.760681,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "asymmetric.",
+        "page": 1,
+        "bbox": [
+          1293,
+          274,
+          190,
+          34
+        ],
+        "confidence": 95.477348,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "LEFT-TWO",
+        "page": 1,
+        "bbox": [
+          123,
+          363,
+          179,
+          28
+        ],
+        "confidence": 91.555931,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "A",
+        "page": 1,
+        "bbox": [
+          302,
+          359,
+          19,
+          44
+        ],
+        "confidence": 96.595627,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "key",
+        "page": 1,
+        "bbox": [
+          350,
+          364,
+          53,
+          34
+        ],
+        "confidence": 95.344116,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "selects",
+        "page": 1,
+        "bbox": [
+          415,
+          364,
+          110,
+          27
+        ],
+        "confidence": 96.631844,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "a",
+        "page": 1,
+        "bbox": [
+          537,
+          371,
+          18,
+          20
+        ],
+        "confidence": 96.84066,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "permutation.",
+        "page": 1,
+        "bbox": [
+          568,
+          364,
+          195,
+          34
+        ],
+        "confidence": 96.420906,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "RIGHT-TWO",
+        "page": 1,
+        "bbox": [
+          963,
+          363,
+          203,
+          28
+        ],
+        "confidence": 92.514191,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "Public",
+        "page": 1,
+        "bbox": [
+          1180,
+          364,
+          95,
+          27
+        ],
+        "confidence": 96.668175,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "keys",
+        "page": 1,
+        "bbox": [
+          1288,
+          364,
+          71,
+          34
+        ],
+        "confidence": 96.418907,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "may",
+        "page": 1,
+        "bbox": [
+          1372,
+          371,
+          65,
+          27
+        ],
+        "confidence": 95.601952,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "be",
+        "page": 1,
+        "bbox": [
+          1450,
+          364,
+          36,
+          27
+        ],
+        "confidence": 96.826431,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "shared.",
+        "page": 1,
+        "bbox": [
+          1499,
+          364,
+          116,
+          27
+        ],
+        "confidence": 96.569214,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "LEFT-THREE",
+        "page": 1,
+        "bbox": [
+          123,
+          454,
+          217,
+          26
+        ],
+        "confidence": 92.655701,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "Evidence",
+        "page": 1,
+        "bbox": [
+          355,
+          454,
+          143,
+          27
+        ],
+        "confidence": 96.438766,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "must",
+        "page": 1,
+        "bbox": [
+          512,
+          456,
+          75,
+          25
+        ],
+        "confidence": 95.386566,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "be",
+        "page": 1,
+        "bbox": [
+          600,
+          454,
+          36,
+          27
+        ],
+        "confidence": 95.386566,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "traceable.",
+        "page": 1,
+        "bbox": [
+          648,
+          454,
+          155,
+          27
+        ],
+        "confidence": 96.558502,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "RIGHT-THREE",
+        "page": 1,
+        "bbox": [
+          963,
+          454,
+          240,
+          27
+        ],
+        "confidence": 92.136292,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "Private",
+        "page": 1,
+        "bbox": [
+          1218,
+          454,
+          108,
+          27
+        ],
+        "confidence": 96.439484,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "keys",
+        "page": 1,
+        "bbox": [
+          1340,
+          454,
+          71,
+          34
+        ],
+        "confidence": 96.15535,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "stay",
+        "page": 1,
+        "bbox": [
+          1423,
+          456,
+          64,
+          32
+        ],
+        "confidence": 96.238182,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "private.",
+        "page": 1,
+        "bbox": [
+          1500,
+          454,
+          113,
+          34
+        ],
+        "confidence": 96.419502,
+        "unit": "rendered_pixel"
+      }
+    ],
+    "page_count": 1,
+    "formula_structure": "NOT_EVALUATED",
+    "table_structure": "NOT_EVALUATED"
+  },
+  "sections": [
+    {
+      "title": "Page 1",
+      "text": "1. Layout and cryptanalysis LEFT-ONE AES uses fixed blocks. RIGHT-ONE RSA is asymmetric. LEFT-TWO A key selects a permutation. RIGHT-TWO Public keys may be shared. LEFT-THREE Evidence must be traceable. RIGHT-THREE Private keys stay private.",
+      "location": {
+        "page": 1,
+        "method": "ocr"
+      }
+    }
+  ],
+  "error": null
+}

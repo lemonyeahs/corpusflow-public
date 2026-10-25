@@ -29,7 +29,10 @@ def submit(
     key: str,
     ratings: dict[str, Any],
     note: str,
+    *,
+    assigned: bool = False,
 ) -> RetrievalReview:
+    rag.require(assigned or not key.startswith("blind:"), "RESERVED_REVIEW_KEY")
     # Newly optional answer fields must not invalidate old retrieval-only request keys.
     ratings = {key: value for key, value in ratings.items() if value is not None}
     lock(session, f"retrieval-review:{wid}:{key}")

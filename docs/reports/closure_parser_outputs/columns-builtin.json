@@ -1,0 +1,34 @@
+{
+  "text": "1. Layout and cryptanalysis\nLEFT-ONE AES uses fixed blocks.\nRIGHT-ONE RSA is asymmetric.\nLEFT-TWO A key selects a permutation.\nRIGHT-TWO Public keys may be shared.\nLEFT-THREE Evidence must be traceable.\nRIGHT-THREE Private keys stay private.",
+  "structured": {
+    "title": "columns.pdf",
+    "pages": [
+      {
+        "title": "Page 1",
+        "text": "1. Layout and cryptanalysis\nLEFT-ONE AES uses fixed blocks.\nRIGHT-ONE RSA is asymmetric.\nLEFT-TWO A key selects a permutation.\nRIGHT-TWO Public keys may be shared.\nLEFT-THREE Evidence must be traceable.\nRIGHT-THREE Private keys stay private.",
+        "location": {
+          "page": 1,
+          "line_start": 1,
+          "line_end": 7
+        }
+      }
+    ],
+    "page_count": 1,
+    "table_rows": [],
+    "formula_markers": [],
+    "layout": "page_text",
+    "source_location": "page_and_line"
+  },
+  "sections": [
+    {
+      "title": "Page 1",
+      "text": "1. Layout and cryptanalysis\nLEFT-ONE AES uses fixed blocks.\nRIGHT-ONE RSA is asymmetric.\nLEFT-TWO A key selects a permutation.\nRIGHT-TWO Public keys may be shared.\nLEFT-THREE Evidence must be traceable.\nRIGHT-THREE Private keys stay private.",
+      "location": {
+        "page": 1,
+        "line_start": 1,
+        "line_end": 7
+      }
+    }
+  ],
+  "error": null
+}

@@ -1,0 +1,45 @@
+{
+  "text": "3. Mathematical notation\nE = mc\n2\nP(X = x) = 1 / N\na + b\nc",
+  "structured": {
+    "title": "formula.pdf",
+    "pages": [
+      {
+        "title": "Page 1",
+        "text": "3. Mathematical notation\nE = mc\n2\nP(X = x) = 1 / N\na + b\nc",
+        "location": {
+          "page": 1,
+          "line_start": 1,
+          "line_end": 6
+        }
+      }
+    ],
+    "page_count": 1,
+    "table_rows": [],
+    "formula_markers": [
+      {
+        "page": 1,
+        "line": 2,
+        "raw": "E = mc"
+      },
+      {
+        "page": 1,
+        "line": 4,
+        "raw": "P(X = x) = 1 / N"
+      }
+    ],
+    "layout": "page_text",
+    "source_location": "page_and_line"
+  },
+  "sections": [
+    {
+      "title": "Page 1",
+      "text": "3. Mathematical notation\nE = mc\n2\nP(X = x) = 1 / N\na + b\nc",
+      "location": {
+        "page": 1,
+        "line_start": 1,
+        "line_end": 6
+      }
+    }
+  ],
+  "error": null
+}

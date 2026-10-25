@@ -107,7 +107,7 @@ export function ProcessingPage({ ctx }: { ctx: ApiContext }) {
             {!assets.length && <Empty>请先完成文件接入。</Empty>}
           </div>
           <Field label="算子参数 JSON（提交后形成不可变 Run 快照）">
-            <label>解析器<select aria-label="解析器" value={parserKind} onChange={e=>setParserKind(e.target.value)}><option value="builtin">内置 PDF / HTML</option><option value="ocr">英文扫描 PDF · 真实 OCR（最多 10 页）</option></select></label>
+            <label>解析器<select aria-label="解析器" value={parserKind} onChange={e=>setParserKind(e.target.value)}><option value="builtin">内置 PDF / HTML</option><option value="layout">原生 PDF 版面与坐标（启发式）</option><option value="ocr">英文扫描 PDF · 真实 OCR（最多 10 页）</option></select></label>
             <textarea value={config} onChange={event => setConfig(event.target.value)} rows={8} />
           </Field>
           {error && <ErrorBox message={error} />}

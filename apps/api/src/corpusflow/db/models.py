@@ -656,3 +656,20 @@ class GenerationRun(Timestamped):
     __table_args__ = (
         UniqueConstraint("workspace_id", "request_key", name="uq_generation_request"),
     )
+
+
+class ReviewTask(Timestamped):
+    __tablename__ = "review_tasks"
+    workspace_id: Mapped[str] = mapped_column(ForeignKey("workspaces.id"), index=True)
+    created_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    request_key: Mapped[str] = mapped_column(String(120))
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
+    snapshot_sha256: Mapped[str] = mapped_column(String(64))
+    __table_args__ = (UniqueConstraint("workspace_id", "request_key", name="uq_review_task_key"),)
+
+
+class ReviewAssignment(Timestamped):
+    __tablename__ = "review_assignments"
+    task_id: Mapped[str] = mapped_column(ForeignKey("review_tasks.id"), index=True)
+    reviewer_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    __table_args__ = (UniqueConstraint("task_id", "reviewer_id", name="uq_review_assignment"),)

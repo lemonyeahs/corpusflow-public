@@ -1,0 +1,1155 @@
+{
+  "reference_origin": "CC0 author-designed, not independent expert labels",
+  "rows": [
+    {
+      "file": "tests/fixtures/closure/columns.pdf",
+      "sha256": "be765a6e43c686dc5553297b37f5a94d82190ed3a92ad770f4e69232a286ed04",
+      "parser": "builtin",
+      "elapsed_ms": 0.86,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 12,
+          "denominator": 15,
+          "value": 0.8
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/columns-builtin.json",
+      "artifact_sha256": "de30bbda35dc46e3346944a6285c8265e993f33c55e9903ee9c8f7845fe9b080"
+    },
+    {
+      "file": "tests/fixtures/closure/columns.pdf",
+      "sha256": "be765a6e43c686dc5553297b37f5a94d82190ed3a92ad770f4e69232a286ed04",
+      "parser": "ocr",
+      "elapsed_ms": 556.27,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 12,
+          "denominator": 15,
+          "value": 0.8
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/columns-ocr.json",
+      "artifact_sha256": "94c1b523d59873877c5a4a2f4110edf0635458e9918738ff3d605a40ee1e167c"
+    },
+    {
+      "file": "tests/fixtures/closure/columns.pdf",
+      "sha256": "be765a6e43c686dc5553297b37f5a94d82190ed3a92ad770f4e69232a286ed04",
+      "parser": "layout",
+      "elapsed_ms": 23.0,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 15,
+          "denominator": 15,
+          "value": 1.0
+        },
+        "heading_matches": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 7,
+          "denominator": 7
+        },
+        "bbox_location": {
+          "numerator": 7,
+          "denominator": 7
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/columns-layout.json",
+      "artifact_sha256": "cc9c71dc1c16847b63cb8dd6feae06fe29a03177e3e694f85f52536435a3a83a"
+    },
+    {
+      "file": "tests/fixtures/closure/columns.pdf",
+      "sha256": "be765a6e43c686dc5553297b37f5a94d82190ed3a92ad770f4e69232a286ed04",
+      "parser": "docreader-builtin",
+      "elapsed_ms": 425.32,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 12,
+          "denominator": 15,
+          "value": 0.8
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/columns-docreader-builtin.json",
+      "artifact_sha256": "89fc6de65799fa0c9b8120b562c98a5362a0c8f6431bcb1497ca8f4fae5a8cde"
+    },
+    {
+      "file": "tests/fixtures/closure/table.pdf",
+      "sha256": "b55907c9f6d3e75d30e4aaccf5fe7e8b29906009eb0917e0a569726a567bfaf5",
+      "parser": "builtin",
+      "elapsed_ms": 2.97,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 3
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/table-builtin.json",
+      "artifact_sha256": "9a90763d24113596c3e811b9b47cae68bc425ef8e1cc80a2d98192b1f044d06a"
+    },
+    {
+      "file": "tests/fixtures/closure/table.pdf",
+      "sha256": "b55907c9f6d3e75d30e4aaccf5fe7e8b29906009eb0917e0a569726a567bfaf5",
+      "parser": "ocr",
+      "elapsed_ms": 637.18,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 3
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/table-ocr.json",
+      "artifact_sha256": "7bc95852f2602d056537bd14baf1f762399b0fc977d1c847a3fe3967ae8d3101"
+    },
+    {
+      "file": "tests/fixtures/closure/table.pdf",
+      "sha256": "b55907c9f6d3e75d30e4aaccf5fe7e8b29906009eb0917e0a569726a567bfaf5",
+      "parser": "layout",
+      "elapsed_ms": 29.57,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "exact_table_rows": {
+          "numerator": 3,
+          "denominator": 3
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 9,
+          "denominator": 9
+        },
+        "bbox_location": {
+          "numerator": 9,
+          "denominator": 9
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/table-layout.json",
+      "artifact_sha256": "35609429621ea17d27c44443a2a5f1e760ad81b97e1b21fb48a76dc9f1a119b7"
+    },
+    {
+      "file": "tests/fixtures/closure/table.pdf",
+      "sha256": "b55907c9f6d3e75d30e4aaccf5fe7e8b29906009eb0917e0a569726a567bfaf5",
+      "parser": "docreader-builtin",
+      "elapsed_ms": 231.14,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 3
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/table-docreader-builtin.json",
+      "artifact_sha256": "7e0d93491fc50d4399774efbd9a662eedf2ba27a761b3bd2c2c259dcaaed3afe"
+    },
+    {
+      "file": "tests/fixtures/closure/formula.pdf",
+      "sha256": "d9fca0b1eefd813f03808cfabb167a4e0e282c7960f0d98166b4f437f09cc6e4",
+      "parser": "builtin",
+      "elapsed_ms": 1.31,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 7,
+          "denominator": 7
+        },
+        "page_location": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/formula-builtin.json",
+      "artifact_sha256": "c4ff9b2e76e4bf2c6f0a990b36a634f7a0eca34145b469f85bf34e57b85af3a0"
+    },
+    {
+      "file": "tests/fixtures/closure/formula.pdf",
+      "sha256": "d9fca0b1eefd813f03808cfabb167a4e0e282c7960f0d98166b4f437f09cc6e4",
+      "parser": "ocr",
+      "elapsed_ms": 359.94,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 2,
+          "denominator": 7
+        },
+        "page_location": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/formula-ocr.json",
+      "artifact_sha256": "cf73cfe5dc6493fb4e1b218b9d8c01c4c40a0cf15dc4585ec98b447be124b39a"
+    },
+    {
+      "file": "tests/fixtures/closure/formula.pdf",
+      "sha256": "d9fca0b1eefd813f03808cfabb167a4e0e282c7960f0d98166b4f437f09cc6e4",
+      "parser": "layout",
+      "elapsed_ms": 22.2,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 7,
+          "denominator": 7
+        },
+        "page_location": {
+          "numerator": 5,
+          "denominator": 5
+        },
+        "bbox_location": {
+          "numerator": 5,
+          "denominator": 5
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/formula-layout.json",
+      "artifact_sha256": "eca25c251f0a8047b198c7d8d59fa10d17a441022a2e4cc5ed5060007327880f"
+    },
+    {
+      "file": "tests/fixtures/closure/formula.pdf",
+      "sha256": "d9fca0b1eefd813f03808cfabb167a4e0e282c7960f0d98166b4f437f09cc6e4",
+      "parser": "docreader-builtin",
+      "elapsed_ms": 139.25,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 7,
+          "denominator": 7
+        },
+        "page_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/formula-docreader-builtin.json",
+      "artifact_sha256": "e6f5797c47ed2be26151bff060a8b3beb8b0dbeab36869569af28ea0114609ae"
+    },
+    {
+      "file": "tests/fixtures/closure/figure.pdf",
+      "sha256": "b337ad88b305c6d16b405948bb73f16247b8a1587b615b89d7f0610b9d1abde5",
+      "parser": "builtin",
+      "elapsed_ms": 0.83,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "page_location": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/figure-builtin.json",
+      "artifact_sha256": "46da432d5431ea7db9313e6e9de2b0dc7dc0bbeafc8f795615a6aea317871d32"
+    },
+    {
+      "file": "tests/fixtures/closure/figure.pdf",
+      "sha256": "b337ad88b305c6d16b405948bb73f16247b8a1587b615b89d7f0610b9d1abde5",
+      "parser": "ocr",
+      "elapsed_ms": 369.48,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "page_location": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/figure-ocr.json",
+      "artifact_sha256": "fefa8a91f4b1140bb3a813a0957d96adc9136b5a67ee179e97530996844d1ab4"
+    },
+    {
+      "file": "tests/fixtures/closure/figure.pdf",
+      "sha256": "b337ad88b305c6d16b405948bb73f16247b8a1587b615b89d7f0610b9d1abde5",
+      "parser": "layout",
+      "elapsed_ms": 43.99,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "page_location": {
+          "numerator": 2,
+          "denominator": 2
+        },
+        "bbox_location": {
+          "numerator": 2,
+          "denominator": 2
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/figure-layout.json",
+      "artifact_sha256": "b97f67b6b86d831363c27e97c1293a48337796e6a762073124ec20a6c84871b1"
+    },
+    {
+      "file": "tests/fixtures/closure/figure.pdf",
+      "sha256": "b337ad88b305c6d16b405948bb73f16247b8a1587b615b89d7f0610b9d1abde5",
+      "parser": "docreader-builtin",
+      "elapsed_ms": 345.86,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "page_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/figure-docreader-builtin.json",
+      "artifact_sha256": "2109f9be2c9f6b80741ffe65c2481172e56ef01aafb04959791416a0d7fbf11d"
+    },
+    {
+      "file": "tests/fixtures/closure/../p2/raster.pdf",
+      "sha256": "8dbaa199863c7d4eeb96eaaa360d5e6ba0adf2357e68bc17cad0c1bebd6ce2cc",
+      "parser": "builtin",
+      "elapsed_ms": 0.84,
+      "status": "FAILED",
+      "error": "SCANNED_PDF_UNSUPPORTED",
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/raster-builtin.json",
+      "artifact_sha256": "e2535f7ee0e8f400e2f1b1ce622687c6caa8c66c3d10cd987fddc53437439047"
+    },
+    {
+      "file": "tests/fixtures/closure/../p2/raster.pdf",
+      "sha256": "8dbaa199863c7d4eeb96eaaa360d5e6ba0adf2357e68bc17cad0c1bebd6ce2cc",
+      "parser": "ocr",
+      "elapsed_ms": 299.03,
+      "status": "PARSED",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "ocr_character_error_rate": 0.0,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/raster-ocr.json",
+      "artifact_sha256": "1392453b83ac4d03f0a39c51b9cac42988031d43908ea2ab12c2788bf7342c8c"
+    },
+    {
+      "file": "tests/fixtures/closure/../p2/raster.pdf",
+      "sha256": "8dbaa199863c7d4eeb96eaaa360d5e6ba0adf2357e68bc17cad0c1bebd6ce2cc",
+      "parser": "layout",
+      "elapsed_ms": 21.18,
+      "status": "FAILED",
+      "error": "SCANNED_PDF_UNSUPPORTED",
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/raster-layout.json",
+      "artifact_sha256": "e2535f7ee0e8f400e2f1b1ce622687c6caa8c66c3d10cd987fddc53437439047"
+    },
+    {
+      "file": "tests/fixtures/closure/../p2/raster.pdf",
+      "sha256": "8dbaa199863c7d4eeb96eaaa360d5e6ba0adf2357e68bc17cad0c1bebd6ce2cc",
+      "parser": "docreader-builtin",
+      "elapsed_ms": 304.38,
+      "status": "IMAGE_ONLY",
+      "error": null,
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/raster-docreader-builtin.json",
+      "artifact_sha256": "27a0abc97f94cf43121eb7e059c36acbd1efe2915d81bc53a53c1baebfad507e"
+    },
+    {
+      "file": "tests/fixtures/closure/../p1a/corrupt.pdf",
+      "sha256": "d40245008afc47a187572287b765d27618a6cc7241f6da312d2b2fe6ab4da5aa",
+      "parser": "builtin",
+      "elapsed_ms": 1.11,
+      "status": "FAILED",
+      "error": "CORRUPT_PDF",
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/corrupt-builtin.json",
+      "artifact_sha256": "67861f13c53aef0f8782dcbb0ba28b9a1c5a385058eecea402928a38b9f2a999"
+    },
+    {
+      "file": "tests/fixtures/closure/../p1a/corrupt.pdf",
+      "sha256": "d40245008afc47a187572287b765d27618a6cc7241f6da312d2b2fe6ab4da5aa",
+      "parser": "ocr",
+      "elapsed_ms": 0.14,
+      "status": "FAILED",
+      "error": "CORRUPT_PDF",
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/corrupt-ocr.json",
+      "artifact_sha256": "67861f13c53aef0f8782dcbb0ba28b9a1c5a385058eecea402928a38b9f2a999"
+    },
+    {
+      "file": "tests/fixtures/closure/../p1a/corrupt.pdf",
+      "sha256": "d40245008afc47a187572287b765d27618a6cc7241f6da312d2b2fe6ab4da5aa",
+      "parser": "layout",
+      "elapsed_ms": 0.03,
+      "status": "FAILED",
+      "error": "CORRUPT_PDF",
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/corrupt-layout.json",
+      "artifact_sha256": "67861f13c53aef0f8782dcbb0ba28b9a1c5a385058eecea402928a38b9f2a999"
+    },
+    {
+      "file": "tests/fixtures/closure/../p1a/corrupt.pdf",
+      "sha256": "d40245008afc47a187572287b765d27618a6cc7241f6da312d2b2fe6ab4da5aa",
+      "parser": "docreader-builtin",
+      "elapsed_ms": 198.08,
+      "status": "FAILED",
+      "error": "Failed to load document (PDFium: Data format error).",
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/corrupt-docreader-builtin.json",
+      "artifact_sha256": "9f9f1ec58f2864f0959bd9023c4c9a7aef7b7086e516c657254c2091e82612f6"
+    },
+    {
+      "file": "tests/fixtures/closure/../p1a/encrypted.pdf",
+      "sha256": "22de187341aacc75fb97032195f7749f074689c26a30cc26c01ccfeb6d282f1d",
+      "parser": "builtin",
+      "elapsed_ms": 2.67,
+      "status": "FAILED",
+      "error": "ENCRYPTED_PDF",
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/encrypted-builtin.json",
+      "artifact_sha256": "df3150d3fde2d7b2fb28fa12d592e9dfa71d74d8f7a52d7b417043d463c2719f"
+    },
+    {
+      "file": "tests/fixtures/closure/../p1a/encrypted.pdf",
+      "sha256": "22de187341aacc75fb97032195f7749f074689c26a30cc26c01ccfeb6d282f1d",
+      "parser": "ocr",
+      "elapsed_ms": 1.74,
+      "status": "FAILED",
+      "error": "ENCRYPTED_PDF",
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/encrypted-ocr.json",
+      "artifact_sha256": "df3150d3fde2d7b2fb28fa12d592e9dfa71d74d8f7a52d7b417043d463c2719f"
+    },
+    {
+      "file": "tests/fixtures/closure/../p1a/encrypted.pdf",
+      "sha256": "22de187341aacc75fb97032195f7749f074689c26a30cc26c01ccfeb6d282f1d",
+      "parser": "layout",
+      "elapsed_ms": 3.67,
+      "status": "FAILED",
+      "error": "ENCRYPTED_PDF",
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/encrypted-layout.json",
+      "artifact_sha256": "df3150d3fde2d7b2fb28fa12d592e9dfa71d74d8f7a52d7b417043d463c2719f"
+    },
+    {
+      "file": "tests/fixtures/closure/../p1a/encrypted.pdf",
+      "sha256": "22de187341aacc75fb97032195f7749f074689c26a30cc26c01ccfeb6d282f1d",
+      "parser": "docreader-builtin",
+      "elapsed_ms": 157.25,
+      "status": "FAILED",
+      "error": "Failed to load document (PDFium: Incorrect password error).",
+      "metrics": {
+        "reading_order": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null
+        },
+        "heading_matches": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "exact_table_rows": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "formula_or_caption_tokens": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "page_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "bbox_location": {
+          "numerator": 0,
+          "denominator": 0
+        },
+        "ocr_character_error_rate": null,
+        "formula_semantics": "NOT_EVALUATED",
+        "merged_cell_topology": "NOT_EVALUATED",
+        "figure_understanding": "NOT_EVALUATED"
+      },
+      "artifact": "docs/reports/closure_parser_outputs/encrypted-docreader-builtin.json",
+      "artifact_sha256": "c482be466109d19f9642ecf2444fdc2ada2f7759e05633afe55d33528d17a6ae"
+    }
+  ],
+  "docreader_image": "sha256:59e26f98f17c296c5f4bd216404558f51d31991b580cfef1d204903a01e4b46b",
+  "docreader_scope": "actual local gRPC builtin only, no Go-side OCR/VLM, no paid model calls"
+}

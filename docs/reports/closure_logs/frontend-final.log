@@ -1,0 +1,22 @@
+
+> corpusflow-web@0.1.0 typecheck
+> tsc --noEmit
+
+
+> corpusflow-web@0.1.0 lint
+> eslint .
+
+
+> corpusflow-web@0.1.0 build
+> tsc -b && vite build
+
+vite v8.3.5 building client environment for production...
+transforming...
+✓ 1952 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.46 kB │ gzip:  0.32 kB
+dist/assets/index-4Hs0FOA_.css   11.73 kB │ gzip:  3.56 kB
+dist/assets/index-BMErXM5W.js   304.97 kB │ gzip: 91.45 kB
+
+✓ built in 177ms

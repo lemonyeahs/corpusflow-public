@@ -30,3 +30,20 @@
 | OIDC / HA / 生产压力 / 全量灾备 | 尚无正式部署验证 | 未访问生产 | NOT RUN |
 | 原型、已发布文件保护 | git / immutable triggers / S3 | 迁移和业务回归；原型无改动 | REAL |
 | 敏感配置不入 Git | SecretStr / ignored local env | 提交前实际值扫描 0 命中，权限 0600 | PASS |
+
+## P2-Closure 增量（2026-10-25）
+
+以下替代上表对应能力的“当前状态”，其余历史证据保留；最终门禁见 P2_CLOSURE_ACCEPTANCE.md。
+
+| 需求 | 实现 / 测试 | 当前状态 |
+|---|---|---|
+| DNS、SSRF、TLS peer、代理、重定向、超时/短读 | acquisition Adapter；26 单元 + 3 真实传输/入库集成测试 | 有限 PASS；公网仍 BLOCKED |
+| 多栏、表格、公式、图像、扫描/错误 PDF 对比 | LayoutParserAdapter、7×4 实测及原始输出；Docker/Web | 顺序及简单行改善；专业结构仍未完成 |
+| 评测分配、盲评、冻结、评分、分歧和导出 | ReviewTask/Assignment、0018、blind_review、真实 Web | 系统已准备好；真实专家 NOT RUN |
+| 评测用途不由 RAG 推导 | evaluation_trace、当前授权复检、撤权/跨空间测试 | PASS |
+| 评分不能伪造分配或覆写 | reserved key guard、数据库触发器、服务/真实 API 测试 | PASS |
+| 完整本地回归 | 109 pytest、13 Web、静态/契约/迁移、无缓存镜像 | PASS（已实现范围） |
+| 执行中 Worker 恢复 | 随机 DB/专用队列/自建 Worker，SQL 写入强杀 | PASS：0→26 自动恢复 |
+| 数据恢复 | 0018、16 触发器、实际 pg_dump/restore；一个对象恢复新 key | 有限 PASS；完整灾备 NOT RUN |
+| 演示基线、真实证据和成本 | FINAL_DEMO_GUIDE/RESULTS；runtime/parser/annotation evidence | 已交付；0 新模型调用，累计 2/10 |
+| 原型及历史发布保护 | 字节比对/业务回归、不改发布逻辑 | PASS |

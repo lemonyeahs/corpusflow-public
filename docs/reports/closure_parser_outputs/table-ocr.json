@@ -1,0 +1,169 @@
+{
+  "text": "2. Parameter table Cipher comparison Bits AES block 128 RSA key 2048",
+  "structured": {
+    "engine": "tesseract 5.5.1",
+    "language": "eng",
+    "psm": 3,
+    "scale_to": 2400,
+    "words": [
+      {
+        "text": "2.",
+        "page": 1,
+        "bbox": [
+          122,
+          97,
+          38,
+          38
+        ],
+        "confidence": 96.661476,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "Parameter",
+        "page": 1,
+        "bbox": [
+          185,
+          96,
+          255,
+          40
+        ],
+        "confidence": 95.997108,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "table",
+        "page": 1,
+        "bbox": [
+          460,
+          96,
+          123,
+          40
+        ],
+        "confidence": 96.606857,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "Cipher",
+        "page": 1,
+        "bbox": [
+          152,
+          348,
+          104,
+          35
+        ],
+        "confidence": 96.153114,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "comparison",
+        "page": 1,
+        "bbox": [
+          267,
+          349,
+          183,
+          34
+        ],
+        "confidence": 96.784256,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "Bits",
+        "page": 1,
+        "bbox": [
+          1113,
+          349,
+          56,
+          27
+        ],
+        "confidence": 96.381233,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "AES",
+        "page": 1,
+        "bbox": [
+          151,
+          469,
+          69,
+          27
+        ],
+        "confidence": 96.654213,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "block",
+        "page": 1,
+        "bbox": [
+          632,
+          469,
+          82,
+          27
+        ],
+        "confidence": 96.777542,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "128",
+        "page": 1,
+        "bbox": [
+          1113,
+          470,
+          55,
+          26
+        ],
+        "confidence": 96.556519,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "RSA",
+        "page": 1,
+        "bbox": [
+          153,
+          589,
+          70,
+          27
+        ],
+        "confidence": 96.524002,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "key",
+        "page": 1,
+        "bbox": [
+          632,
+          589,
+          53,
+          34
+        ],
+        "confidence": 96.629601,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "2048",
+        "page": 1,
+        "bbox": [
+          1111,
+          590,
+          77,
+          26
+        ],
+        "confidence": 96.689644,
+        "unit": "rendered_pixel"
+      }
+    ],
+    "page_count": 1,
+    "formula_structure": "NOT_EVALUATED",
+    "table_structure": "NOT_EVALUATED"
+  },
+  "sections": [
+    {
+      "title": "Page 1",
+      "text": "2. Parameter table Cipher comparison Bits AES block 128 RSA key 2048",
+      "location": {
+        "page": 1,
+        "method": "ocr"
+      }
+    }
+  ],
+  "error": null
+}

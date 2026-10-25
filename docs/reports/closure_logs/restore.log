@@ -1,0 +1,1 @@
+PASS: real pg_dump/pg_restore, fixture and immutable triggers preserved

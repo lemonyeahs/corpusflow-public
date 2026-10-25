@@ -41,6 +41,7 @@ export interface DocumentVersion {
   document_version_id: string;
   version_no: number;
   content_sha256: string;
+  parser_name?: string;
   parser_version?: string;
   segments?: Segment[];
 }

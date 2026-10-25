@@ -1,0 +1,1 @@
+PASS: owned worker killed during INSERT; rollback=0; automatic recovery=26 chunks

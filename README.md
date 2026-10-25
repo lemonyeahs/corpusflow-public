@@ -1,6 +1,6 @@
 # CorpusFlow
 
-当前交付包含 **P0-A～P0-G 的本地可验收真实业务闭环**：FastAPI、版本化迁移、空间与用途授权、真实字节上传、异步 Run、PDF/HTML 解析、SFT 构建审核、JSONL/Manifest 数据集物化、不可变发布、签名下载、血缘和审计。V3.1 仍是独立浏览器 DEMO，不能代表正式 Web UI 已完成。
+当前交付包含真实 Web 数据工程工作台、P0/P1 核心闭环与已验证的 P2 增量。最新数据库迁移为 `0018_blind_review`。**开发/演示环境已实现范围 CONDITIONAL PASS；完整 P2 与生产门禁尚未通过。** 最新证据见 [P2-Closure 验收](docs/reports/P2_CLOSURE_ACCEPTANCE.md)，操作见 [最终演示指南](docs/demo/FINAL_DEMO_GUIDE.md)。V3.1 HTML 保留为独立 DEMO 参考，不代表工程实现状态。
 
 ## 本地启动
 
@@ -105,7 +105,7 @@ cd apps/web && npm run e2e
 
 ## P2 开发环境增量
 
-当前迁移 `0017_generation_guards`。见 [总验收](docs/reports/CORPUSFLOW_FINAL_ACCEPTANCE.md)、[演示指南](docs/demo/DEMO_GUIDE.md)。完整 P2 和生产门禁尚未通过：公网采集受 DNS 限制，复杂版面和真实专家评测未验收。
+前轮迁移 `0017_generation_guards`，P2-Closure 升级至 `0018_blind_review`。前轮记录见 [总验收](docs/reports/CORPUSFLOW_FINAL_ACCEPTANCE.md)、[演示指南](docs/demo/DEMO_GUIDE.md)。完整 P2 和生产门禁尚未通过：公网采集受 DNS 限制，复杂版面和真实专家评测未验收。
 
 1. 已有 `.env` 不覆盖。新环境使用 `make install`、`make init-env`，再启动本地依赖。
 2. 按 [本地模型说明](tools/semantic/README.md) 用独立锁文件启动已许可的模型；不自动下载大型权重。Docker Desktop 的 `.env` 可设 `EMBEDDING_ENDPOINT=http://host.docker.internal:58110`；宿主测试设为 `http://127.0.0.1:58110`。
@@ -128,3 +128,10 @@ npm --prefix apps/web run e2e
 ```
 
 完整 Playwright 依赖已保存的受控生成 fixture；新部署没有模型授权/历史答案时，不应伪造数据来通过该用例。可单独运行其他 spec，缺失生成证据明确记录 NOT RUN。故障脚本只操作自己创建的随机数据库、独立队列和 Worker，不停止共享 Worker；备份测试不代表生产 RPO/RTO 或对象桶灾备已验收。
+
+
+## P2-Closure
+
+新增 `parser=layout` 的实际 Poppler 版面提取、严格采集响应校验、冻结的多人盲评任务与 JSON 导出。规则不自动放宽授权，布局启发式不保证公式/复杂表格语义。参考 [复杂文档评测](docs/reports/P2_COMPLEX_DOCUMENT_BENCHMARK.md)、[采集安全验证](docs/reports/P2_INGEST_SECURITY_VALIDATION.md) 和 [专家操作指南](docs/demo/EXPERT_EVALUATION_GUIDE.md)。
+
+复验命令和依赖见 [最终验收](docs/reports/P2_CLOSURE_ACCEPTANCE.md)。当前已保存模型回答可直接用于评分演示，本轮无新增付费调用。仅有测试账号和自制语料，未完成真实专家评测；不得开放开发认证到公网。

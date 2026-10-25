@@ -90,7 +90,7 @@ def main():
                     == "Original backup fixture"
                 )
                 revision = db.execute("SELECT version_num FROM alembic_version").fetchone()[0]
-                assert revision == "0017_generation_guards"
+                assert revision == "0018_blind_review"
                 triggers = db.execute(
                     "SELECT count(*) FROM pg_trigger WHERE NOT tgisinternal"
                 ).fetchone()[0]

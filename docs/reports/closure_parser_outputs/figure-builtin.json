@@ -1,0 +1,34 @@
+{
+  "text": "4. Evidence flow\nFigure 1. Source evidence becomes a reviewed dataset.",
+  "structured": {
+    "title": "figure.pdf",
+    "pages": [
+      {
+        "title": "Page 1",
+        "text": "4. Evidence flow\nFigure 1. Source evidence becomes a reviewed dataset.",
+        "location": {
+          "page": 1,
+          "line_start": 1,
+          "line_end": 2
+        }
+      }
+    ],
+    "page_count": 1,
+    "table_rows": [],
+    "formula_markers": [],
+    "layout": "page_text",
+    "source_location": "page_and_line"
+  },
+  "sections": [
+    {
+      "title": "Page 1",
+      "text": "4. Evidence flow\nFigure 1. Source evidence becomes a reviewed dataset.",
+      "location": {
+        "page": 1,
+        "line_start": 1,
+        "line_end": 2
+      }
+    }
+  ],
+  "error": null
+}

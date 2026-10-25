@@ -1,0 +1,81 @@
+{
+  "columns.pdf": {
+    "ordered_markers": [
+      "LEFT-ONE",
+      "LEFT-TWO",
+      "LEFT-THREE",
+      "RIGHT-ONE",
+      "RIGHT-TWO",
+      "RIGHT-THREE"
+    ],
+    "headings": [
+      "1. Layout and cryptanalysis"
+    ],
+    "sha256": "be765a6e43c686dc5553297b37f5a94d82190ed3a92ad770f4e69232a286ed04",
+    "bytes": 1724,
+    "license": "CC0 original fixture",
+    "reference_origin": "Author-designed reference; NOT independently expert annotated"
+  },
+  "table.pdf": {
+    "table_rows": [
+      [
+        "Cipher comparison",
+        "Bits"
+      ],
+      [
+        "AES",
+        "block",
+        "128"
+      ],
+      [
+        "RSA",
+        "key",
+        "2048"
+      ]
+    ],
+    "headings": [
+      "2. Parameter table"
+    ],
+    "sha256": "b55907c9f6d3e75d30e4aaccf5fe7e8b29906009eb0917e0a569726a567bfaf5",
+    "bytes": 1677,
+    "license": "CC0 original fixture",
+    "reference_origin": "Author-designed reference; NOT independently expert annotated"
+  },
+  "formula.pdf": {
+    "formula_tokens": [
+      "E",
+      "mc",
+      "2",
+      "P(X = x)",
+      "1 / N",
+      "a + b",
+      "c"
+    ],
+    "formula_semantics": [
+      "E = mc^2",
+      "P(X = x) = 1 / N",
+      "(a + b) / c"
+    ],
+    "headings": [
+      "3. Mathematical notation"
+    ],
+    "two_dimensional_formula_structure": "REFERENCE_ONLY",
+    "sha256": "d9fca0b1eefd813f03808cfabb167a4e0e282c7960f0d98166b4f437f09cc6e4",
+    "bytes": 1627,
+    "license": "CC0 original fixture",
+    "reference_origin": "Author-designed reference; NOT independently expert annotated"
+  },
+  "figure.pdf": {
+    "markers": [
+      "Figure 1. Source evidence becomes a reviewed dataset."
+    ],
+    "headings": [
+      "4. Evidence flow"
+    ],
+    "image_count": 1,
+    "sha256": "b337ad88b305c6d16b405948bb73f16247b8a1587b615b89d7f0610b9d1abde5",
+    "bytes": 3553,
+    "license": "CC0 original fixture",
+    "reference_origin": "Author-designed reference; NOT independently expert annotated"
+  }
+}

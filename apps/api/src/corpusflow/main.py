@@ -16,6 +16,7 @@ from corpusflow.adapters.embedding import EmbeddingError
 from corpusflow.adapters.generation import GenerationError
 from corpusflow.adapters.readiness import DependencyProbe
 from corpusflow.api.health import router
+from corpusflow.api.v1.blind_review import router as blind_review_router
 from corpusflow.api.v1.business import router as business_router
 from corpusflow.api.v1.collection import router as collection_router
 from corpusflow.api.v1.rag import router as rag_router
@@ -159,6 +160,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.include_router(collection_router)
     app.include_router(rag_router)
+    app.include_router(blind_review_router)
     app.include_router(router)
     app.include_router(business_router)
     return app

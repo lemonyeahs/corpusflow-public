@@ -1,0 +1,1 @@
+PASS: actual MinIO -> local backup -> new MinIO key; SHA-256 matches; source unchanged

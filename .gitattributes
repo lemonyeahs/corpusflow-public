@@ -1,0 +1,3 @@
+
+# Preserve PDF byte offsets and fixture hashes; PDFs are not line-oriented text.
+tests/fixtures/closure/*.pdf binary

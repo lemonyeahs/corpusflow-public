@@ -1,0 +1,15 @@
+
+> corpusflow-web@0.1.0 e2e
+> playwright test --grep P2-Closure
+
+
+Running 2 tests using 1 worker
+
+(node:33983) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+  ✓  1 [chromium] › tests/p2-closure.spec.ts:6:1 › P2-Closure Docker layout text and immutable located output (2.8s)
+
+  ✓  2 [chromium] › tests/p2-closure.spec.ts:20:1 › P2-Closure assigned blind scoring and real agreement export (2.3s)
+
+  2 passed (5.8s)

@@ -1,0 +1,34 @@
+{
+  "text": "2. Parameter table\nCipher comparison\nBits\nAES\nblock\n128\nRSA\nkey\n2048",
+  "structured": {
+    "title": "table.pdf",
+    "pages": [
+      {
+        "title": "Page 1",
+        "text": "2. Parameter table\nCipher comparison\nBits\nAES\nblock\n128\nRSA\nkey\n2048",
+        "location": {
+          "page": 1,
+          "line_start": 1,
+          "line_end": 9
+        }
+      }
+    ],
+    "page_count": 1,
+    "table_rows": [],
+    "formula_markers": [],
+    "layout": "page_text",
+    "source_location": "page_and_line"
+  },
+  "sections": [
+    {
+      "title": "Page 1",
+      "text": "2. Parameter table\nCipher comparison\nBits\nAES\nblock\n128\nRSA\nkey\n2048",
+      "location": {
+        "page": 1,
+        "line_start": 1,
+        "line_end": 9
+      }
+    }
+  ],
+  "error": null
+}

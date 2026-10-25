@@ -1,0 +1,157 @@
+{
+  "text": "4. Evidence flow Figure 1. Source evidence becomes a reviewed dataset.",
+  "structured": {
+    "engine": "tesseract 5.5.1",
+    "language": "eng",
+    "psm": 3,
+    "scale_to": 2400,
+    "words": [
+      {
+        "text": "4.",
+        "page": 1,
+        "bbox": [
+          121,
+          97,
+          39,
+          38
+        ],
+        "confidence": 96.191322,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "Evidence",
+        "page": 1,
+        "bbox": [
+          185,
+          96,
+          230,
+          40
+        ],
+        "confidence": 95.932701,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "flow",
+        "page": 1,
+        "bbox": [
+          433,
+          96,
+          103,
+          40
+        ],
+        "confidence": 96.37854,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "Figure",
+        "page": 1,
+        "bbox": [
+          123,
+          1144,
+          97,
+          34
+        ],
+        "confidence": 96.392189,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "1.",
+        "page": 1,
+        "bbox": [
+          235,
+          1145,
+          24,
+          25
+        ],
+        "confidence": 96.392189,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "Source",
+        "page": 1,
+        "bbox": [
+          274,
+          1144,
+          110,
+          27
+        ],
+        "confidence": 96.479507,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "evidence",
+        "page": 1,
+        "bbox": [
+          397,
+          1144,
+          141,
+          27
+        ],
+        "confidence": 96.056084,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "becomes",
+        "page": 1,
+        "bbox": [
+          552,
+          1144,
+          143,
+          27
+        ],
+        "confidence": 96.283623,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "a",
+        "page": 1,
+        "bbox": [
+          707,
+          1151,
+          18,
+          20
+        ],
+        "confidence": 96.762321,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "reviewed",
+        "page": 1,
+        "bbox": [
+          738,
+          1144,
+          140,
+          27
+        ],
+        "confidence": 96.399971,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "dataset.",
+        "page": 1,
+        "bbox": [
+          891,
+          1144,
+          124,
+          27
+        ],
+        "confidence": 96.232986,
+        "unit": "rendered_pixel"
+      }
+    ],
+    "page_count": 1,
+    "formula_structure": "NOT_EVALUATED",
+    "table_structure": "NOT_EVALUATED"
+  },
+  "sections": [
+    {
+      "title": "Page 1",
+      "text": "4. Evidence flow Figure 1. Source evidence becomes a reviewed dataset.",
+      "location": {
+        "page": 1,
+        "method": "ocr"
+      }
+    }
+  ],
+  "error": null
+}

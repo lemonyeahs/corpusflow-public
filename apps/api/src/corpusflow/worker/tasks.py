@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from corpusflow.adapters.parser import HTMLParserAdapter, ParserError, PDFParserAdapter
 from corpusflow.adapters.parser.base import ParserAdapter
+from corpusflow.adapters.parser.layout import LayoutParserAdapter
 from corpusflow.adapters.parser.ocr import OCRParserAdapter
 from corpusflow.adapters.processing import ProcessingError
 from corpusflow.adapters.storage import S3ObjectStore
@@ -285,12 +286,12 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                 else HTMLParserAdapter()
             )
             parser_kind = run.config_snapshot.get("parser", "builtin")
-            if parser_kind not in {"builtin", "ocr"}:
+            if parser_kind not in {"builtin", "ocr", "layout"}:
                 raise ParserError("PARSER_CONFIG_INVALID", "Unknown parser")
-            if parser_kind == "ocr":
+            if parser_kind in {"ocr", "layout"}:
                 if asset.format.lower() != "pdf":
                     raise ParserError("UNSUPPORTED_FORMAT", "OCR requires PDF")
-                parser = OCRParserAdapter()
+                parser = OCRParserAdapter() if parser_kind == "ocr" else LayoutParserAdapter()
             node.operator_key = parser.name
             node.operator_version = parser.version
             node.config_snapshot = {"parser": parser_kind, "version": parser.version}

@@ -1,0 +1,61 @@
+{
+  "text": "3. Mathematical notation",
+  "structured": {
+    "engine": "tesseract 5.5.1",
+    "language": "eng",
+    "psm": 3,
+    "scale_to": 2400,
+    "words": [
+      {
+        "text": "3.",
+        "page": 1,
+        "bbox": [
+          121,
+          97,
+          39,
+          39
+        ],
+        "confidence": 95.156593,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "Mathematical",
+        "page": 1,
+        "bbox": [
+          184,
+          96,
+          331,
+          40
+        ],
+        "confidence": 95.720062,
+        "unit": "rendered_pixel"
+      },
+      {
+        "text": "notation",
+        "page": 1,
+        "bbox": [
+          540,
+          96,
+          204,
+          40
+        ],
+        "confidence": 96.597778,
+        "unit": "rendered_pixel"
+      }
+    ],
+    "page_count": 1,
+    "formula_structure": "NOT_EVALUATED",
+    "table_structure": "NOT_EVALUATED"
+  },
+  "sections": [
+    {
+      "title": "Page 1",
+      "text": "3. Mathematical notation",
+      "location": {
+        "page": 1,
+        "method": "ocr"
+      }
+    }
+  ],
+  "error": null
+}

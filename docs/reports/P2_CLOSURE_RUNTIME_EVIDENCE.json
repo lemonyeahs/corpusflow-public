@@ -1,0 +1,483 @@
+{
+  "baseline": "99533a5",
+  "migration": "0018_blind_review",
+  "date": "2026-10-25",
+  "controlled_ingest": {
+    "scope": "Controlled local HTTPS, injected DNS/CA/port in test only; NOT public network",
+    "asset": [
+      {
+        "bytes": 87,
+        "sha256": "f261e82c0f5bb023a25f1fc26be3e0ef77a6d6980ec95b8086fdb4be638ca71a",
+        "asset_id": "ed927ff7-f244-4c6e-b65f-a756be9b94ad",
+        "elapsed_ms": 7.0728331338614225,
+        "object_key": "acquisition/e6359795-736f-458e-923d-4011a188e061/2bf6866e-0ea9-4c6e-b671-9ac5d3e72cfb/0d3149c2-ec64-440d-b091-2520897549b9/f261e82c0f5bb023a25f1fc26be3e0ef77a6d6980ec95b8086fdb4be638ca71a.html",
+        "candidate_id": "0d3149c2-ec64-440d-b091-2520897549b9",
+        "purpose_grants": "NONE"
+      }
+    ],
+    "asset_count": 1,
+    "purpose_grant_count": 0,
+    "duplicates": 0
+  },
+  "layout": {
+    "input_sha256": "be765a6e43c686dc5553297b37f5a94d82190ed3a92ad770f4e69232a286ed04",
+    "layout": {
+      "run_id": "0a30ad2f-7d28-40e5-81d0-433638a85c90",
+      "asset_id": "22e1343b-842e-4370-84c6-db244f988982",
+      "status": "succeeded",
+      "snapshot_hash": "0fb402201dbe161c7a823403aaa5812e64da1d8a9230417f3dadf2b7bd98052e",
+      "error_code": null,
+      "revision": 1,
+      "nodes": [
+        {
+          "node_id": "parse",
+          "status": "succeeded",
+          "attempt": 1,
+          "operator_key": "local.poppler-layout",
+          "operator_version": "1.0.0",
+          "input_count": 1,
+          "output_count": 7,
+          "filtered_count": 0,
+          "duration_ms": 162.962,
+          "failure_code": null,
+          "config": {
+            "parser": "layout",
+            "version": "1.0.0"
+          },
+          "log_ref": null
+        },
+        {
+          "node_id": "clean",
+          "status": "succeeded",
+          "attempt": 1,
+          "operator_key": "builtin.clean",
+          "operator_version": "1.0.0",
+          "input_count": 7,
+          "output_count": 7,
+          "filtered_count": 0,
+          "duration_ms": 2.2920000000000003,
+          "failure_code": null,
+          "config": {},
+          "log_ref": "artifacts/0a30ad2f-7d28-40e5-81d0-433638a85c90/clean/output.json"
+        },
+        {
+          "node_id": "deduplicate",
+          "status": "succeeded",
+          "attempt": 1,
+          "operator_key": "builtin.deduplicate",
+          "operator_version": "1.0.0",
+          "input_count": 7,
+          "output_count": 7,
+          "filtered_count": 0,
+          "duration_ms": 3.6470000000000002,
+          "failure_code": null,
+          "config": {},
+          "log_ref": "artifacts/0a30ad2f-7d28-40e5-81d0-433638a85c90/deduplicate/output.json"
+        },
+        {
+          "node_id": "quality",
+          "status": "succeeded",
+          "attempt": 1,
+          "operator_key": "builtin.quality",
+          "operator_version": "1.0.0",
+          "input_count": 7,
+          "output_count": 7,
+          "filtered_count": 0,
+          "duration_ms": 2.35,
+          "failure_code": null,
+          "config": {},
+          "log_ref": "artifacts/0a30ad2f-7d28-40e5-81d0-433638a85c90/quality/output.json"
+        }
+      ]
+    },
+    "asset": {
+      "asset_id": "22e1343b-842e-4370-84c6-db244f988982",
+      "filename": "columns.pdf",
+      "format": "pdf",
+      "source": {
+        "source_id": "a885da4a-09a3-4760-ae0d-4a10836852b1",
+        "name": "Original CC0 multi-column fixture",
+        "kind": "upload"
+      },
+      "blob": {
+        "storage_key": "uploads/527ac8d7-8572-41e3-9013-9c9b922137b4/columns.pdf",
+        "sha256": "be765a6e43c686dc5553297b37f5a94d82190ed3a92ad770f4e69232a286ed04",
+        "byte_size": 1724,
+        "media_type": "application/pdf"
+      },
+      "ingestion_status": "registered",
+      "quality_status": "unreviewed",
+      "language": null,
+      "metadata": {},
+      "document": {
+        "document_id": "8abc2d8e-60b3-4cde-8a3c-052842431181",
+        "title": "columns.pdf",
+        "parse_status": "succeeded"
+      },
+      "versions": [
+        {
+          "document_version_id": "ae9a7200-c99d-4be1-8b2d-8f5f608a66fb",
+          "version_no": 1,
+          "content_sha256": "be765a6e43c686dc5553297b37f5a94d82190ed3a92ad770f4e69232a286ed04",
+          "parser_name": "local.poppler-layout",
+          "parser_version": "1.0.0",
+          "config_hash": "1fb02e142c7133b25d79e8eab4fd54ede10aa5c764fcacc4d738902fbc2d13b3",
+          "run_id": "0a30ad2f-7d28-40e5-81d0-433638a85c90",
+          "status": "succeeded",
+          "segments": [
+            {
+              "segment_id": "bd33a6e4-e514-48bd-aadc-aa1e2d239add",
+              "source_id": "a885da4a-09a3-4760-ae0d-4a10836852b1",
+              "content_hash": "a04c5cc3bb55539888a4da9d81e446167bd9ed13e0cb9db1879a7d3a67b6ecef",
+              "text": "1. Layout and cryptanalysis",
+              "quality_state": "reviewed",
+              "location": {
+                "bbox": [
+                  40.0,
+                  32.076,
+                  276.088,
+                  48.726
+                ],
+                "page": 1,
+                "unit": "PDF points, top-left origin",
+                "reading_order": 1
+              },
+              "token_count": 4,
+              "section_title": "1. Layout and cryptanalysis"
+            },
+            {
+              "segment_id": "66b7f01e-fd60-407a-9e6b-94b70d18ddcc",
+              "source_id": "a885da4a-09a3-4760-ae0d-4a10836852b1",
+              "content_hash": "4a5a7ddce3130ca0da1fec61d6f851633df2d92e7f46bcdd16cdf58cca55227d",
+              "text": "LEFT-ONE AES uses fixed blocks.",
+              "quality_state": "reviewed",
+              "location": {
+                "bbox": [
+                  40.0,
+                  91.384,
+                  224.728,
+                  102.484
+                ],
+                "page": 1,
+                "unit": "PDF points, top-left origin",
+                "reading_order": 2
+              },
+              "token_count": 5,
+              "section_title": "Page 1 line 2"
+            },
+            {
+              "segment_id": "6cce6251-04f1-46ca-8311-7d07a1fb70ac",
+              "source_id": "a885da4a-09a3-4760-ae0d-4a10836852b1",
+              "content_hash": "32e315236e711cebdc296a84382b090ca9efd82bb0e5879ee983615f5e3d17e1",
+              "text": "LEFT-TWO A key selects a permutation.",
+              "quality_state": "reviewed",
+              "location": {
+                "bbox": [
+                  40.0,
+                  121.384,
+                  255.4,
+                  132.484
+                ],
+                "page": 1,
+                "unit": "PDF points, top-left origin",
+                "reading_order": 3
+              },
+              "token_count": 6,
+              "section_title": "Page 1 line 3"
+            },
+            {
+              "segment_id": "f4e8ce87-40c9-4fd5-9e7f-0b680f2a4a07",
+              "source_id": "a885da4a-09a3-4760-ae0d-4a10836852b1",
+              "content_hash": "33861094e7912d5936dc2f5bc52a29e94c7964c8d2acbc77fc3d768dda062601",
+              "text": "LEFT-THREE Evidence must be traceable.",
+              "quality_state": "reviewed",
+              "location": {
+                "bbox": [
+                  40.0,
+                  151.384,
+                  268.744,
+                  162.484
+                ],
+                "page": 1,
+                "unit": "PDF points, top-left origin",
+                "reading_order": 4
+              },
+              "token_count": 5,
+              "section_title": "Page 1 line 4"
+            },
+            {
+              "segment_id": "47d9564c-7ff1-4503-ae59-69e87dc2f3ad",
+              "source_id": "a885da4a-09a3-4760-ae0d-4a10836852b1",
+              "content_hash": "0e16b71c0fc02d80d76de41e1a72207e089259de884067aa39c5e72a1d9f1cf3",
+              "text": "RIGHT-ONE RSA is asymmetric.",
+              "quality_state": "reviewed",
+              "location": {
+                "bbox": [
+                  320.0,
+                  91.384,
+                  495.344,
+                  102.484
+                ],
+                "page": 1,
+                "unit": "PDF points, top-left origin",
+                "reading_order": 5
+              },
+              "token_count": 4,
+              "section_title": "Page 1 line 5"
+            },
+            {
+              "segment_id": "a5728a28-abd1-4378-8ee3-cad60ba1cfc2",
+              "source_id": "a885da4a-09a3-4760-ae0d-4a10836852b1",
+              "content_hash": "eb964340bf5d809ea84aaf42d54ae083a097b732ecb50603bfe55c6d9dae727e",
+              "text": "RIGHT-TWO Public keys may be shared.",
+              "quality_state": "reviewed",
+              "location": {
+                "bbox": [
+                  320.0,
+                  121.384,
+                  539.384,
+                  132.484
+                ],
+                "page": 1,
+                "unit": "PDF points, top-left origin",
+                "reading_order": 6
+              },
+              "token_count": 6,
+              "section_title": "Page 1 line 6"
+            },
+            {
+              "segment_id": "8d5762b5-757e-4563-80cb-8aa7717e5fa1",
+              "source_id": "a885da4a-09a3-4760-ae0d-4a10836852b1",
+              "content_hash": "850c1bfd4629aea0f058951f8e2eeb08142798eb90a1e5d8453374ed80ca9242",
+              "text": "RIGHT-THREE Private keys stay private.",
+              "quality_state": "reviewed",
+              "location": {
+                "bbox": [
+                  320.0,
+                  151.384,
+                  538.712,
+                  162.484
+                ],
+                "page": 1,
+                "unit": "PDF points, top-left origin",
+                "reading_order": 7
+              },
+              "token_count": 5,
+              "section_title": "Page 1 line 7"
+            }
+          ]
+        }
+      ]
+    },
+    "checks": [
+      "real multi-column upload",
+      "Docker layout actual text",
+      "frozen parser config",
+      "duplicate delivery no new versions"
+    ]
+  },
+  "blind_api": {
+    "task": {
+      "task_id": "0326a918-0f9d-4c37-9e82-e70241c25db1",
+      "snapshot_sha256": "5b82329d346a78e24ec9c9c460c7492f84ed9e287979d227980d95e9d6b0ecc4"
+    },
+    "checks": [
+      "assignment isolation",
+      "workspace isolation",
+      "reviewer export denied",
+      "frozen snapshot",
+      "hidden model/strategy/peer scores",
+      "submission idempotency",
+      "conflicting overwrite denied"
+    ],
+    "new_model_calls": 0,
+    "expert_participation": "NOT_RUN"
+  },
+  "worker_recovery": {
+    "isolated_database": "cf_crash_c18bc592b6cf",
+    "isolated_queue": "cf-crash-c18bc592b6cf",
+    "owned_worker": "cf-crash-worker-c18bc592b6cf",
+    "observed_before_kill": {
+      "state": "active",
+      "wait_event": "relation",
+      "operation": "INSERT INTO rag_chunks"
+    },
+    "before": {
+      "index_version_id": "53deb3ab-c86b-40a9-ab6f-81df1ff15149",
+      "dataset_version_id": "cd545f1c-a5f8-4109-acbd-4ef670a586f9",
+      "status": "running",
+      "chunk_count": 0,
+      "config": {
+        "fts": "postgresql-simple",
+        "schema": "rag-index.v1",
+        "embedding": null,
+        "tokenizer": "unicode-cjk-bigram-latin-v1",
+        "dimensions": null,
+        "vector_store": null
+      },
+      "content_sha256": "6cbb56fba37a64b767bfebf3401aa1fd2d8850a6ffde8b989f96067f80d2d66f",
+      "error_code": null
+    },
+    "after_restart": {
+      "index_version_id": "53deb3ab-c86b-40a9-ab6f-81df1ff15149",
+      "dataset_version_id": "cd545f1c-a5f8-4109-acbd-4ef670a586f9",
+      "status": "succeeded",
+      "chunk_count": 26,
+      "config": {
+        "fts": "postgresql-simple",
+        "schema": "rag-index.v1",
+        "embedding": null,
+        "tokenizer": "unicode-cjk-bigram-latin-v1",
+        "dimensions": null,
+        "build_stats": {
+          "usage": {},
+          "elapsed_ms": 599.7593339998275,
+          "vectors_reused": 0,
+          "vectors_encoded": 0,
+          "vector_bytes_float32": 0
+        },
+        "vector_store": null
+      },
+      "content_sha256": "6cbb56fba37a64b767bfebf3401aa1fd2d8850a6ffde8b989f96067f80d2d66f",
+      "error_code": null
+    },
+    "chunks_after_kill": 0,
+    "chunks_after_recovery": 26,
+    "recovery": "Redis visibility timeout redelivery; no manually republished task",
+    "shared_worker_killed": false
+  },
+  "postgres_restore": {
+    "source_database": "cf_backup_669569070b9f",
+    "restored_database": "cf_restore_669569070b9f",
+    "snapshot_bytes": 153568,
+    "snapshot_sha256": "a4793655c31f052d3f444ce07b6a7cf7f46dde4874ae01683fd2063cceb2614b",
+    "revision": "0018_blind_review",
+    "restored_user_triggers": 16,
+    "scope": "local schema/fixture restore; production RPO/RTO/MinIO NOT_VERIFIED"
+  },
+  "object_restore": {
+    "source_key": "closure-restore-fixture/1498d09a45ea4faf93e89dde329c51b4/source.pdf",
+    "restored_key": "closure-restore-fixture/1498d09a45ea4faf93e89dde329c51b4/restored.pdf",
+    "bytes": 1724,
+    "sha256": "be765a6e43c686dc5553297b37f5a94d82190ed3a92ad770f4e69232a286ed04",
+    "original_unchanged": true,
+    "scope": "one owned original object restored to a NEW key; not full bucket disaster recovery",
+    "versions": [
+      {
+        "key": "closure-restore-fixture/1498d09a45ea4faf93e89dde329c51b4/source.pdf",
+        "version_id": "7e85321d-c8d0-47ed-93d4-bac1671e5e61"
+      },
+      {
+        "key": "closure-restore-fixture/1498d09a45ea4faf93e89dde329c51b4/restored.pdf",
+        "version_id": "f0ee55db-fd60-42dc-b189-d4df340bb84a"
+      }
+    ]
+  },
+  "playwright_full": {
+    "startTime": "2026-10-25T12:51:53.159Z",
+    "duration": 75422.468,
+    "expected": 13,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "playwright_visual": {
+    "startTime": "2026-10-25T12:41:30.782Z",
+    "duration": 5832.424,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "paid_model": {
+    "new_calls": 0,
+    "reserved_calls_total": 2,
+    "authorized_max_calls": 10,
+    "max_output_tokens_per_call": 512,
+    "prior_prompt_tokens": 672,
+    "prior_completion_tokens": 74,
+    "currency_cost": "NOT_MEASURED"
+  },
+  "prototype": {
+    "docs/prototype/CorpusFlow_V3_1_CHANGELOG.md": {
+      "unchanged": true,
+      "sha256": "10733bade01c525a523ad320960d84697896c526a6f2cbdb4d82b4f47a5f3b50"
+    },
+    "docs/prototype/CorpusFlow_V3_1.html": {
+      "unchanged": true,
+      "sha256": "b65d5ac9a0dd81d28dcf5297cddf0789a214bcbd9922ca88b19d1e8f0f98ea32"
+    }
+  },
+  "logs": {
+    "pytest-final.log": {
+      "sha256": "f5f6170dd1c505d5b7e36f35862bac5f7d4eff787e73061d88355333f26b0e53",
+      "bytes": 1379
+    },
+    "playwright-final.log": {
+      "sha256": "92a84651ed873ea472bf83984b057c77e7e8cf4701758be05a5557317c566a99",
+      "bytes": 1936
+    },
+    "playwright-visual.log": {
+      "sha256": "e275b785abc62649acdb9fc62f5dc497f292b8b499fbc51d36ca05db281fb913",
+      "bytes": 531
+    },
+    "alembic.log": {
+      "sha256": "43d345b67ace77ab8c4cbf575a3baddf66e8623cf7d1e0b78e602b1d641ecf50",
+      "bytes": 36
+    },
+    "worker-recovery.log": {
+      "sha256": "9ce526f97ce9fe9fd3042e5c22603e67b2252732cb71f76e8be8aad2a235f821",
+      "bytes": 82
+    },
+    "restore.log": {
+      "sha256": "3be5bc1978bea2489081537d89746760b518a07c8ce2ce2ff990d12e23a74a75",
+      "bytes": 72
+    },
+    "object-restore.log": {
+      "sha256": "97066d1bb76aaadaa4c294cf715c48e363688dbfbf886bb5261f59156cfecd69",
+      "bytes": 87
+    },
+    "docker-build.log": {
+      "local_path": ".local/closure/docker-build.log",
+      "sha256": "8ecd08f1d21e33cb5b8b8488ed26263724960c31e3dfbbf128a4fc43b283bf8b",
+      "bytes": 53517,
+      "tail": [
+        "#40 [minio] resolving provenance for metadata file",
+        "#40 DONE 0.1s",
+        " Image corpusflow-p0a-minio Built ",
+        " Image corpusflow-p0a-worker Built ",
+        " Image corpusflow-p0a-api Built ",
+        " Image corpusflow-p0a-dispatcher Built ",
+        " Image corpusflow-p0a-init Built "
+      ]
+    },
+    "deploy-final.log": {
+      "local_path": ".local/closure/deploy-final.log",
+      "sha256": "a4d1fd0c044fb6017895424f54f5f9eae2333d713bd7ec266e3327f5ad19c543",
+      "bytes": 10901,
+      "tail": [
+        " Container corpusflow-p0a-init-1 Exited ",
+        " Container corpusflow-p0a-minio-1 Healthy ",
+        " Container corpusflow-p0a-worker-1 Healthy ",
+        " Container corpusflow-p0a-redis-1 Healthy ",
+        " Container corpusflow-p0a-dispatcher-1 Healthy ",
+        " Container corpusflow-p0a-postgres-1 Healthy ",
+        " Container corpusflow-p0a-api-1 Healthy "
+      ]
+    },
+    "final-check.log": {
+      "sha256": "f3be3797e6a00032394975a246417978a6421cb03cc55681fd2cfdbd6455e14d",
+      "bytes": 189
+    },
+    "frontend-final.log": {
+      "sha256": "996a31886d97b9985e8cb6f8d7844da32fa86b17f1bb3937f046f8039f03744d",
+      "bytes": 495
+    }
+  },
+  "precommit_check": {
+    "configured_secret_matches": 0,
+    "large_new_files_above_1MiB": 0,
+    "checked_changed_files": 91,
+    "reserved_model_calls_after_all_tests": 2
+  }
+}

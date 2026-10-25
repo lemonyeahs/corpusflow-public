@@ -1,0 +1,154 @@
+{
+  "text": "4. Evidence flow\nFigure 1. Source evidence becomes a reviewed dataset.",
+  "structured": {
+    "pages": [
+      {
+        "page": 1,
+        "lines": [
+          {
+            "text": "4. Evidence flow",
+            "words": [
+              {
+                "text": "4.",
+                "xMin": 40.0,
+                "yMin": 32.076,
+                "xMax": 55.012,
+                "yMax": 48.726
+              },
+              {
+                "text": "Evidence",
+                "xMin": 60.016,
+                "yMin": 32.076,
+                "xMax": 139.054,
+                "yMax": 48.726
+              },
+              {
+                "text": "flow",
+                "xMin": 144.058,
+                "yMin": 32.076,
+                "xMax": 180.058,
+                "yMax": 48.726
+              }
+            ],
+            "xMin": 40.0,
+            "yMin": 32.076,
+            "xMax": 180.058,
+            "yMax": 48.726,
+            "heading": true
+          },
+          {
+            "text": "Figure 1. Source evidence becomes a reviewed dataset.",
+            "words": [
+              {
+                "text": "Figure",
+                "xMin": 40.0,
+                "yMin": 381.384,
+                "xMax": 74.008,
+                "yMax": 392.484
+              },
+              {
+                "text": "1.",
+                "xMin": 77.344,
+                "yMin": 381.384,
+                "xMax": 87.352,
+                "yMax": 392.484
+              },
+              {
+                "text": "Source",
+                "xMin": 90.688,
+                "yMin": 381.384,
+                "xMax": 128.704,
+                "yMax": 392.484
+              },
+              {
+                "text": "evidence",
+                "xMin": 132.04,
+                "yMin": 381.384,
+                "xMax": 180.064,
+                "yMax": 392.484
+              },
+              {
+                "text": "becomes",
+                "xMin": 183.4,
+                "yMin": 381.384,
+                "xMax": 232.084,
+                "yMax": 392.484
+              },
+              {
+                "text": "a",
+                "xMin": 235.42,
+                "yMin": 381.384,
+                "xMax": 242.092,
+                "yMax": 392.484
+              },
+              {
+                "text": "reviewed",
+                "xMin": 245.428,
+                "yMin": 381.384,
+                "xMax": 293.44,
+                "yMax": 392.484
+              },
+              {
+                "text": "dataset.",
+                "xMin": 296.776,
+                "yMin": 381.384,
+                "xMax": 339.472,
+                "yMax": 392.484
+              }
+            ],
+            "xMin": 40.0,
+            "yMin": 381.384,
+            "xMax": 339.472,
+            "yMax": 392.484,
+            "heading": false
+          }
+        ],
+        "two_column_heuristic": false
+      }
+    ],
+    "headings": [
+      {
+        "page": 1,
+        "text": "4. Evidence flow"
+      }
+    ],
+    "tables": [],
+    "engine": "pdftotext version 26.03.0",
+    "formula_structure": "NOT_EVALUATED",
+    "image_semantics": "NOT_EVALUATED",
+    "reading_order": "bounded two-column heuristic"
+  },
+  "sections": [
+    {
+      "title": "4. Evidence flow",
+      "text": "4. Evidence flow",
+      "location": {
+        "page": 1,
+        "bbox": [
+          40.0,
+          32.076,
+          180.058,
+          48.726
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 1
+      }
+    },
+    {
+      "title": "Page 1 line 2",
+      "text": "Figure 1. Source evidence becomes a reviewed dataset.",
+      "location": {
+        "page": 1,
+        "bbox": [
+          40.0,
+          381.384,
+          339.472,
+          392.484
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 2
+      }
+    }
+  ],
+  "error": null
+}

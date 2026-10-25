@@ -1,0 +1,359 @@
+{
+  "text": "2. Parameter table\nCipher comparison\nAES\nblock\nRSA\nkey\nBits\n128\n2048",
+  "structured": {
+    "pages": [
+      {
+        "page": 1,
+        "lines": [
+          {
+            "text": "2. Parameter table",
+            "words": [
+              {
+                "text": "2.",
+                "xMin": 40.0,
+                "yMin": 32.076,
+                "xMax": 55.012,
+                "yMax": 48.726
+              },
+              {
+                "text": "Parameter",
+                "xMin": 60.016,
+                "yMin": 32.076,
+                "xMax": 148.054,
+                "yMax": 48.726
+              },
+              {
+                "text": "table",
+                "xMin": 153.058,
+                "yMin": 32.076,
+                "xMax": 195.07,
+                "yMax": 48.726
+              }
+            ],
+            "xMin": 40.0,
+            "yMin": 32.076,
+            "xMax": 195.07,
+            "yMax": 48.726,
+            "heading": true
+          },
+          {
+            "text": "Cipher comparison",
+            "words": [
+              {
+                "text": "Cipher",
+                "xMin": 50.0,
+                "yMin": 116.384,
+                "xMax": 85.34,
+                "yMax": 127.484
+              },
+              {
+                "text": "comparison",
+                "xMin": 88.676,
+                "yMin": 116.384,
+                "xMax": 150.692,
+                "yMax": 127.484
+              }
+            ],
+            "xMin": 50.0,
+            "yMin": 116.384,
+            "xMax": 150.692,
+            "yMax": 127.484,
+            "heading": false
+          },
+          {
+            "text": "AES",
+            "words": [
+              {
+                "text": "AES",
+                "xMin": 50.0,
+                "yMin": 156.384,
+                "xMax": 74.012,
+                "yMax": 167.484
+              }
+            ],
+            "xMin": 50.0,
+            "yMin": 156.384,
+            "xMax": 74.012,
+            "yMax": 167.484,
+            "heading": false
+          },
+          {
+            "text": "block",
+            "words": [
+              {
+                "text": "block",
+                "xMin": 210.0,
+                "yMin": 156.384,
+                "xMax": 238.008,
+                "yMax": 167.484
+              }
+            ],
+            "xMin": 210.0,
+            "yMin": 156.384,
+            "xMax": 238.008,
+            "yMax": 167.484,
+            "heading": false
+          },
+          {
+            "text": "RSA",
+            "words": [
+              {
+                "text": "RSA",
+                "xMin": 50.0,
+                "yMin": 196.384,
+                "xMax": 74.672,
+                "yMax": 207.484
+              }
+            ],
+            "xMin": 50.0,
+            "yMin": 196.384,
+            "xMax": 74.672,
+            "yMax": 207.484,
+            "heading": false
+          },
+          {
+            "text": "key",
+            "words": [
+              {
+                "text": "key",
+                "xMin": 210.0,
+                "yMin": 196.384,
+                "xMax": 228.672,
+                "yMax": 207.484
+              }
+            ],
+            "xMin": 210.0,
+            "yMin": 196.384,
+            "xMax": 228.672,
+            "yMax": 207.484,
+            "heading": false
+          },
+          {
+            "text": "Bits",
+            "words": [
+              {
+                "text": "Bits",
+                "xMin": 370.0,
+                "yMin": 116.384,
+                "xMax": 390.004,
+                "yMax": 127.484
+              }
+            ],
+            "xMin": 370.0,
+            "yMin": 116.384,
+            "xMax": 390.004,
+            "yMax": 127.484,
+            "heading": false
+          },
+          {
+            "text": "128",
+            "words": [
+              {
+                "text": "128",
+                "xMin": 370.0,
+                "yMin": 156.384,
+                "xMax": 390.016,
+                "yMax": 167.484
+              }
+            ],
+            "xMin": 370.0,
+            "yMin": 156.384,
+            "xMax": 390.016,
+            "yMax": 167.484,
+            "heading": false
+          },
+          {
+            "text": "2048",
+            "words": [
+              {
+                "text": "2048",
+                "xMin": 370.0,
+                "yMin": 196.384,
+                "xMax": 396.688,
+                "yMax": 207.484
+              }
+            ],
+            "xMin": 370.0,
+            "yMin": 196.384,
+            "xMax": 396.688,
+            "yMax": 207.484,
+            "heading": false
+          }
+        ],
+        "two_column_heuristic": true
+      }
+    ],
+    "headings": [
+      {
+        "page": 1,
+        "text": "2. Parameter table"
+      }
+    ],
+    "tables": [
+      {
+        "page": 1,
+        "rows": [
+          [
+            "Cipher comparison",
+            "Bits"
+          ],
+          [
+            "AES",
+            "block",
+            "128"
+          ],
+          [
+            "RSA",
+            "key",
+            "2048"
+          ]
+        ],
+        "method": "aligned-word-gaps",
+        "merged_cells": "NOT_EVALUATED",
+        "grid_verified": false
+      }
+    ],
+    "engine": "pdftotext version 26.03.0",
+    "formula_structure": "NOT_EVALUATED",
+    "image_semantics": "NOT_EVALUATED",
+    "reading_order": "bounded two-column heuristic"
+  },
+  "sections": [
+    {
+      "title": "2. Parameter table",
+      "text": "2. Parameter table",
+      "location": {
+        "page": 1,
+        "bbox": [
+          40.0,
+          32.076,
+          195.07,
+          48.726
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 1
+      }
+    },
+    {
+      "title": "Page 1 line 2",
+      "text": "Cipher comparison",
+      "location": {
+        "page": 1,
+        "bbox": [
+          50.0,
+          116.384,
+          150.692,
+          127.484
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 2
+      }
+    },
+    {
+      "title": "Page 1 line 3",
+      "text": "AES",
+      "location": {
+        "page": 1,
+        "bbox": [
+          50.0,
+          156.384,
+          74.012,
+          167.484
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 3
+      }
+    },
+    {
+      "title": "Page 1 line 4",
+      "text": "block",
+      "location": {
+        "page": 1,
+        "bbox": [
+          210.0,
+          156.384,
+          238.008,
+          167.484
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 4
+      }
+    },
+    {
+      "title": "Page 1 line 5",
+      "text": "RSA",
+      "location": {
+        "page": 1,
+        "bbox": [
+          50.0,
+          196.384,
+          74.672,
+          207.484
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 5
+      }
+    },
+    {
+      "title": "Page 1 line 6",
+      "text": "key",
+      "location": {
+        "page": 1,
+        "bbox": [
+          210.0,
+          196.384,
+          228.672,
+          207.484
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 6
+      }
+    },
+    {
+      "title": "Page 1 line 7",
+      "text": "Bits",
+      "location": {
+        "page": 1,
+        "bbox": [
+          370.0,
+          116.384,
+          390.004,
+          127.484
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 7
+      }
+    },
+    {
+      "title": "Page 1 line 8",
+      "text": "128",
+      "location": {
+        "page": 1,
+        "bbox": [
+          370.0,
+          156.384,
+          390.016,
+          167.484
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 8
+      }
+    },
+    {
+      "title": "Page 1 line 9",
+      "text": "2048",
+      "location": {
+        "page": 1,
+        "bbox": [
+          370.0,
+          196.384,
+          396.688,
+          207.484
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 9
+      }
+    }
+  ],
+  "error": null
+}

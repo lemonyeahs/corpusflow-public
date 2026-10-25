@@ -1,0 +1,31 @@
+
+> corpusflow-web@0.1.0 e2e
+> playwright test
+
+
+Running 13 tests using 1 worker
+
+(node:34905) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › tests/p0-h.spec.ts:5:3 › P0-H 真实 Web 联调 › 登录、真实 PDF、异步解析、SFT 发布、下载和血缘 (5.3s)
+  ✓   2 [chromium] › tests/p0-i.spec.ts:6:3 › P0-I 系统级真实 API 验收 › 尺寸校验、损坏 PDF、幂等 Run、审核门控和角色隔离 (1.9s)
+  ✓   3 [chromium] › tests/p1-a.spec.ts:5:1 › P1-A 真实处理算子链和版本化产物 (704ms)
+  ✓   4 [chromium] › tests/p1-b.spec.ts:5:1 › P1-B RAG 产品在 Web 页面真实构建并进入发布下载 (2.2s)
+
+  ✓   5 [chromium] › tests/p1-c.spec.ts:6:1 › P1-C real quality reports, coverage, immutable version differences and export (5.9s)
+
+  ✓   6 [chromium] › tests/p1-d.spec.ts:6:1 › P1-D real index, queries, evaluation history and quality feedback (19.2s)
+
+  ✓   7 [chromium] › tests/p2-a.spec.ts:6:1 › P2-A real persisted semantic index and query (25.4s)
+
+  ✓   8 [chromium] › tests/p2-b.spec.ts:6:1 › P2-B evidence review workflow is real but does not invent expert scores (1.3s)
+
+  ✓   9 [chromium] › tests/p2-c.spec.ts:6:1 › P2-C Docker OCR and fail-closed acquisition are visible (5.3s)
+
+  ✓  10 [chromium] › tests/p2-closure.spec.ts:6:1 › P2-Closure Docker layout text and immutable located output (2.9s)
+
+  ✓  11 [chromium] › tests/p2-closure.spec.ts:20:1 › P2-Closure assigned blind scoring and real agreement export (2.2s)
+  ✓  12 [chromium] › tests/p2-generation.spec.ts:5:1 › P2-B actual provider answer, citations and refusal history without new billable calls (1.7s)
+  ✓  13 [chromium] › tests/responsive.spec.ts:3:1 › 窄屏登录和总览无横向溢出 (427ms)
+
+  13 passed (1.3m)

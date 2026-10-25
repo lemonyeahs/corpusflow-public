@@ -12,7 +12,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 from dataclasses import dataclass
-from threading import BoundedSemaphore
+from threading import BoundedSemaphore, Event, Timer
 from urllib.parse import quote, urlsplit
 
 
@@ -47,13 +47,13 @@ _dns_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="cf-dns")
 _dns_slots = BoundedSemaphore(4)
 
 
-def public_addresses(host: str) -> list[str]:
+def public_addresses(host: str, timeout: float = 5) -> list[str]:
     if not _dns_slots.acquire(blocking=False):
         raise AcquisitionError("ACQUISITION_DNS_BUSY")
     future = _dns_pool.submit(socket.getaddrinfo, host, 443, type=socket.SOCK_STREAM)
     future.add_done_callback(lambda _: _dns_slots.release())
     try:
-        values = sorted({str(info[4][0]) for info in future.result(timeout=5)})
+        values = sorted({str(info[4][0]) for info in future.result(timeout=timeout)})
     except (OSError, FutureTimeout):
         future.cancel()
         raise AcquisitionError("ACQUISITION_DNS_FAILED") from None
@@ -61,7 +61,21 @@ def public_addresses(host: str) -> list[str]:
         raise AcquisitionError("ACQUISITION_DNS_FAILED")
     for value in values:
         ip = ipaddress.ip_address(value)
-        if not ip.is_global or ip.is_multicast or ip.is_reserved or ip.is_unspecified:
+        transition = isinstance(ip, ipaddress.IPv6Address) and (
+            ip.ipv4_mapped is not None
+            or ip.sixtofour is not None
+            or ip.teredo is not None
+            or ip in ipaddress.ip_network("64:ff9b::/96")
+            or ip in ipaddress.ip_network("64:ff9b:1::/48")
+        )
+        if (
+            not ip.is_global
+            or ip.is_multicast
+            or ip.is_reserved
+            or ip.is_unspecified
+            or transition
+            or value == "168.63.129.16"
+        ):
             raise AcquisitionError("ACQUISITION_ADDRESS_REJECTED")
     return values
 
@@ -84,15 +98,40 @@ class SafeFetcher:
     def get(self, url: str) -> Fetched:
         started = time.monotonic()
         host, path = approved_target(url, self.hosts)
-        addresses = public_addresses(host)
+
+        def remaining() -> float:
+            value = self.timeout - (time.monotonic() - started)
+            if value <= 0:
+                raise AcquisitionError("ACQUISITION_TIMEOUT")
+            return value
+
+        addresses = public_addresses(host, timeout=min(5, remaining()))
         # Use the validated numeric address exactly once. TLS still authenticates
         # the original hostname; no second DNS lookup or automatic redirect exists.
-        connection = http.client.HTTPSConnection(host, timeout=self.timeout)
+        connection = http.client.HTTPSConnection(host, timeout=remaining())
         raw: socket.socket | None = None
+        transport: socket.socket | None = None
+        response: http.client.HTTPResponse | None = None
+        deadline_timer: Timer | None = None
+        expired = Event()
+
+        def expire() -> None:
+            expired.set()
+            current = connection.sock or raw or transport
+            if current:
+                try:
+                    current.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
+
         try:
-            raw = socket.create_connection((addresses[0], 443), timeout=self.timeout)
+            raw = socket.create_connection((addresses[0], 443), timeout=remaining())
             if raw.getpeername()[0] not in addresses:
                 raise AcquisitionError("ACQUISITION_ADDRESS_REJECTED")
+            deadline_timer = Timer(remaining(), expire)
+            deadline_timer.daemon = True
+            deadline_timer.start()
+            raw.settimeout(remaining())
             connection.sock = ssl.create_default_context().wrap_socket(raw, server_hostname=host)
             raw = None  # HTTPSConnection owns the TLS socket now.
             connection.request(
@@ -104,6 +143,8 @@ class SafeFetcher:
                     "User-Agent": "CorpusFlow/0.1 (local research acquisition)",
                 },
             )
+            connection.sock.settimeout(remaining())
+            transport = connection.sock
             response = connection.getresponse()
             if 300 <= response.status < 400:
                 raise AcquisitionError("ACQUISITION_REDIRECT_REJECTED")
@@ -112,16 +153,16 @@ class SafeFetcher:
             if response.getheader("Content-Encoding", "identity").lower() != "identity":
                 raise AcquisitionError("ACQUISITION_ENCODING_REJECTED")
             length = response.getheader("Content-Length")
+            if length is not None and (
+                not length.isascii() or not length.isdigit() or len(length) > 12
+            ):
+                raise AcquisitionError("ACQUISITION_LENGTH_INVALID")
             if length and int(length) > self.max_bytes:
                 raise AcquisitionError("ACQUISITION_SIZE_LIMIT")
             chunks = []
             total = 0
-            while True:
-                remaining = self.timeout - (time.monotonic() - started)
-                if remaining <= 0:
-                    raise AcquisitionError("ACQUISITION_TIMEOUT")
-                if connection.sock:
-                    connection.sock.settimeout(remaining)
+            while not response.isclosed():
+                transport.settimeout(remaining())
                 block = response.read1(min(64 * 1024, self.max_bytes + 1 - total))
                 if not block:
                     break
@@ -129,6 +170,9 @@ class SafeFetcher:
                 total += len(block)
                 if total > self.max_bytes:
                     raise AcquisitionError("ACQUISITION_SIZE_LIMIT")
+            if length is not None and total != int(length):
+                raise AcquisitionError("ACQUISITION_TRUNCATED")
+            remaining()
             content = b"".join(chunks)
             return Fetched(
                 content,
@@ -140,8 +184,16 @@ class SafeFetcher:
         except (OSError, ValueError, http.client.HTTPException) as exc:
             if isinstance(exc, AcquisitionError):
                 raise
-            raise AcquisitionError("ACQUISITION_NETWORK_FAILED") from None
+            raise AcquisitionError(
+                "ACQUISITION_TIMEOUT"
+                if expired.is_set() or isinstance(exc, TimeoutError)
+                else "ACQUISITION_NETWORK_FAILED"
+            ) from None
         finally:
+            if deadline_timer:
+                deadline_timer.cancel()
+            if response:
+                response.close()
             connection.close()
             if raw:
                 raw.close()

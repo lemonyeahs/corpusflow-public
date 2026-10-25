@@ -1,0 +1,447 @@
+{
+  "text": "1. Layout and cryptanalysis\nLEFT-ONE AES uses fixed blocks.\nLEFT-TWO A key selects a permutation.\nLEFT-THREE Evidence must be traceable.\nRIGHT-ONE RSA is asymmetric.\nRIGHT-TWO Public keys may be shared.\nRIGHT-THREE Private keys stay private.",
+  "structured": {
+    "pages": [
+      {
+        "page": 1,
+        "lines": [
+          {
+            "text": "1. Layout and cryptanalysis",
+            "words": [
+              {
+                "text": "1.",
+                "xMin": 40.0,
+                "yMin": 32.076,
+                "xMax": 55.012,
+                "yMax": 48.726
+              },
+              {
+                "text": "Layout",
+                "xMin": 60.016,
+                "yMin": 32.076,
+                "xMax": 119.02,
+                "yMax": 48.726
+              },
+              {
+                "text": "and",
+                "xMin": 124.024,
+                "yMin": 32.076,
+                "xMax": 156.028,
+                "yMax": 48.726
+              },
+              {
+                "text": "cryptanalysis",
+                "xMin": 161.032,
+                "yMin": 32.076,
+                "xMax": 276.088,
+                "yMax": 48.726
+              }
+            ],
+            "xMin": 40.0,
+            "yMin": 32.076,
+            "xMax": 276.088,
+            "yMax": 48.726,
+            "heading": true
+          },
+          {
+            "text": "LEFT-ONE AES uses fixed blocks.",
+            "words": [
+              {
+                "text": "LEFT-ONE",
+                "xMin": 40.0,
+                "yMin": 91.384,
+                "xMax": 99.34,
+                "yMax": 102.484
+              },
+              {
+                "text": "AES",
+                "xMin": 102.676,
+                "yMin": 91.384,
+                "xMax": 126.688,
+                "yMax": 102.484
+              },
+              {
+                "text": "uses",
+                "xMin": 130.024,
+                "yMin": 91.384,
+                "xMax": 155.368,
+                "yMax": 102.484
+              },
+              {
+                "text": "fixed",
+                "xMin": 158.704,
+                "yMin": 91.384,
+                "xMax": 184.048,
+                "yMax": 102.484
+              },
+              {
+                "text": "blocks.",
+                "xMin": 187.384,
+                "yMin": 91.384,
+                "xMax": 224.728,
+                "yMax": 102.484
+              }
+            ],
+            "xMin": 40.0,
+            "yMin": 91.384,
+            "xMax": 224.728,
+            "yMax": 102.484,
+            "heading": false
+          },
+          {
+            "text": "LEFT-TWO A key selects a permutation.",
+            "words": [
+              {
+                "text": "LEFT-TWO",
+                "xMin": 40.0,
+                "yMin": 121.384,
+                "xMax": 101.332,
+                "yMax": 132.484
+              },
+              {
+                "text": "A",
+                "xMin": 104.668,
+                "yMin": 121.384,
+                "xMax": 112.672,
+                "yMax": 132.484
+              },
+              {
+                "text": "key",
+                "xMin": 116.008,
+                "yMin": 121.384,
+                "xMax": 134.68,
+                "yMax": 132.484
+              },
+              {
+                "text": "selects",
+                "xMin": 138.016,
+                "yMin": 121.384,
+                "xMax": 175.36,
+                "yMax": 132.484
+              },
+              {
+                "text": "a",
+                "xMin": 178.696,
+                "yMin": 121.384,
+                "xMax": 185.368,
+                "yMax": 132.484
+              },
+              {
+                "text": "permutation.",
+                "xMin": 188.704,
+                "yMin": 121.384,
+                "xMax": 255.4,
+                "yMax": 132.484
+              }
+            ],
+            "xMin": 40.0,
+            "yMin": 121.384,
+            "xMax": 255.4,
+            "yMax": 132.484,
+            "heading": false
+          },
+          {
+            "text": "LEFT-THREE Evidence must be traceable.",
+            "words": [
+              {
+                "text": "LEFT-THREE",
+                "xMin": 40.0,
+                "yMin": 151.384,
+                "xMax": 114.004,
+                "yMax": 162.484
+              },
+              {
+                "text": "Evidence",
+                "xMin": 117.34,
+                "yMin": 151.384,
+                "xMax": 166.696,
+                "yMax": 162.484
+              },
+              {
+                "text": "must",
+                "xMin": 170.032,
+                "yMin": 151.384,
+                "xMax": 196.036,
+                "yMax": 162.484
+              },
+              {
+                "text": "be",
+                "xMin": 199.372,
+                "yMin": 151.384,
+                "xMax": 212.716,
+                "yMax": 162.484
+              },
+              {
+                "text": "traceable.",
+                "xMin": 216.052,
+                "yMin": 151.384,
+                "xMax": 268.744,
+                "yMax": 162.484
+              }
+            ],
+            "xMin": 40.0,
+            "yMin": 151.384,
+            "xMax": 268.744,
+            "yMax": 162.484,
+            "heading": false
+          },
+          {
+            "text": "RIGHT-ONE RSA is asymmetric.",
+            "words": [
+              {
+                "text": "RIGHT-ONE",
+                "xMin": 320.0,
+                "yMin": 91.384,
+                "xMax": 387.332,
+                "yMax": 102.484
+              },
+              {
+                "text": "RSA",
+                "xMin": 390.668,
+                "yMin": 91.384,
+                "xMax": 415.34,
+                "yMax": 102.484
+              },
+              {
+                "text": "is",
+                "xMin": 418.676,
+                "yMin": 91.384,
+                "xMax": 427.34,
+                "yMax": 102.484
+              },
+              {
+                "text": "asymmetric.",
+                "xMin": 430.676,
+                "yMin": 91.384,
+                "xMax": 495.344,
+                "yMax": 102.484
+              }
+            ],
+            "xMin": 320.0,
+            "yMin": 91.384,
+            "xMax": 495.344,
+            "yMax": 102.484,
+            "heading": false
+          },
+          {
+            "text": "RIGHT-TWO Public keys may be shared.",
+            "words": [
+              {
+                "text": "RIGHT-TWO",
+                "xMin": 320.0,
+                "yMin": 121.384,
+                "xMax": 389.324,
+                "yMax": 132.484
+              },
+              {
+                "text": "Public",
+                "xMin": 392.66,
+                "yMin": 121.384,
+                "xMax": 425.336,
+                "yMax": 132.484
+              },
+              {
+                "text": "keys",
+                "xMin": 428.672,
+                "yMin": 121.384,
+                "xMax": 453.344,
+                "yMax": 132.484
+              },
+              {
+                "text": "may",
+                "xMin": 456.68,
+                "yMin": 121.384,
+                "xMax": 479.348,
+                "yMax": 132.484
+              },
+              {
+                "text": "be",
+                "xMin": 482.684,
+                "yMin": 121.384,
+                "xMax": 496.028,
+                "yMax": 132.484
+              },
+              {
+                "text": "shared.",
+                "xMin": 499.364,
+                "yMin": 121.384,
+                "xMax": 539.384,
+                "yMax": 132.484
+              }
+            ],
+            "xMin": 320.0,
+            "yMin": 121.384,
+            "xMax": 539.384,
+            "yMax": 132.484,
+            "heading": false
+          },
+          {
+            "text": "RIGHT-THREE Private keys stay private.",
+            "words": [
+              {
+                "text": "RIGHT-THREE",
+                "xMin": 320.0,
+                "yMin": 151.384,
+                "xMax": 401.996,
+                "yMax": 162.484
+              },
+              {
+                "text": "Private",
+                "xMin": 405.332,
+                "yMin": 151.384,
+                "xMax": 442.676,
+                "yMax": 162.484
+              },
+              {
+                "text": "keys",
+                "xMin": 446.012,
+                "yMin": 151.384,
+                "xMax": 470.684,
+                "yMax": 162.484
+              },
+              {
+                "text": "stay",
+                "xMin": 474.02,
+                "yMin": 151.384,
+                "xMax": 496.028,
+                "yMax": 162.484
+              },
+              {
+                "text": "private.",
+                "xMin": 499.364,
+                "yMin": 151.384,
+                "xMax": 538.712,
+                "yMax": 162.484
+              }
+            ],
+            "xMin": 320.0,
+            "yMin": 151.384,
+            "xMax": 538.712,
+            "yMax": 162.484,
+            "heading": false
+          }
+        ],
+        "two_column_heuristic": true
+      }
+    ],
+    "headings": [
+      {
+        "page": 1,
+        "text": "1. Layout and cryptanalysis"
+      }
+    ],
+    "tables": [],
+    "engine": "pdftotext version 26.03.0",
+    "formula_structure": "NOT_EVALUATED",
+    "image_semantics": "NOT_EVALUATED",
+    "reading_order": "bounded two-column heuristic"
+  },
+  "sections": [
+    {
+      "title": "1. Layout and cryptanalysis",
+      "text": "1. Layout and cryptanalysis",
+      "location": {
+        "page": 1,
+        "bbox": [
+          40.0,
+          32.076,
+          276.088,
+          48.726
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 1
+      }
+    },
+    {
+      "title": "Page 1 line 2",
+      "text": "LEFT-ONE AES uses fixed blocks.",
+      "location": {
+        "page": 1,
+        "bbox": [
+          40.0,
+          91.384,
+          224.728,
+          102.484
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 2
+      }
+    },
+    {
+      "title": "Page 1 line 3",
+      "text": "LEFT-TWO A key selects a permutation.",
+      "location": {
+        "page": 1,
+        "bbox": [
+          40.0,
+          121.384,
+          255.4,
+          132.484
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 3
+      }
+    },
+    {
+      "title": "Page 1 line 4",
+      "text": "LEFT-THREE Evidence must be traceable.",
+      "location": {
+        "page": 1,
+        "bbox": [
+          40.0,
+          151.384,
+          268.744,
+          162.484
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 4
+      }
+    },
+    {
+      "title": "Page 1 line 5",
+      "text": "RIGHT-ONE RSA is asymmetric.",
+      "location": {
+        "page": 1,
+        "bbox": [
+          320.0,
+          91.384,
+          495.344,
+          102.484
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 5
+      }
+    },
+    {
+      "title": "Page 1 line 6",
+      "text": "RIGHT-TWO Public keys may be shared.",
+      "location": {
+        "page": 1,
+        "bbox": [
+          320.0,
+          121.384,
+          539.384,
+          132.484
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 6
+      }
+    },
+    {
+      "title": "Page 1 line 7",
+      "text": "RIGHT-THREE Private keys stay private.",
+      "location": {
+        "page": 1,
+        "bbox": [
+          320.0,
+          151.384,
+          538.712,
+          162.484
+        ],
+        "unit": "PDF points, top-left origin",
+        "reading_order": 7
+      }
+    }
+  ],
+  "error": null
+}
