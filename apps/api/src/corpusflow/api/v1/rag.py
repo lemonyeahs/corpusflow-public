@@ -460,3 +460,50 @@ def feedback_list(request: Request, session: Annotated[Session, Depends(db)]) ->
             for f, q in rows
         ]
     }
+
+
+class ReviewIn(BaseModel):
+    trace_id: str
+    request_key: str = Field(min_length=1, max_length=120)
+    evidence_support: int = Field(ge=0, le=4)
+    completeness: int = Field(ge=0, le=4)
+    irrelevant: bool
+    no_answer_expected: bool
+    note: str = Field(min_length=8, max_length=2000)
+
+
+@router.post("/reviews")
+def review_evidence(
+    body: ReviewIn, request: Request, session: Annotated[Session, Depends(db)]
+) -> dict[str, Any]:
+    from corpusflow.services import retrieval_review
+
+    user, wid = context(request, session)
+    role_required(session, user, wid, {"reviewer"})
+    row = retrieval_review.submit(
+        session,
+        wid,
+        user,
+        body.trace_id,
+        body.request_key,
+        body.model_dump(
+            include={"evidence_support", "completeness", "irrelevant", "no_answer_expected"}
+        ),
+        body.note,
+    )
+    audit(session, request, wid, user, "rag.review", "retrieval_review", row.id)
+    session.commit()
+    return {"review_id": row.id, "rubric_version": row.rubric_version}
+
+
+@router.get("/traces/{trace_id}/reviews")
+def evidence_reviews(
+    trace_id: str, request: Request, session: Annotated[Session, Depends(db)]
+) -> dict[str, Any]:
+    from corpusflow.services import retrieval_review
+
+    user, wid = context(request, session)
+    result = retrieval_review.report(session, wid, trace_id)
+    audit(session, request, wid, user, "rag.reviews.read", "retrieval_trace", trace_id)
+    session.commit()
+    return result

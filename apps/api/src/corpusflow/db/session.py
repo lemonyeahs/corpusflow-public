@@ -5,7 +5,7 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from corpusflow.core.config import Settings
 
-SCHEMA_REVISION = "0013_semantic_embeddings"
+SCHEMA_REVISION = "0014_retrieval_reviews"
 
 
 class Base(DeclarativeBase):

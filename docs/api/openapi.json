@@ -823,6 +823,133 @@
         }
       }
     },
+    "/api/v1/rag/reviews": {
+      "post": {
+        "tags": [
+          "rag"
+        ],
+        "summary": "Review Evidence",
+        "operationId": "review_evidence_api_v1_rag_reviews_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Review Evidence Api V1 Rag Reviews Post"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rag/traces/{trace_id}/reviews": {
+      "get": {
+        "tags": [
+          "rag"
+        ],
+        "summary": "Evidence Reviews",
+        "operationId": "evidence_reviews_api_v1_rag_traces__trace_id__reviews_get",
+        "parameters": [
+          {
+            "name": "trace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Trace Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Evidence Reviews Api V1 Rag Traces  Trace Id  Reviews Get"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -4993,6 +5120,57 @@
           "query"
         ],
         "title": "QueryIn"
+      },
+      "ReviewIn": {
+        "properties": {
+          "trace_id": {
+            "type": "string",
+            "title": "Trace Id"
+          },
+          "request_key": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Request Key"
+          },
+          "evidence_support": {
+            "type": "integer",
+            "maximum": 4.0,
+            "minimum": 0.0,
+            "title": "Evidence Support"
+          },
+          "completeness": {
+            "type": "integer",
+            "maximum": 4.0,
+            "minimum": 0.0,
+            "title": "Completeness"
+          },
+          "irrelevant": {
+            "type": "boolean",
+            "title": "Irrelevant"
+          },
+          "no_answer_expected": {
+            "type": "boolean",
+            "title": "No Answer Expected"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 8,
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "trace_id",
+          "request_key",
+          "evidence_support",
+          "completeness",
+          "irrelevant",
+          "no_answer_expected",
+          "note"
+        ],
+        "title": "ReviewIn"
       },
       "SampleReviewIn": {
         "properties": {

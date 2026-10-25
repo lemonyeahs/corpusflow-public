@@ -609,3 +609,17 @@ class RagFeedback(Timestamped):
     category: Mapped[str] = mapped_column(String(40))
     note: Mapped[str] = mapped_column(Text)
     created_by: Mapped[str] = mapped_column(String(36))
+
+
+class RetrievalReview(Timestamped):
+    __tablename__ = "retrieval_reviews"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    trace_id: Mapped[str] = mapped_column(ForeignKey("retrieval_traces.id"), index=True)
+    reviewer_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    request_key: Mapped[str] = mapped_column(String(120))
+    rubric_version: Mapped[str] = mapped_column(String(50), default="evidence-review.v1")
+    ratings: Mapped[dict[str, Any]] = mapped_column(JSON)
+    note: Mapped[str] = mapped_column(Text)
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "request_key", name="uq_retrieval_review_request"),
+    )

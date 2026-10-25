@@ -1,0 +1,63 @@
+{
+  "trace_id": "239d8376-a20f-4d3c-892c-aed178e94aac",
+  "rubric_version": "evidence-review.v1",
+  "scope": "retrieval evidence only; generated answer NOT_EVALUATED",
+  "reviewer_count": 2,
+  "annotation_count": 4,
+  "support_range": [
+    1,
+    4
+  ],
+  "disagreement": 3,
+  "items": [
+    {
+      "review_id": "813ac878-7da9-4925-b9e3-922997606af0",
+      "reviewer_id": "802470bc-91c3-4f1f-9ebe-8db7ee1cbd9a",
+      "ratings": {
+        "irrelevant": false,
+        "completeness": 3,
+        "evidence_support": 4,
+        "no_answer_expected": false
+      },
+      "note": "Synthetic workflow assertion; not expert opinion",
+      "created_at": "2026-10-25T10:27:55.507496+00:00"
+    },
+    {
+      "review_id": "2c80974a-20ba-44db-b9b2-0412b193ddda",
+      "reviewer_id": "cc802a89-9da1-4db2-9d4f-51322ef921c8",
+      "ratings": {
+        "irrelevant": false,
+        "completeness": 3,
+        "evidence_support": 1,
+        "no_answer_expected": false
+      },
+      "note": "Synthetic workflow assertion; not expert opinion",
+      "created_at": "2026-10-25T10:27:55.534459+00:00"
+    },
+    {
+      "review_id": "976b0061-1c0a-452a-b838-2cc70e06496b",
+      "reviewer_id": "802470bc-91c3-4f1f-9ebe-8db7ee1cbd9a",
+      "ratings": {
+        "irrelevant": false,
+        "completeness": 3,
+        "evidence_support": 4,
+        "no_answer_expected": false
+      },
+      "note": "Synthetic workflow assertion; not expert opinion",
+      "created_at": "2026-10-25T10:28:15.320372+00:00"
+    },
+    {
+      "review_id": "e6626e3c-9607-4a1e-9aef-499af6631e30",
+      "reviewer_id": "cc802a89-9da1-4db2-9d4f-51322ef921c8",
+      "ratings": {
+        "irrelevant": false,
+        "completeness": 3,
+        "evidence_support": 1,
+        "no_answer_expected": false
+      },
+      "note": "Synthetic workflow assertion; not expert opinion",
+      "created_at": "2026-10-25T10:28:15.352774+00:00"
+    }
+  ],
+  "expert_credentials": "NOT_VERIFIED"
+}
