@@ -26,6 +26,7 @@ router = APIRouter(prefix="/api/v1/rag", tags=["rag"])
 
 
 class IndexIn(BaseModel):
+    embedding: bool = False
     dataset_version_id: str
     request_key: str = Field(min_length=1, max_length=120)
 
@@ -33,9 +34,10 @@ class IndexIn(BaseModel):
 class QueryIn(BaseModel):
     index_version_id: str
     query: str = Field(min_length=1, max_length=2000, pattern=r"\S")
-    strategy: Literal["fts", "bm25", "hybrid", "vector"] = "bm25"
+    strategy: Literal["fts", "bm25", "hybrid", "vector", "semantic_hybrid"] = "bm25"
     top_k: int = Field(default=5, ge=1, le=50)
     rerank: bool = False
+    min_similarity: float = Field(default=0.5, ge=-1, le=1)
 
 
 class SuiteIn(BaseModel):
@@ -49,9 +51,10 @@ class EvalIn(BaseModel):
     suite_id: str
     index_version_id: str
     request_key: str = Field(min_length=1, max_length=120)
-    strategy: Literal["fts", "bm25", "hybrid"] = "bm25"
+    strategy: Literal["fts", "bm25", "hybrid", "vector", "semantic_hybrid"] = "bm25"
     top_k: int = Field(default=5, ge=1, le=50)
     rerank: bool = False
+    min_similarity: float = Field(default=0.5, ge=-1, le=1)
 
 
 class FeedbackIn(BaseModel):
@@ -86,11 +89,13 @@ def index_json(row: RagIndexVersion) -> dict[str, Any]:
 def capabilities(request: Request, session: Annotated[Session, Depends(db)]) -> dict[str, Any]:
     context(request, session)
     return {
-        "strategies": ["fts", "bm25", "hybrid"],
-        "vector": "NOT_CONFIGURED",
+        "strategies": ["fts", "bm25", "hybrid", "vector", "semantic_hybrid"],
+        "vector": "CONFIGURED_NOT_PROBED"
+        if request.app.state.config.embedding_endpoint
+        else "NOT_CONFIGURED",
         "generation": "NOT_CONFIGURED",
         "reranker": "token-coverage-v1",
-        "scope": "lexical retrieval; no semantic model",
+        "scope": "bounded PostgreSQL exact cosine; local model requires configuration",
         "max_chunks": 5000,
     }
 
@@ -128,7 +133,15 @@ def create_index(
 ) -> dict[str, Any]:
     user, wid = context(request, session)
     role_required(session, user, wid, {"engineer"})
-    row = rag.create_index(session, wid, user, body.dataset_version_id, body.request_key)
+    row = rag.create_index(
+        session,
+        wid,
+        user,
+        body.dataset_version_id,
+        body.request_key,
+        body.embedding,
+        request.app.state.config,
+    )
     audit(session, request, wid, user, "rag.index.create", "rag_index", row.id)
     session.commit()
     return index_json(row)
@@ -179,6 +192,8 @@ def query(
         body.strategy,
         body.top_k,
         body.rerank,
+        body.min_similarity,
+        request.app.state.config,
     )
     audit(
         session,
@@ -269,7 +284,12 @@ def create_eval(
     )
     rag.require(suite, "NOT_FOUND")
     rag.allowed_chunks(session, wid, body.index_version_id)
-    config = {"strategy": body.strategy, "top_k": body.top_k, "rerank": body.rerank}
+    config = {
+        "strategy": body.strategy,
+        "top_k": body.top_k,
+        "rerank": body.rerank,
+        "min_similarity": body.min_similarity,
+    }
     row = session.scalar(
         select(RagEvaluationRun).where(
             RagEvaluationRun.workspace_id == wid, RagEvaluationRun.request_key == body.request_key

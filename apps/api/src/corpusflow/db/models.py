@@ -546,6 +546,7 @@ class RagIndexVersion(Timestamped):
 class RagChunk(Timestamped):
     __tablename__ = "rag_chunks"
     index_version_id: Mapped[str] = mapped_column(ForeignKey("rag_index_versions.id"), index=True)
+    embedding: Mapped[list[float] | None] = mapped_column(JSON, nullable=True)
     sample_id: Mapped[str] = mapped_column(ForeignKey("candidate_samples.id"))
     segment_id: Mapped[str] = mapped_column(ForeignKey("segments.id"))
     asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id"))

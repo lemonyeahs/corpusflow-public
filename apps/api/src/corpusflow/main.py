@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from starlette.exceptions import HTTPException
 from starlette.responses import Response
 
+from corpusflow.adapters.embedding import EmbeddingError
 from corpusflow.adapters.readiness import DependencyProbe
 from corpusflow.api.health import router
 from corpusflow.api.v1.business import router as business_router
@@ -137,6 +138,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             [{"location": list(e["loc"]), "type": e["type"]} for e in exc.errors()],
         )
 
+    @app.exception_handler(EmbeddingError)
     @app.exception_handler(RagError)
     async def rag_error(request: Request, exc: RagError) -> Response:
         code = str(exc)

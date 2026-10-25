@@ -10,7 +10,7 @@ const post = (body: unknown) => ({method: 'POST', body: JSON.stringify(body)});
 export const ragApi = {
  versions: (ctx: ApiContext) => request<{items: RagVersion[]}>('/rag/versions',ctx),
  indexes: (ctx: ApiContext) => request<{items: RagIndex[]}>('/rag/indexes',ctx),
- build: (ctx: ApiContext, id: string) => request<RagIndex>('/rag/indexes',ctx,post({dataset_version_id:id,request_key:crypto.randomUUID()})),
+ build: (ctx: ApiContext, id: string, embedding = false) => request<RagIndex>('/rag/indexes',ctx,post({dataset_version_id:id,embedding,request_key:crypto.randomUUID()})),
  query: (ctx: ApiContext, body: unknown) => request<RagTrace>('/rag/queries',ctx,post(body)),
  trace: (ctx: ApiContext, id: string) => request<RagTrace>(`/rag/traces/${id}`,ctx),
  suites: (ctx: ApiContext) => request<{items: RagSuite[]}>('/rag/suites',ctx),

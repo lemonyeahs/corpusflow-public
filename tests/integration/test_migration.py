@@ -35,7 +35,7 @@ def test_upgrade_downgrade_reupgrade(monkeypatch):
                 with engine.connect() as conn:
                     assert (
                         conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
-                        == "0012_legacy_schema_alignment"
+                        == "0013_semantic_embeddings"
                     )
                 command.check(config)
                 # Reproduce an incremental legacy schema; empty-bootstrap success

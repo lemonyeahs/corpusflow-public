@@ -4526,7 +4526,9 @@
             "enum": [
               "fts",
               "bm25",
-              "hybrid"
+              "hybrid",
+              "vector",
+              "semantic_hybrid"
             ],
             "title": "Strategy",
             "default": "bm25"
@@ -4542,6 +4544,13 @@
             "type": "boolean",
             "title": "Rerank",
             "default": false
+          },
+          "min_similarity": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": -1.0,
+            "title": "Min Similarity",
+            "default": 0.5
           }
         },
         "type": "object",
@@ -4673,6 +4682,11 @@
       },
       "IndexIn": {
         "properties": {
+          "embedding": {
+            "type": "boolean",
+            "title": "Embedding",
+            "default": false
+          },
           "dataset_version_id": {
             "type": "string",
             "title": "Dataset Version Id"
@@ -4947,7 +4961,8 @@
               "fts",
               "bm25",
               "hybrid",
-              "vector"
+              "vector",
+              "semantic_hybrid"
             ],
             "title": "Strategy",
             "default": "bm25"
@@ -4963,6 +4978,13 @@
             "type": "boolean",
             "title": "Rerank",
             "default": false
+          },
+          "min_similarity": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": -1.0,
+            "title": "Min Similarity",
+            "default": 0.5
           }
         },
         "type": "object",

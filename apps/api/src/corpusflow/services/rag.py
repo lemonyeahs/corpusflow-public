@@ -15,8 +15,9 @@ from typing import Any
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from corpusflow.adapters.embedding import EmbeddingAdapter, cosine
 from corpusflow.adapters.retrieval import TOKENIZER, bm25, metrics, reciprocal_rank, tokens
-from corpusflow.core.config import Settings
+from corpusflow.core.config import Settings, load_settings
 from corpusflow.db.models import (
     Asset,
     CandidateSample,
@@ -148,7 +149,15 @@ def enqueue(session: Session, wid: str, object_id: str, kind: str) -> None:
     )
 
 
-def create_index(session: Session, wid: str, actor: str, vid: str, key: str) -> RagIndexVersion:
+def create_index(
+    session: Session,
+    wid: str,
+    actor: str,
+    vid: str,
+    key: str,
+    embedding: bool = False,
+    settings: Settings | None = None,
+) -> RagIndexVersion:
     lock(session, f"rag-index:{wid}:{key}")
     # Lock parent to serialize repeated requests and construction revisions.
     session.execute(
@@ -163,8 +172,13 @@ def create_index(session: Session, wid: str, actor: str, vid: str, key: str) -> 
         )
     )
     if existing:
-        require(existing.dataset_version_id == vid, "IDEMPOTENCY_KEY_REUSED")
+        require(
+            existing.dataset_version_id == vid
+            and bool(existing.config.get("embedding")) == embedding,
+            "IDEMPOTENCY_KEY_REUSED",
+        )
         return existing
+    profile = EmbeddingAdapter(settings or load_settings()).profile() if embedding else None
     row = RagIndexVersion(
         id=uid(),
         workspace_id=wid,
@@ -175,8 +189,9 @@ def create_index(session: Session, wid: str, actor: str, vid: str, key: str) -> 
         config={
             "tokenizer": TOKENIZER,
             "fts": "postgresql-simple",
-            "embedding": None,
-            "dimensions": None,
+            "embedding": profile,
+            "dimensions": profile["dimensions"] if profile else None,
+            "vector_store": "postgresql-json-exact-cosine" if profile else None,
             "schema": "rag-index.v1",
         },
     )
@@ -187,12 +202,14 @@ def create_index(session: Session, wid: str, actor: str, vid: str, key: str) -> 
 
 
 def build_index(session: Session, settings: Settings, row: RagIndexVersion) -> None:
+    started = time.monotonic()
     member(session, row.workspace_id, row.created_by, True)
     v = version(session, row.workspace_id, row.dataset_version_id, "rag")
     require(v.content_sha256 == row.content_sha256, "MATERIALIZATION_HASH_MISMATCH")
     manifest, records = read_release(settings, v)
     manifest_samples = {item["sample_id"]: item for item in manifest["samples"]}
     require(0 < len(records) <= 5000, "RAG_SCOPE_TOO_LARGE")
+    pending: list[RagChunk] = []
     for sample_id, record in records.items():
         sample = session.get(CandidateSample, sample_id)
         require(
@@ -239,7 +256,7 @@ def build_index(session: Session, settings: Settings, row: RagIndexVersion) -> N
             ),
             "QUALITY_GATE_FAILED",
         )
-        session.add(
+        pending.append(
             RagChunk(
                 index_version_id=row.id,
                 sample_id=sample.id,
@@ -257,6 +274,46 @@ def build_index(session: Session, settings: Settings, row: RagIndexVersion) -> N
                 },
             )
         )
+    profile = row.config.get("embedding")
+    usage: dict[str, Any] = {}
+    reused = 0
+    if profile:
+        # Only reuse immutable vectors from the same workspace/model/content. Current
+        # grant and quality were checked above; reuse never bypasses those checks.
+        prior = session.execute(
+            select(RagChunk, RagIndexVersion)
+            .join(RagIndexVersion)
+            .where(
+                RagIndexVersion.workspace_id == row.workspace_id,
+                RagIndexVersion.status == "succeeded",
+                RagChunk.embedding.is_not(None),
+            )
+        ).all()
+        cache = {
+            c.content_sha256: c.embedding for c, i in prior if i.config.get("embedding") == profile
+        }
+        missing = []
+        for chunk in pending:
+            if chunk.content_sha256 in cache:
+                chunk.embedding = cache[chunk.content_sha256]
+                reused += 1
+            else:
+                missing.append(chunk)
+        if missing:
+            vectors, usage = EmbeddingAdapter(settings).embed([c.text for c in missing], profile)
+            for chunk, vector in zip(missing, vectors, strict=True):
+                chunk.embedding = vector
+    session.add_all(pending)
+    row.config = {
+        **row.config,
+        "build_stats": {
+            "elapsed_ms": (time.monotonic() - started) * 1000,
+            "vectors_reused": reused,
+            "vectors_encoded": len(pending) - reused if profile else 0,
+            "vector_bytes_float32": len(pending) * profile["dimensions"] * 4 if profile else 0,
+            "usage": usage,
+        },
+    }
     row.chunk_count = len(records)
     row.status = "succeeded"
 
@@ -303,9 +360,13 @@ def retrieve(
     strategy: str = "bm25",
     top_k: int = 5,
     rerank: bool = False,
+    min_similarity: float = 0.5,
+    settings: Settings | None = None,
 ) -> RetrievalTrace:
     member(session, wid, actor)
-    require(strategy in {"fts", "bm25", "hybrid"}, "ADAPTER_UNAVAILABLE")
+    require(
+        strategy in {"fts", "bm25", "hybrid", "vector", "semantic_hybrid"}, "ADAPTER_UNAVAILABLE"
+    )
     started = time.monotonic()
     index, chunks = allowed_chunks(session, wid, iid)
     documents = {c.id: c.text for c in chunks}
@@ -324,8 +385,29 @@ def retrieve(
     def ordered(scores: dict[str, float]) -> list[str]:
         return sorted(scores, key=lambda k: (-scores[k], k))
 
+    dense: dict[str, float] = {}
+    embedding_usage: dict[str, Any] = {}
+    if strategy in {"vector", "semantic_hybrid"}:
+        require(index.config.get("embedding"), "ADAPTER_UNAVAILABLE")
+        if chunks:
+            vectors, embedding_usage = EmbeddingAdapter(settings or load_settings()).embed(
+                [query], index.config["embedding"]
+            )
+            require(all(c.embedding is not None for c in chunks), "EMBEDDING_INDEX_INCOMPLETE")
+            dense = {c.id: cosine(vectors[0], c.embedding or []) for c in chunks}
+            dense = {key: score for key, score in dense.items() if score >= min_similarity}
     fused = reciprocal_rank([ordered(sparse), ordered(fts)]) if strategy == "hybrid" else {}
-    scores = fts if strategy == "fts" else fused if strategy == "hybrid" else sparse
+    if strategy == "semantic_hybrid":
+        fused = reciprocal_rank([ordered(sparse), ordered(dense)])
+    scores = (
+        fts
+        if strategy == "fts"
+        else dense
+        if strategy == "vector"
+        else fused
+        if strategy in {"hybrid", "semantic_hybrid"}
+        else sparse
+    )
     ranking = ordered(scores)
     original_ranks = {key: i + 1 for i, key in enumerate(ranking)}
     coverage = {
@@ -345,6 +427,7 @@ def retrieve(
             "rank": i + 1,
             "original_rank": original_ranks[key],
             "scores": {
+                "cosine": dense.get(key),
                 "bm25": sparse.get(key),
                 "fts": fts.get(key),
                 "rrf": fused.get(key),
@@ -363,12 +446,17 @@ def retrieve(
         config={
             "strategy": strategy,
             "top_k": top_k,
+            "min_similarity": min_similarity,
+            "rrf_constant": 60,
+            "embedding": index.config.get("embedding"),
             "reranker": "token-coverage-v1" if rerank else None,
         },
         result={
             "status": (
                 "LOW_EVIDENCE"
-                if hits and max(coverage[key] for key in ranking[:top_k]) < 0.5
+                if hits
+                and max(coverage[key] for key in ranking[:top_k]) < 0.5
+                and not any(key in dense for key in ranking[:top_k])
                 else "EVIDENCE_FOUND"
                 if hits
                 else "NO_EVIDENCE"
@@ -378,7 +466,10 @@ def retrieve(
             "elapsed_ms": (time.monotonic() - started) * 1000,
             "dataset_version_id": index.dataset_version_id,
             "index_version_id": iid,
-            "algorithm_version": "lexical-v1",
+            "algorithm_version": "semantic-v1"
+            if strategy in {"vector", "semantic_hybrid"}
+            else "lexical-v1",
+            "embedding_usage": embedding_usage,
             "score_semantics": "not probabilities",
         },
     )

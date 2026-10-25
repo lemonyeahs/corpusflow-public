@@ -21,6 +21,29 @@ class Settings(BaseSettings):
     object_store_secret_key: SecretStr
     dependency_timeout: int = Field(default=2, ge=1, le=10)
 
+    embedding_endpoint: str = ""
+    embedding_timeout: int = Field(default=30, ge=1, le=60)
+    embedding_retries: int = Field(default=1, ge=0, le=2)
+
+    @field_validator("embedding_endpoint")
+    @classmethod
+    def local_embedding_only(cls, value: str) -> str:
+        from urllib.parse import urlsplit
+
+        if not value:
+            return value
+        url = urlsplit(value)
+        if (
+            url.scheme != "http"
+            or url.hostname not in {"localhost", "127.0.0.1", "host.docker.internal"}
+            or url.username
+            or url.password
+            or url.query
+            or url.fragment
+        ):
+            raise ValueError("Only explicit local embedding endpoints are supported")
+        return value
+
     @field_validator("database_url")
     @classmethod
     def postgres_only(cls, value: SecretStr) -> SecretStr:
