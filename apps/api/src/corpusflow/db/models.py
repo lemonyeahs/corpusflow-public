@@ -451,6 +451,58 @@ class SampleReview(Timestamped):
     note: Mapped[str] = mapped_column(Text, default="")
 
 
+class PreferenceSample(Timestamped):
+    """An immutable-after-publication pair of candidate answers for DPO."""
+
+    __tablename__ = "preference_samples"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    sample_key: Mapped[str] = mapped_column(String(160))
+    import_request_key: Mapped[str] = mapped_column(String(120), index=True)
+    import_request_hash: Mapped[str] = mapped_column(String(64))
+    prompt: Mapped[str] = mapped_column(Text)
+    prompt_messages: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON, nullable=True)
+    response_a: Mapped[str] = mapped_column(Text)
+    response_b: Mapped[str] = mapped_column(Text)
+    chosen_response: Mapped[str | None] = mapped_column(Text, nullable=True)
+    rejected_response: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    preference_reason: Mapped[str] = mapped_column(Text, default="")
+    source_id: Mapped[str] = mapped_column(String(36), index=True)
+    evidence_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    candidate_model: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    model_version: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    generation_config: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    imported_by: Mapped[str] = mapped_column(String(36))
+    reviewed_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    review_note: Mapped[str] = mapped_column(Text, default="")
+    annotation_version: Mapped[str] = mapped_column(String(40), default="dpo.preference.v1")
+    published_version_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "sample_key", name="uq_preference_sample_key"),
+        UniqueConstraint(
+            "workspace_id", "import_request_key", "sample_key", name="uq_preference_import_item"
+        ),
+    )
+
+
+class PreferenceAnnotation(Timestamped):
+    __tablename__ = "preference_annotations"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    preference_sample_id: Mapped[str] = mapped_column(
+        ForeignKey("preference_samples.id"), index=True
+    )
+    annotator_id: Mapped[str] = mapped_column(String(36), index=True)
+    choice: Mapped[str] = mapped_column(String(30))
+    reason: Mapped[str] = mapped_column(Text)
+    annotation_version: Mapped[str] = mapped_column(String(40), default="dpo.preference.v1")
+    presented_order: Mapped[dict[str, str]] = mapped_column(JSON, default=dict)
+    __table_args__ = (
+        UniqueConstraint(
+            "preference_sample_id", "annotator_id", name="uq_preference_annotation_annotator"
+        ),
+    )
+
+
 class DatasetVersion(Timestamped):
     __tablename__ = "dataset_versions"
     workspace_id: Mapped[str] = mapped_column(String(36), index=True)

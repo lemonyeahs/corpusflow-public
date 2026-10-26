@@ -49,6 +49,8 @@ from corpusflow.db.models import (
     PipelineRun,
     PipelineTemplate,
     PipelineVersion,
+    PreferenceAnnotation,
+    PreferenceSample,
     ProcessingBatch,
     QualityEvaluationRun,
     QualityIssue,
@@ -64,7 +66,7 @@ from corpusflow.db.models import (
     Workspace,
     uid,
 )
-from corpusflow.services.dataset_builders import BuilderError, builder_for
+from corpusflow.services.dataset_builders import BuilderError, DpoBuilder, builder_for
 from corpusflow.services.dataset_materializer import MaterializationError, materialize
 from corpusflow.services.quality_governance import (
     METRICS,
@@ -1955,7 +1957,7 @@ def datasets(request: Request, session: Session = Depends(db)):
 
 class DatasetIn(BaseModel):
     name: str = Field(default="dataset", min_length=1, max_length=160)
-    product_type: str = Field(default="sft", pattern="^(sft|pretrain|rag|evaluation)$")
+    product_type: str = Field(default="sft", pattern="^(sft|pretrain|rag|evaluation|dpo)$")
 
 
 @router.post("/datasets")
@@ -2003,7 +2005,544 @@ def dataset_product_types(request: Request, session: Session = Depends(db)):
                 "schema_version": "evaluation.v1",
                 "description": "带证据关联的问答评测数据集",
             },
+            {
+                "product_type": "dpo",
+                "purpose": "training",
+                "schema_version": "dpo.v1",
+                "description": "经人工成对偏好审核的 DPO 优化数据集",
+            },
         ]
+    }
+
+
+class DpoImportSampleIn(BaseModel):
+    sample_key: str = Field(min_length=1, max_length=160)
+    prompt: str = Field(min_length=1, max_length=20000)
+    response_a: str = Field(min_length=1, max_length=50000)
+    response_b: str = Field(min_length=1, max_length=50000)
+    source_id: str
+    evidence_ids: list[str] = Field(min_length=1, max_length=50)
+    prompt_messages: list[dict[str, Any]] | None = None
+    candidate_model: str | None = Field(default=None, max_length=160)
+    model_version: str | None = Field(default=None, max_length=160)
+    generation_config: dict[str, Any] = Field(default_factory=dict)
+
+
+class DpoImportIn(BaseModel):
+    request_key: str = Field(min_length=1, max_length=120)
+    samples: list[DpoImportSampleIn] = Field(min_length=1, max_length=100)
+
+
+def _dpo_evidence_asset(
+    session: Session, workspace: str, source_id: str, evidence_ids: list[str]
+) -> Asset | None:
+    segments = list(
+        session.scalars(
+            select(Segment).where(
+                Segment.workspace_id == workspace,
+                Segment.id.in_(evidence_ids),
+            )
+        ).all()
+    )
+    if len(segments) != len(set(evidence_ids)) or any(
+        segment.source_id != source_id for segment in segments
+    ):
+        return None
+    versions = {segment.document_version_id for segment in segments}
+    if len(versions) != 1:
+        return None
+    return session.scalar(
+        select(Asset)
+        .join(Document, Document.asset_id == Asset.id)
+        .join(DocumentVersion, DocumentVersion.document_id == Document.id)
+        .where(
+            Asset.workspace_id == workspace,
+            Document.workspace_id == workspace,
+            DocumentVersion.workspace_id == workspace,
+            DocumentVersion.id == next(iter(versions)),
+        )
+    )
+
+
+@router.get("/dpo/overview")
+def dpo_overview(request: Request, session: Session = Depends(db)):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    rows = list(
+        session.scalars(
+            select(PreferenceSample)
+            .where(PreferenceSample.workspace_id == wid)
+            .order_by(PreferenceSample.created_at.desc())
+            .limit(5000)
+        )
+    )
+    statuses = {status: sum(row.status == status for row in rows) for status in {
+        "pending", "annotated", "tie", "uncertain", "rejected", "approved"
+    }}
+    build_count = int(
+        session.scalar(
+            select(func.count())
+            .select_from(DatasetBuild)
+            .join(Dataset, Dataset.id == DatasetBuild.dataset_id)
+            .where(DatasetBuild.workspace_id == wid, Dataset.product_type == "dpo")
+        )
+        or 0
+    )
+    published_count = int(
+        session.scalar(
+            select(func.count())
+            .select_from(DatasetVersion)
+            .join(Dataset, Dataset.id == DatasetVersion.dataset_id)
+            .where(
+                DatasetVersion.workspace_id == wid,
+                Dataset.product_type == "dpo",
+                DatasetVersion.status == "published",
+            )
+        )
+        or 0
+    )
+    return {
+        "workspace_id": wid,
+        "total": len(rows),
+        "statuses": statuses,
+        "built_count": build_count,
+        "published_count": published_count,
+        "annotation_version": "dpo.preference.v1",
+    }
+
+
+@router.post("/dpo/preferences/import")
+def import_dpo_preferences(
+    body: DpoImportIn, request: Request, session: Session = Depends(db)
+):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    role_required(session, user, wid, {"admin", "engineer"})
+    keys = [item.sample_key for item in body.samples]
+    if len(set(keys)) != len(keys):
+        raise HTTPException(422, "INVALID_PREFERENCE")
+    request_hash = digest([item.model_dump() for item in body.samples])
+    existing = list(
+        session.scalars(
+            select(PreferenceSample).where(
+                PreferenceSample.workspace_id == wid,
+                PreferenceSample.import_request_key == body.request_key,
+            )
+        )
+    )
+    if existing:
+        if len(existing) != len(keys) or any(row.import_request_hash != request_hash for row in existing):
+            raise HTTPException(409, "IDEMPOTENCY_KEY_REUSED")
+        return {
+            "items": [
+                {"preference_sample_id": row.id, "sample_key": row.sample_key}
+                for row in existing
+            ],
+            "idempotent": True,
+        }
+    created: list[PreferenceSample] = []
+    for item in body.samples:
+        if item.response_a.strip() == item.response_b.strip():
+            raise HTTPException(422, "INVALID_PREFERENCE")
+        asset = _dpo_evidence_asset(session, wid, item.source_id, item.evidence_ids)
+        if not asset or not current_grant(session, wid, asset.id, "training"):
+            raise HTTPException(409, "PURPOSE_GRANT_MISSING")
+        row = PreferenceSample(
+            workspace_id=wid,
+            sample_key=item.sample_key,
+            import_request_key=body.request_key,
+            import_request_hash=request_hash,
+            prompt=item.prompt.strip(),
+            prompt_messages=item.prompt_messages,
+            response_a=item.response_a.strip(),
+            response_b=item.response_b.strip(),
+            source_id=item.source_id,
+            evidence_ids=list(dict.fromkeys(item.evidence_ids)),
+            candidate_model=item.candidate_model,
+            model_version=item.model_version,
+            generation_config=item.generation_config,
+            imported_by=user,
+            annotation_version="dpo.preference.v1",
+        )
+        session.add(row)
+        session.flush()
+        created.append(row)
+        for evidence_id in row.evidence_ids:
+            edge(session, wid, "Segment", evidence_id, "PreferenceSample", row.id, "supports")
+    audit(
+        session,
+        request,
+        wid,
+        user,
+        "dpo.preferences.import",
+        "preference_sample",
+        body.request_key,
+        {"count": len(created), "source": "imported_fixture_or_review_record"},
+    )
+    session.commit()
+    return {
+        "items": [
+            {"preference_sample_id": row.id, "sample_key": row.sample_key}
+            for row in created
+        ],
+        "idempotent": False,
+    }
+
+
+@router.get("/dpo/preferences")
+def list_dpo_preferences(
+    request: Request,
+    session: Session = Depends(db),
+    status: str | None = None,
+):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    query = select(PreferenceSample).where(PreferenceSample.workspace_id == wid)
+    if status:
+        query = query.where(PreferenceSample.status == status)
+    rows = session.scalars(query.order_by(PreferenceSample.created_at.desc()).limit(500)).all()
+    return {
+        "items": [
+            {
+                "preference_sample_id": row.id,
+                "sample_key": row.sample_key,
+                "prompt": row.prompt,
+                "response_a": row.response_a,
+                "response_b": row.response_b,
+                "chosen_response": row.chosen_response,
+                "rejected_response": row.rejected_response,
+                "status": row.status,
+                "preference_reason": row.preference_reason,
+                "source_id": row.source_id,
+                "evidence_ids": row.evidence_ids,
+                "reviewed_by": row.reviewed_by,
+                "published_version_id": row.published_version_id,
+                "candidate_model": row.candidate_model,
+                "model_version": row.model_version,
+                "created_at": row.created_at.isoformat(),
+            }
+            for row in rows
+        ]
+    }
+
+
+@router.get("/dpo/preferences/{preference_id}")
+def get_dpo_preference(
+    preference_id: str, request: Request, session: Session = Depends(db)
+):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    row = session.scalar(
+        select(PreferenceSample).where(
+            PreferenceSample.id == preference_id, PreferenceSample.workspace_id == wid
+        )
+    )
+    if not row:
+        raise HTTPException(404, "NOT_FOUND")
+    annotations = session.scalars(
+        select(PreferenceAnnotation)
+        .where(
+            PreferenceAnnotation.preference_sample_id == row.id,
+            PreferenceAnnotation.workspace_id == wid,
+        )
+        .order_by(PreferenceAnnotation.created_at)
+    ).all()
+    return {
+        "preference_sample_id": row.id,
+        "sample_key": row.sample_key,
+        "prompt": row.prompt,
+        "prompt_messages": row.prompt_messages,
+        "response_a": row.response_a,
+        "response_b": row.response_b,
+        "chosen_response": row.chosen_response,
+        "rejected_response": row.rejected_response,
+        "status": row.status,
+        "preference_reason": row.preference_reason,
+        "source_id": row.source_id,
+        "evidence_ids": row.evidence_ids,
+        "reviewed_by": row.reviewed_by,
+        "review_note": row.review_note,
+        "annotation_version": row.annotation_version,
+        "published_version_id": row.published_version_id,
+        "annotations": [
+            {
+                "annotation_id": item.id,
+                "annotator_id": item.annotator_id,
+                "choice": item.choice,
+                "reason": item.reason,
+                "annotation_version": item.annotation_version,
+                "presented_order": item.presented_order,
+            }
+            for item in annotations
+        ],
+    }
+
+
+class DpoAnnotationIn(BaseModel):
+    choice: str = Field(pattern="^(a|b|tie|uncertain|both_invalid)$")
+    reason: str = Field(min_length=8, max_length=2000)
+
+
+@router.post("/dpo/preferences/{preference_id}/annotations")
+def annotate_dpo_preference(
+    preference_id: str,
+    body: DpoAnnotationIn,
+    request: Request,
+    session: Session = Depends(db),
+):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    role_required(session, user, wid, {"admin", "reviewer"})
+    row = session.scalar(
+        select(PreferenceSample).where(
+            PreferenceSample.id == preference_id, PreferenceSample.workspace_id == wid
+        )
+    )
+    if not row:
+        raise HTTPException(404, "NOT_FOUND")
+    if row.published_version_id:
+        raise HTTPException(409, "PREFERENCE_IMMUTABLE")
+    if user == row.imported_by:
+        raise HTTPException(409, "REVIEWER_SEPARATION_REQUIRED")
+    if session.scalar(
+        select(PreferenceAnnotation).where(
+            PreferenceAnnotation.preference_sample_id == row.id,
+            PreferenceAnnotation.annotator_id == user,
+        )
+    ):
+        raise HTTPException(409, "ANNOTATION_ALREADY_SUBMITTED")
+    annotations = list(
+        session.scalars(
+            select(PreferenceAnnotation).where(
+                PreferenceAnnotation.preference_sample_id == row.id
+            )
+        )
+    )
+    semantic_order = (
+        {"left": "a", "right": "b"}
+        if int(digest(row.sample_key)[:2], 16) % 2
+        else {"left": "b", "right": "a"}
+    )
+    session.add(
+        PreferenceAnnotation(
+            workspace_id=wid,
+            preference_sample_id=row.id,
+            annotator_id=user,
+            choice=body.choice,
+            reason=body.reason,
+            annotation_version="dpo.preference.v1",
+            presented_order=semantic_order,
+        )
+    )
+    annotations.append(
+        PreferenceAnnotation(
+            choice=body.choice, annotator_id=user, reason=body.reason
+        )
+    )
+    clear = {item.choice for item in annotations if item.choice in {"a", "b"}}
+    if body.choice in {"tie", "uncertain", "both_invalid"}:
+        row.status = body.choice
+        row.chosen_response = None
+        row.rejected_response = None
+    elif len(clear) > 1:
+        row.status = "uncertain"
+        row.preference_reason = "ANNOTATION_CONFLICT"
+        row.chosen_response = None
+        row.rejected_response = None
+    else:
+        row.status = "annotated"
+        row.chosen_response = row.response_a if body.choice == "a" else row.response_b
+        row.rejected_response = row.response_b if body.choice == "a" else row.response_a
+        row.preference_reason = body.reason
+    audit(
+        session,
+        request,
+        wid,
+        user,
+        "dpo.preference.annotate",
+        "preference_sample",
+        row.id,
+        {"choice": body.choice},
+    )
+    session.commit()
+    return {"preference_sample_id": row.id, "status": row.status}
+
+
+class DpoReviewIn(BaseModel):
+    decision: str = Field(pattern="^(approved|rejected)$")
+    note: str = Field(min_length=8, max_length=2000)
+    choice: str | None = Field(default=None, pattern="^(a|b)$")
+
+
+@router.post("/dpo/preferences/{preference_id}/review")
+def review_dpo_preference(
+    preference_id: str,
+    body: DpoReviewIn,
+    request: Request,
+    session: Session = Depends(db),
+):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    role_required(session, user, wid, {"admin", "reviewer"})
+    row = session.scalar(
+        select(PreferenceSample).where(
+            PreferenceSample.id == preference_id, PreferenceSample.workspace_id == wid
+        )
+    )
+    if not row:
+        raise HTTPException(404, "NOT_FOUND")
+    if row.published_version_id:
+        raise HTTPException(409, "PREFERENCE_IMMUTABLE")
+    annotators = set(
+        session.scalars(
+            select(PreferenceAnnotation.annotator_id).where(
+                PreferenceAnnotation.preference_sample_id == row.id
+            )
+        )
+    )
+    if user == row.imported_by or user in annotators:
+        raise HTTPException(409, "REVIEWER_SEPARATION_REQUIRED")
+    if body.decision == "approved" and body.choice:
+        row.chosen_response = row.response_a if body.choice == "a" else row.response_b
+        row.rejected_response = row.response_b if body.choice == "a" else row.response_a
+        row.status = "annotated"
+        row.preference_reason = body.note
+    if body.decision == "approved" and (
+        row.status != "annotated" or not row.chosen_response or not row.rejected_response
+    ):
+        raise HTTPException(409, "PREFERENCE_NOT_RESOLVED")
+    row.status = body.decision
+    row.reviewed_by = user
+    row.review_note = body.note
+    audit(
+        session,
+        request,
+        wid,
+        user,
+        "dpo.preference.review",
+        "preference_sample",
+        row.id,
+        {"decision": body.decision},
+    )
+    session.commit()
+    return {"preference_sample_id": row.id, "status": row.status}
+
+
+class DpoBuildIn(BaseModel):
+    dataset_id: str
+    preference_sample_ids: list[str] = Field(min_length=1, max_length=500)
+    config: dict[str, Any] = Field(default_factory=dict)
+
+
+@router.post("/dpo/builds")
+def create_dpo_build(
+    body: DpoBuildIn, request: Request, session: Session = Depends(db)
+):
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    role_required(session, user, wid, {"admin", "engineer"})
+    dataset = session.scalar(
+        select(Dataset).where(
+            Dataset.id == body.dataset_id,
+            Dataset.workspace_id == wid,
+            Dataset.product_type == "dpo",
+        )
+    )
+    if not dataset:
+        raise HTTPException(404, "NOT_FOUND")
+    if len(set(body.preference_sample_ids)) != len(body.preference_sample_ids):
+        raise HTTPException(422, "INVALID_PREFERENCE")
+    preferences = list(
+        session.scalars(
+            select(PreferenceSample).where(
+                PreferenceSample.workspace_id == wid,
+                PreferenceSample.id.in_(body.preference_sample_ids),
+            )
+        )
+    )
+    if len(preferences) != len(body.preference_sample_ids):
+        raise HTTPException(404, "NOT_FOUND")
+    for preference in preferences:
+        if preference.status != "approved":
+            raise HTTPException(409, "PREFERENCE_NOT_RESOLVED")
+        asset = _dpo_evidence_asset(
+            session, wid, preference.source_id, [str(x) for x in preference.evidence_ids]
+        )
+        if not asset or not current_grant(session, wid, asset.id, "training"):
+            raise HTTPException(409, "PURPOSE_GRANT_MISSING")
+    builder = DpoBuilder()
+    result = builder.build_preferences(preferences, body.config)
+    if not result.candidates:
+        raise HTTPException(409, "NO_VALID_CANDIDATES")
+    cfg = {
+        **body.config,
+        "purpose": "training",
+        "product_type": "dpo",
+        "schema_version": "dpo.v1",
+        "preference_sample_ids": sorted(body.preference_sample_ids),
+        "excluded": result.excluded,
+        "builder_metrics": result.metrics,
+    }
+    build = DatasetBuild(
+        workspace_id=wid,
+        dataset_id=dataset.id,
+        created_by=user,
+        config_json=cfg,
+        config_hash=digest(cfg),
+    )
+    session.add(build)
+    session.flush()
+    for candidate in result.candidates:
+        preference = next(
+            item for item in preferences if item.id == candidate.payload["preference_sample_id"]
+        )
+        for evidence_id in candidate.evidence_ids:
+            segment = session.get(Segment, evidence_id)
+            if not segment:
+                raise HTTPException(409, "INVALID_SAMPLE_EVIDENCE")
+            session.add(
+                BuildInput(
+                    build_id=build.id,
+                    segment_id=segment.id,
+                    source_id=segment.source_id,
+                    content_sha256=segment.content_hash,
+                )
+            )
+        sample = CandidateSample(
+            workspace_id=wid,
+            build_id=build.id,
+            sample_key=candidate.key,
+            payload=candidate.payload,
+            payload_hash=digest(candidate.payload),
+            source_id=candidate.source_id,
+            status="approved",
+        )
+        session.add(sample)
+        session.flush()
+        for evidence_id in candidate.evidence_ids:
+            session.add(SampleEvidence(candidate_sample_id=sample.id, segment_id=evidence_id))
+            edge(session, wid, "Segment", evidence_id, "CandidateSample", sample.id, "dpo_input")
+        if preference.reviewed_by:
+            session.add(
+                SampleReview(
+                    candidate_sample_id=sample.id,
+                    reviewer_id=preference.reviewed_by,
+                    decision="approved",
+                    note=preference.review_note,
+                )
+            )
+        edge(session, wid, "PreferenceSample", preference.id, "CandidateSample", sample.id, "built_from")
+    audit(session, request, wid, user, "dpo.build.create", "dataset_build", build.id)
+    session.commit()
+    return {
+        "build_id": build.id,
+        "dataset_id": dataset.id,
+        "product_type": "dpo",
+        "status": build.status,
+        "candidate_count": len(result.candidates),
+        "config_hash": build.config_hash,
+        "metrics": result.metrics,
+        "excluded": result.excluded,
     }
 
 

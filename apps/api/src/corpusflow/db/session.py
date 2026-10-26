@@ -5,7 +5,7 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from corpusflow.core.config import Settings
 
-SCHEMA_REVISION = "0018_blind_review"
+SCHEMA_REVISION = "0020_dpo_import_idempotency"
 
 
 class Base(DeclarativeBase):

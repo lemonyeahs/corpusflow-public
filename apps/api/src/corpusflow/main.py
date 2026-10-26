@@ -124,6 +124,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "QUALITY_SCOPE_TOO_LARGE",
             "INVALID_QUALITY_RULE",
             "PRODUCT_MISMATCH",
+            "INVALID_PREFERENCE",
+            "REVIEWER_SEPARATION_REQUIRED",
+            "ANNOTATION_ALREADY_SUBMITTED",
+            "PREFERENCE_IMMUTABLE",
+            "PREFERENCE_NOT_RESOLVED",
+            "DPO_PREFERENCE_INPUT_REQUIRED",
         }
         return error_response(
             request,

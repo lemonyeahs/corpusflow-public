@@ -81,6 +81,34 @@ export interface DemoCase {
   limitations: string[];
 }
 
+export interface DpoPreference {
+  preference_sample_id: string;
+  sample_key: string;
+  prompt: string;
+  response_a: string;
+  response_b: string;
+  chosen_response?: string | null;
+  rejected_response?: string | null;
+  status: string;
+  preference_reason: string;
+  source_id: string;
+  evidence_ids: string[];
+  reviewed_by?: string | null;
+  published_version_id?: string | null;
+  candidate_model?: string | null;
+  model_version?: string | null;
+  created_at?: string;
+}
+
+export interface DpoOverview {
+  workspace_id: string;
+  total: number;
+  statuses: Record<string, number>;
+  built_count: number;
+  published_count: number;
+  annotation_version: string;
+}
+
 export interface DocumentVersion {
   document_version_id: string;
   version_no: number;
