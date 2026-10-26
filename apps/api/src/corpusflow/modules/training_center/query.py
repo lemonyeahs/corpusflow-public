@@ -306,7 +306,9 @@ class CatalogQueries:
             key=lambda s: (s.sequence, s.id),
         )
 
-    def samples(self, dataset_id: str, query: m.SamplesQuery) -> m.SamplesResponse:
+    def filtered_samples(self, dataset_id: str, query: m.SamplesQuery) -> list[m.Sample]:
+        """Shared selection for lists and downloads. Pagination is deliberately separate."""
+
         def searchable(sample: m.Sample) -> str:
             if sample.kind == "cpt":
                 return "\n".join([sample.title or "", sample.text])
@@ -316,12 +318,15 @@ class CatalogQueries:
                 [sample.prompt, sample.chosen, sample.rejected, sample.preference_reason or ""]
             )
 
-        samples = [
+        return [
             s
             for s in self._samples(dataset_id, query.version)
             if (query.split is None or s.split == query.split)
             and (not query.q or query.q.casefold() in searchable(s).casefold())
         ]
+
+    def samples(self, dataset_id: str, query: m.SamplesQuery) -> m.SamplesResponse:
+        samples = self.filtered_samples(dataset_id, query)
         return m.SamplesResponse(
             scope=self.scope,
             items=samples[query.offset : query.offset + query.limit],
@@ -329,6 +334,13 @@ class CatalogQueries:
             offset=query.offset,
             limit=query.limit,
         )
+
+    def sample(self, dataset_id: str, version: str, sample_id: str) -> m.SamplesResponse:
+        """Resolve an exact version-scoped ID independently of current list filters/page."""
+        sample = next((s for s in self._samples(dataset_id, version) if s.id == sample_id), None)
+        if sample is None:
+            raise CatalogError("NOT_FOUND", 404)
+        return m.SamplesResponse(scope=self.scope, items=[sample], total_count=1, offset=0, limit=1)
 
     def dataset_overview(self, dataset_id: str, version: str) -> m.DatasetOverviewResponse:
         dataset = self._dataset(dataset_id, version)

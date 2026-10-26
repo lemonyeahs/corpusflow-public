@@ -8,7 +8,7 @@ from collections import Counter, OrderedDict
 from collections.abc import Callable
 from datetime import UTC, datetime
 from threading import RLock
-from typing import Any
+from typing import Any, Protocol
 from uuid import uuid4
 
 from pydantic import ValidationError
@@ -48,6 +48,23 @@ def utc(value: datetime) -> str:
 
 def reference(kind: m.ObjectType, identifier: str) -> m.ObjectRef:
     return m.ObjectRef(catalog="workspace", type=kind, id=identifier)
+
+
+class WorkspaceCatalogProvider(Protocol):
+    """Python injection boundary, not a new wire revision protocol.
+
+    Agent 1 can substitute the shared store here when delivered. Callers must
+    authorize membership on every request before load.
+    """
+
+    def load(
+        self,
+        workspace: str,
+        revision: str | None,
+        session: Session,
+        max_records: int = 100_000,
+        max_bytes: int = 100 * 1024 * 1024,
+    ) -> CatalogSnapshot: ...
 
 
 def snapshot_from_database(
@@ -121,6 +138,8 @@ def snapshot_from_database(
         for v in rows(DatasetVersion)
         if v.status == "published" and v.dataset_id in dataset_rows
     }
+    pipeline_rows = rows(PipelineRun)
+    pipelines = {run.id: run for run in pipeline_rows}
     linked = session.execute(
         select(CandidateSample, DatasetVersionSample)
         .join(DatasetVersionSample, DatasetVersionSample.candidate_sample_id == CandidateSample.id)
@@ -141,6 +160,8 @@ def snapshot_from_database(
     )
     samples: list[m.Sample] = []
     sample_files: dict[tuple[str, str, str], set[str]] = {}
+    sample_runs: dict[tuple[str, str, str], tuple[str, ...]] = {}
+    version_samples: dict[str, list[m.Sample]] = {vid: [] for vid in published}
     sequences: Counter[str] = Counter()
     dataset_sources: dict[str, set[str]] = {vid: set() for vid in published}
     file_datasets: dict[str, set[str]] = {aid: set() for aid in assets}
@@ -208,7 +229,19 @@ def snapshot_from_database(
         if bytes_used > max_bytes:
             raise CatalogError("CATALOG_LIMIT_EXCEEDED", 413)
         samples.append(sample)
+        version_samples[version.id].append(sample)
         sample_files[(sample.dataset_id, sample.dataset_version, sample.id)] = file_ids
+        sample_runs[(sample.dataset_id, sample.dataset_version, sample.id)] = tuple(
+            sorted(
+                {
+                    run_id
+                    for sid in evidence
+                    if (run_id := versions[segments[sid].document_version_id].run_id) is not None
+                    and run_id in pipelines
+                    and pipelines[run_id].asset_id == segment_files[sid]
+                }
+            )
+        )
         dataset_sources[version.id].update(refs)
         for aid in file_ids:
             file_datasets[aid].add(version.id)
@@ -216,9 +249,7 @@ def snapshot_from_database(
     metadata: dict[str, Json] = {}
     for version in published.values():
         dataset = dataset_rows[version.dataset_id]
-        selected = [
-            s for s in samples if (s.dataset_id, s.dataset_version) == (dataset.id, version.version)
-        ]
+        selected = version_samples[version.id]
         kind = "cpt" if dataset.product_type == "pretrain" else dataset.product_type
         datasets.append(
             m.DatasetSummary.model_validate(
@@ -251,7 +282,7 @@ def snapshot_from_database(
             "manifest_sha256": version.manifest_sha256,
         }
     runs: dict[str, Any] = {}
-    for run in sorted(rows(PipelineRun), key=lambda r: (r.created_at, r.id)):
+    for run in sorted(pipeline_rows, key=lambda r: (r.created_at, r.id)):
         if run.asset_id in assets:
             runs[run.asset_id] = run
     counts = Counter(s.file_id for s in current_segments)
@@ -312,6 +343,7 @@ def snapshot_from_database(
         sample_files,
         metadata,
         {aid: r.id for aid, r in runs.items()},
+        sample_runs,
     )
 
 

@@ -1,5 +1,7 @@
 # Agent 2：M0 生成目录与响应建议
 
+> M1 补充：`openapi_followup_delta.json` 是指定 acb7ce0 基线后从实际应用生成的详情/导出路径差异，仅供 Agent 1 同步共享 OpenAPI，不是响应兜底数据。当前实现和验证见上级目录 [M1_DATASETS_FOLLOWUP.md](../M1_DATASETS_FOLLOWUP.md)；以下是 M0 历史说明。
+
 > 历史提案来源已纳入契约 1.0.0。公共类型以 `corpusflow.contracts.training_center` 为准，统一场景包位于仓库根目录 `contracts/training-center/examples.json`，冻结决定见共享契约第9节。下文保留首轮交付说明和可重放来源；其中待确认事项已由冻结决定取代。
 
 基于共同基线 `263821e` 的 `TRAINING_CENTER_CONTRACT_V1.md` 草案。本目录由 Agent 2 维护，供 Agent 1 评审后整合到共享 DTO 和开发样例。**本轮没有实现或注册 HTTP 接口，也没有实现 React 页面、数据库写入或真实处理链。** 不得在后端失败时自动返回这里的成功样例。

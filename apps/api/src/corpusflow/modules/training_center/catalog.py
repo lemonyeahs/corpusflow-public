@@ -143,6 +143,7 @@ class CatalogSnapshot:
     sample_files: dict[tuple[str, str, str], set[str]] = field(default_factory=dict)
     version_metadata: dict[str, Json] = field(default_factory=dict)
     file_runs: dict[str, str] = field(default_factory=dict)
+    sample_runs: dict[tuple[str, str, str], tuple[str, ...]] = field(default_factory=dict)
 
 
 class GeneratedCatalog:

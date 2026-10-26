@@ -1,5 +1,7 @@
 # M1 workspace、导出与 React 页面交付
 
+> 历史交付记录。指定 acb7ce0 基线合并后的当前状态见 [M1_DATASETS_FOLLOWUP.md](M1_DATASETS_FOLLOWUP.md)；下文未注册路由、共享类型检查问题及导出不支持 q 的描述不再代表当前分支。
+
 日期：2026-10-27。Agent 2（B＋G），worktree `F:/PJ/xz/corpusflow-datasets`，分支 `feat/tc-catalog-datasets`。
 
 这三项在本轮实现，不推迟到 M2；生产路由注册、真实服务联调和独立验收仍未完成，不能称整个 M1 已验收。

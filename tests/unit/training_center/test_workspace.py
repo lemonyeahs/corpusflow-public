@@ -167,6 +167,37 @@ def test_database_queries_use_published_records_and_actual_evidence(database):
     assert [message.role for message in sft.items[0].messages] == ["system", "user", "assistant"]
 
 
+def test_relations_keep_evidence_run_distinct_from_latest_file_run(database):
+    from datetime import UTC, datetime
+
+    from corpusflow.modules.training_center.relations import CatalogRelations
+
+    for rid, year in (("evidence-run", 2024), ("latest-run", 2025)):
+        database.add(
+            d.PipelineRun(
+                id=rid,
+                workspace_id="workspace-a",
+                asset_id="workspace-a-file",
+                batch_id="batch",
+                pipeline_version_id="pipeline",
+                config_snapshot={},
+                snapshot_hash="a" * 64,
+                status="succeeded",
+                created_at=datetime(year, 1, 1, tzinfo=UTC),
+            )
+        )
+    database.get(d.DocumentVersion, "workspace-a-dv2").run_id = "evidence-run"
+    database.commit()
+    snapshot = WorkspaceSnapshots().load("workspace-a", None, database)
+    relations = CatalogRelations(snapshot)
+    assert relations.file("workspace-a-file").latest_processing_run.id == "latest-run"
+    for sample in snapshot.samples:
+        linked = relations.sample(sample.dataset_id, sample.dataset_version, sample.id)
+        assert [run.id for run in linked.processing_runs] == ["evidence-run"]
+        assert [f.id for f in linked.files] == ["workspace-a-file"]
+        assert linked.file_basis == "segment_evidence"
+
+
 def test_snapshot_is_frozen_expiry_does_not_slide_and_is_scoped(database):
     now = [0.0]
     store = WorkspaceSnapshots(clock=lambda: now[0])
