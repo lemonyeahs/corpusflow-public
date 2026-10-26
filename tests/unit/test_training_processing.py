@@ -2,6 +2,8 @@ import csv
 import io
 import json
 import zipfile
+from datetime import UTC, datetime
+from types import SimpleNamespace
 
 import pytest
 from corpusflow.adapters.parser import (
@@ -13,6 +15,7 @@ from corpusflow.adapters.parser import (
 )
 from corpusflow.adapters.processing import ExactDeduplicateAdapter, TextCleanAdapter
 from corpusflow.services.processing_exports import serialize_records
+from corpusflow.services.processing_insights import build_processing_summary
 
 
 def test_text_parser_preserves_unicode_special_characters_and_metadata():
@@ -159,3 +162,71 @@ def test_serializers_preserve_nested_shapes_and_csv_escaping():
         export = serialize_records(records, "sft", export_format)
         assert export.extension == extension
         assert b"sft-1" in b"".join(export.chunks)
+
+
+def test_processing_summary_uses_final_attempt_and_contract_units():
+    now = datetime(2026, 10, 27, 0, 0, tzinfo=UTC)
+    run = SimpleNamespace(
+        id="run-1",
+        workspace_id="ws-1",
+        asset_id="asset-1",
+        revision=2,
+        status="succeeded",
+        finished_at=now,
+    )
+    asset = SimpleNamespace(id="asset-1")
+    version = SimpleNamespace(id="version-1", run_id="run-1", version_no=1, created_at=now)
+    segment = SimpleNamespace(id="segment-1", document_version_id="version-1", created_at=now)
+    nodes = [
+        SimpleNamespace(
+            id="node-parse",
+            run_id="run-1",
+            node_id="parse",
+            attempt_no=1,
+            status="succeeded",
+            operator_key="builtin.text",
+            operator_version="1.0.0",
+            config_snapshot={},
+            input_count=1,
+            output_count=1,
+            filtered_count=0,
+        ),
+        SimpleNamespace(
+            id="node-clean",
+            run_id="run-1",
+            node_id="clean",
+            attempt_no=1,
+            status="succeeded",
+            operator_key="builtin.clean",
+            operator_version="1.0.0",
+            config_snapshot={"collapse_whitespace": True},
+            input_count=1,
+            output_count=1,
+            filtered_count=0,
+        ),
+    ]
+
+    class FakeResult:
+        def __init__(self, values):
+            self.values = values
+
+        def all(self):
+            return self.values
+
+    class FakeSession:
+        def get(self, model, identifier):
+            return asset if identifier == "asset-1" else None
+
+        def scalars(self, statement):
+            entity = statement.column_descriptions[0]["entity"]
+            if entity.__name__ == "DocumentVersion":
+                return FakeResult([version])
+            if entity.__name__ == "NodeRun":
+                return FakeResult(nodes)
+            return FakeResult([segment])
+
+    summary = build_processing_summary(FakeSession(), run)
+    assert summary.status == "succeeded"
+    assert [step.input_unit for step in summary.steps] == ["file", "segment"]
+    assert summary.steps[1].input_count == summary.steps[1].output_count == 1
+    assert summary.totals[1].output_count == 1
