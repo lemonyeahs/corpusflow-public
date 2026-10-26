@@ -59,7 +59,7 @@ def main():
             "Worker processing",
             "MinIO/Redis readiness",
             "workspace catalog and processing APIs",
-            "generated graph and Worker-produced lineage",
+            "Worker-produced lineage",
         ],
     }
 

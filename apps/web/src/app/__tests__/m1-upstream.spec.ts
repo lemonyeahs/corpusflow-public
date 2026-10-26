@@ -98,6 +98,55 @@ test.describe("M1 upstream integration", () => {
     await expect.poll(() => graphQueries.some(url => url.searchParams.get("direction") === "upstream" && url.searchParams.get("revision") === "run-revision")).toBe(true);
   });
 
+  test("links selected file, sample, dataset and processing nodes to scoped lineage views", async ({ page }) => {
+    const nodes = [
+      ["file", "file-1", "文件节点"],
+      ["sample", "sample-1", "样本节点"],
+      ["dataset_version", "dataset-v1", "数据集版本节点"],
+      ["operator_run", "run-1", "处理记录节点"],
+    ].map(([kind, id, label]) => ({
+      id: `workspace:${kind}:${id}`,
+      ref: { catalog: "workspace", type: kind, id },
+      kind,
+      label,
+      description: `${label}说明`,
+      status: null,
+      metrics: {},
+      detail: kind === "sample"
+        ? { dataset_id: "dataset-1", dataset_version: "1.0.0", dataset_kind: "sft" }
+        : kind === "dataset_version"
+          ? { dataset_id: "dataset-1", dataset_version: "1.0.0", dataset_kind: "sft" }
+          : {},
+    }));
+    await page.route("**/api/v1/**", async route => {
+      const url = new URL(route.request().url());
+      if (url.pathname.endsWith("/auth/me")) return route.fulfill({ json: { user_id: session.user_id } });
+      if (url.pathname.endsWith("/workspaces")) return route.fulfill({ json: { items: [{ workspace_id: session.workspace_id, role: "admin" }] } });
+      return route.fulfill({
+        json: {
+          scope,
+          root: { catalog: "workspace", type: "file", id: "file-1" },
+          nodes,
+          edges: [],
+          truncated: false,
+          truncation_reason: null,
+        },
+      });
+    });
+    await login(page, "/lineage?catalog=workspace&root_type=file&root_id=file-1");
+    await expect(page.getByText("图 · 4 个节点 / 0 条边", { exact: true })).toBeVisible();
+    for (const [kind, id, label, target] of [
+      ["file", "file-1", "文件节点", "/data/all"],
+      ["sample", "sample-1", "样本节点", "/datasets/sft"],
+      ["dataset_version", "dataset-v1", "数据集版本节点", "/datasets/sft"],
+      ["operator_run", "run-1", "处理记录节点", "/advanced/processing"],
+    ]) {
+      await page.getByText(label, { exact: true }).click();
+      const link = page.getByRole("link", { name: `打开${kind === "file" ? "文件" : kind === "sample" ? "样本" : kind === "dataset_version" ? "数据集版本" : "处理记录"}` });
+      await expect(link).toHaveAttribute("href", new RegExp(`${target}.*${kind === "file" ? `file_id=${id}` : kind === "operator_run" ? `run_id=${id}` : kind === "sample" ? `sample_id=${id}` : `version=1.0.0`}`));
+    }
+  });
+
   for (const mismatch of ["workspace_id", "catalog", "revision"] as const) {
     test(`lineage rejects ${mismatch} mismatch and clears root/revision when changing catalog`, async ({ page }) => {
       await page.route("**/api/v1/**", async route => {

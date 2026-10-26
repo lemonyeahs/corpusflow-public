@@ -14,9 +14,11 @@ from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from corpusflow.api.dependencies import actor_id, db, workspace_id
+from corpusflow.api.v1.training_center import catalog_store
 from corpusflow.contracts.training_center.models import (
     Catalog,
     GraphQuery,
@@ -33,6 +35,7 @@ from corpusflow.db.models import (
     Asset,
     CandidateSample,
     DatasetVersion,
+    DatasetVersionSample,
     DocumentVersion,
     PipelineRun,
     PreferenceSample,
@@ -40,9 +43,14 @@ from corpusflow.db.models import (
     Source,
 )
 from corpusflow.db.models import (
+    Dataset as DatasetDefinition,
+)
+from corpusflow.db.models import (
     LineageEdge as StoredLineageEdge,
 )
 from corpusflow.modules.lineage_graph import GraphEdge, GraphNode, query_graph
+from corpusflow.modules.training_center.catalog import CatalogError, CatalogSnapshot
+from corpusflow.services.processing_insights import build_processing_summary
 
 router = APIRouter(prefix="/api/v1", tags=["training-center-lineage"])
 
@@ -75,6 +83,7 @@ class GraphSnapshot:
     expires_at: float
     rows: tuple[FrozenEdge, ...]
     visible: frozenset[tuple[str, str]]
+    node_details: tuple[tuple[tuple[str, str], dict[str, object]], ...] = ()
 
 
 class GraphSnapshots:
@@ -111,11 +120,14 @@ class GraphSnapshots:
         workspace: str,
         rows: tuple[FrozenEdge, ...],
         visible: frozenset[tuple[str, str]],
+        node_details: tuple[tuple[tuple[str, str], dict[str, object]], ...] = (),
     ) -> GraphSnapshot:
         with self._lock:
             now = self._clock()
             self._expire(now)
-            snapshot = GraphSnapshot(uuid.uuid4().hex, _now(), now + 900, rows, visible)
+            snapshot = GraphSnapshot(
+                uuid.uuid4().hex, _now(), now + 900, rows, visible, node_details
+            )
             snapshots = self._workspaces.setdefault(workspace, OrderedDict())
             snapshots[snapshot.revision] = snapshot
             while len(snapshots) > 10:
@@ -202,16 +214,23 @@ def _stored_graph(
     revision: str,
     as_of: str,
     visible: frozenset[tuple[str, str]] = frozenset(),
+    node_details: dict[tuple[str, str], dict[str, object]] | None = None,
 ) -> LineageGraph:
     graph_edges: list[GraphEdge] = []
     nodes: dict[tuple[str, str], GraphNode] = {}
+    details = node_details or {}
     for storage_type, value in sorted(visible):
         kind = STORAGE_TYPES.get(storage_type)
         if kind:
+            detail = {"storage_kind": storage_type, **details.get((storage_type, value), {})}
             nodes.setdefault(
                 (kind, value),
                 GraphNode(
-                    kind, value, f"{kind}:{value[:12]}", detail={"storage_kind": storage_type}
+                    kind,
+                    value,
+                    str(detail.get("label") or f"{kind}:{value[:12]}"),
+                    status=str(detail["status"]) if detail.get("status") else None,
+                    detail=detail,
                 ),
             )
     for row in rows:
@@ -222,22 +241,26 @@ def _stored_graph(
             continue
         edge = GraphEdge(source_kind, row.from_id, target_kind, row.to_id, relation)
         graph_edges.append(edge)
+        detail = {"storage_kind": row.from_type, **details.get((row.from_type, row.from_id), {})}
         nodes.setdefault(
             edge.source,
             GraphNode(
                 edge.source_kind,
                 edge.source_id,
-                f"{edge.source_kind}:{edge.source_id[:12]}",
-                detail={"storage_kind": row.from_type},
+                str(detail.get("label") or f"{edge.source_kind}:{edge.source_id[:12]}"),
+                status=str(detail["status"]) if detail.get("status") else None,
+                detail=detail,
             ),
         )
+        detail = {"storage_kind": row.to_type, **details.get((row.to_type, row.to_id), {})}
         nodes.setdefault(
             edge.target,
             GraphNode(
                 edge.target_kind,
                 edge.target_id,
-                f"{edge.target_kind}:{edge.target_id[:12]}",
-                detail={"storage_kind": row.to_type},
+                str(detail.get("label") or f"{edge.target_kind}:{edge.target_id[:12]}"),
+                status=str(detail["status"]) if detail.get("status") else None,
+                detail=detail,
             ),
         )
     root_key = (query.root_type, query.root_id)
@@ -262,7 +285,7 @@ def _stored_graph(
             ref=refs[node.key],
             kind=cast(ObjectType, node.kind),
             label=node.label or node.id,
-            description=f"{node.kind} 节点 {node.id}",
+            description=str(node.detail.get("description") or f"{node.kind} 节点 {node.id}"),
             status=node.status,
             metrics={},
             detail=dict(node.detail),
@@ -304,6 +327,96 @@ def _workspace_nodes(session: Session, workspace: str) -> frozenset[tuple[str, s
     )
 
 
+def _generated_projection(
+    snapshot: CatalogSnapshot,
+) -> tuple[tuple[FrozenEdge, ...], frozenset[tuple[str, str]]]:
+    """Project only explicit generated-catalog references into graph edges.
+
+    generated-v1 has no executed processing records. The projection therefore
+    contains source/file/sample/dataset-version nodes and their persisted refs;
+    it never invents operator runs or processing history.
+    """
+    visible: set[tuple[str, str]] = set()
+    edges: set[FrozenEdge] = set()
+    for source_id in snapshot.sources:
+        visible.add(("Source", source_id))
+    for file in snapshot.files:
+        visible.add(("Asset", file.id))
+        edges.add(FrozenEdge("Source", file.source_ref.id, "Asset", file.id, "provides"))
+        for file_dataset in file.dataset_refs:
+            edges.add(
+                FrozenEdge(
+                    "Asset", file.id, "DatasetVersion", file_dataset.id, "included_in"
+                )
+            )
+    for sample in snapshot.samples:
+        visible.add(("CandidateSample", sample.id))
+        for source_ref in sample.source_refs:
+            edges.add(
+                FrozenEdge("Source", source_ref.id, "CandidateSample", sample.id, "provides")
+            )
+        edges.add(
+            FrozenEdge(
+                "CandidateSample",
+                sample.id,
+                "DatasetVersion",
+                sample.dataset_version,
+                "included_in",
+            )
+        )
+    for dataset in snapshot.datasets:
+        visible.add(("DatasetVersion", dataset.version_id))
+        for source_ref in dataset.source_refs:
+            edges.add(
+                FrozenEdge(
+                    "Source", source_ref.id, "DatasetVersion", dataset.version_id, "provides"
+                )
+            )
+    return (
+        tuple(
+            sorted(
+                edges,
+                key=lambda row: (
+                    row.from_type,
+                    row.from_id,
+                    row.to_type,
+                    row.to_id,
+                    row.relation,
+                ),
+            )
+        ),
+        frozenset(visible),
+    )
+
+
+def _generated_node_details(
+    snapshot: CatalogSnapshot,
+) -> dict[tuple[str, str], dict[str, object]]:
+    details: dict[tuple[str, str], dict[str, object]] = {}
+    for file in snapshot.files:
+        details[("Asset", file.id)] = {"label": file.filename, "filename": file.filename}
+    for sample in snapshot.samples:
+        details[("CandidateSample", sample.id)] = {
+            "dataset_id": sample.dataset_id,
+            "dataset_version": sample.dataset_version,
+            "dataset_kind": sample.kind,
+            "label": f"{sample.kind} 样本 {sample.id[:12]}",
+        }
+    for dataset in snapshot.datasets:
+        details[("DatasetVersion", dataset.version_id)] = {
+            "dataset_id": dataset.id,
+            "dataset_version": dataset.version,
+            "dataset_kind": dataset.kind,
+            "label": f"{dataset.name} · {dataset.version}",
+        }
+    return details
+
+
+def _training_kind(product_type: str) -> str:
+    """Map persisted product types to the training-center route kind."""
+    return "cpt" if product_type == "pretrain" else product_type
+
+
 @router.get("/lineage/graph", response_model=LineageGraph)
 def graph(
     request: Request,
@@ -313,7 +426,23 @@ def graph(
     user = actor_id(request, session)
     workspace = workspace_id(request, session, user)
     if query.catalog == "generated":
-        raise HTTPException(503, "CATALOG_UNAVAILABLE")
+        try:
+            generated_snapshot = catalog_store(request).load(workspace, query.revision)
+        except CatalogError as exc:
+            raise HTTPException(exc.status, exc.code) from None
+        rows, visible = _generated_projection(generated_snapshot)
+        root = ObjectRef(catalog="generated", type=query.root_type, id=query.root_id)
+        return _stored_graph(
+            rows,
+            "generated",
+            workspace,
+            root,
+            query,
+            revision=generated_snapshot.scope.revision,
+            as_of=generated_snapshot.scope.as_of,
+            visible=visible,
+            node_details=_generated_node_details(generated_snapshot),
+        )
     store = _snapshots(request)
     if query.revision is not None:
         snapshot = store.get(workspace, query.revision)
@@ -329,6 +458,7 @@ def graph(
         revision=snapshot.revision,
         as_of=snapshot.as_of,
         visible=snapshot.visible,
+        node_details=dict(snapshot.node_details),
     )
 
 
@@ -346,9 +476,112 @@ def _capture_snapshot(session: Session, workspace: str, store: GraphSnapshots) -
         ).all()
     )
     visible = _workspace_nodes(session, workspace)
-    frozen_rows = tuple(
+    frozen_rows = [
         FrozenEdge(row.from_type, row.from_id, row.to_type, row.to_id, row.relation)
         for row in rows
         if (row.from_type, row.from_id) in visible and (row.to_type, row.to_id) in visible
+    ]
+    node_details: dict[tuple[str, str], dict[str, object]] = {}
+    for run in session.scalars(
+        select(PipelineRun).where(PipelineRun.workspace_id == workspace)
+    ):
+        try:
+            summary = build_processing_summary(session, run)
+        except ValueError:
+            # A malformed run cannot be presented as a verified operator graph.
+            continue
+        node_details[("PipelineRun", run.id)] = {
+            "label": f"处理运行 {run.id[:12]}",
+            "status": summary.status,
+            "description": f"处理运行 {run.id}",
+            "run_revision": run.revision,
+        }
+        for step in summary.steps:
+            visible = frozenset((*visible, ("NodeRun", step.id)))
+            node_details[("NodeRun", step.id)] = {
+                "label": f"{step.operator_key} · attempt {step.attempt}",
+                "status": step.status,
+                "description": (
+                    f"{step.operator_key} {step.operator_version}（第 {step.attempt} 次）"
+                ),
+                "run_id": step.run_id,
+                "attempt": step.attempt,
+                "operator_key": step.operator_key,
+                "operator_version": step.operator_version,
+                "config_hash": step.config_hash,
+                "sequence": step.sequence,
+                "input_refs": [ref.model_dump() for ref in step.input_refs],
+                "output_refs": [ref.model_dump() for ref in step.output_refs],
+            }
+            frozen_rows.append(
+                FrozenEdge("PipelineRun", run.id, "NodeRun", step.id, "processed_by")
+            )
+            for ref in step.input_refs:
+                storage_type = {
+                    "file": "Asset",
+                    "segment": "Segment",
+                    "sample": "CandidateSample",
+                    "dataset_version": "DatasetVersion",
+                }.get(ref.type)
+                if storage_type and (storage_type, ref.id) in visible:
+                    frozen_rows.append(
+                        FrozenEdge(storage_type, ref.id, "NodeRun", step.id, "processed_by")
+                    )
+            for ref in step.output_refs:
+                storage_type = {
+                    "file": "Asset",
+                    "segment": "Segment",
+                    "sample": "CandidateSample",
+                    "dataset_version": "DatasetVersion",
+                }.get(ref.type)
+                if storage_type and (storage_type, ref.id) in visible:
+                    frozen_rows.append(
+                        FrozenEdge("NodeRun", step.id, storage_type, ref.id, "produced")
+                    )
+    try:
+        dataset_rows = session.execute(
+            select(DatasetVersion, DatasetDefinition)
+            .join(DatasetDefinition, DatasetDefinition.id == DatasetVersion.dataset_id)
+            .where(DatasetVersion.workspace_id == workspace)
+        )
+        dataset_details = {}
+        for version, dataset in dataset_rows:
+            dataset_details[version.id] = {
+                "dataset_id": dataset.id,
+                "dataset_version": version.version,
+                "dataset_kind": _training_kind(dataset.product_type),
+                "label": f"{dataset.name} · {version.version}",
+            }
+            node_details[("DatasetVersion", version.id)] = dataset_details[version.id]
+        sample_rows = session.execute(
+            select(CandidateSample, DatasetVersion, DatasetDefinition)
+            .join(
+                DatasetVersionSample,
+                DatasetVersionSample.candidate_sample_id == CandidateSample.id,
+            )
+            .join(DatasetVersion, DatasetVersion.id == DatasetVersionSample.dataset_version_id)
+            .join(DatasetDefinition, DatasetDefinition.id == DatasetVersion.dataset_id)
+            .where(CandidateSample.workspace_id == workspace)
+        )
+        for sample, version, dataset in sample_rows:
+            node_details[("CandidateSample", sample.id)] = {
+                "dataset_id": dataset.id,
+                "dataset_version": version.version,
+                "dataset_kind": _training_kind(dataset.product_type),
+                "label": f"{dataset.name} 样本 {sample.id[:12]}",
+            }
+    except SQLAlchemyError:
+        # Optional deep-link metadata must not make a graph unavailable when a
+        # legacy workspace lacks dataset publication tables.
+        pass
+    return store.put(
+        workspace,
+        tuple(
+            sorted(
+                set(frozen_rows),
+                key=lambda row: (row.from_type, row.from_id, row.to_type, row.to_id, row.relation),
+            )
+        ),
+        visible,
+        tuple(sorted(node_details.items())),
     )
-    return store.put(workspace, frozen_rows, visible)

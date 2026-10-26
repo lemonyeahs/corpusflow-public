@@ -1,13 +1,28 @@
+from types import SimpleNamespace
+
 import pytest
 from corpusflow.api.v1.lineage_graph import (
     WORKSPACE_MODELS,
     FrozenEdge,
     GraphSnapshots,
+    _generated_projection,
     _stored_graph,
+    _training_kind,
     router,
 )
 from corpusflow.contracts.training_center.models import GraphQuery, ObjectRef
-from corpusflow.db.models import LineageEdge, Membership, Source, User, Workspace
+from corpusflow.db.models import (
+    Asset,
+    LineageEdge,
+    Membership,
+    NodeRun,
+    PipelineRun,
+    Source,
+    User,
+    Workspace,
+)
+from corpusflow.modules.training_center.catalog import GeneratedCatalog
+from corpusflow.modules.training_center.generation import build_catalog, write_catalog
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, delete, select
@@ -112,6 +127,86 @@ def test_stored_graph_marks_node_limit_and_keeps_endpoints_valid() -> None:
     assert all(edge.source in node_ids and edge.target in node_ids for edge in graph.edges)
 
 
+def test_generated_projection_uses_explicit_refs_without_operator_history() -> None:
+    source = SimpleNamespace(id="source-1")
+    snapshot = SimpleNamespace(
+        sources={"source-1": {}},
+        files=(
+            SimpleNamespace(
+                id="file-1",
+                source_ref=source,
+                dataset_refs=(SimpleNamespace(id="dataset-v1"),),
+            ),
+        ),
+        samples=(
+            SimpleNamespace(
+                id="sample-1",
+                source_refs=(source,),
+                dataset_version="dataset-v1",
+            ),
+        ),
+        datasets=(
+            SimpleNamespace(version_id="dataset-v1", source_refs=(source,)),
+        ),
+    )
+
+    rows, visible = _generated_projection(snapshot)
+
+    assert visible == {
+        ("Source", "source-1"),
+        ("Asset", "file-1"),
+        ("CandidateSample", "sample-1"),
+        ("DatasetVersion", "dataset-v1"),
+    }
+    assert all("Run" not in edge.from_type and "Run" not in edge.to_type for edge in rows)
+    assert FrozenEdge("Source", "source-1", "Asset", "file-1", "provides") in rows
+    assert FrozenEdge(
+        "CandidateSample", "sample-1", "DatasetVersion", "dataset-v1", "included_in"
+    ) in rows
+
+
+@pytest.mark.parametrize(
+    ("product_type", "route_kind"),
+    [("pretrain", "cpt"), ("sft", "sft"), ("dpo", "dpo")],
+)
+def test_workspace_dataset_product_type_maps_to_training_route(product_type, route_kind):
+    assert _training_kind(product_type) == route_kind
+
+
+def test_http_generated_graph_uses_published_revision_and_explicit_refs(graph_api, tmp_path):
+    client, _ = graph_api
+    store = GeneratedCatalog(tmp_path)
+    manifest, content = build_catalog("workspace-a", 7, 4, 3, 2)
+    write_catalog(tmp_path / "workspace-a" / manifest["revision"], manifest, content)
+    store.publish("workspace-a", manifest["revision"])
+    client.app.state.training_center_generated = store
+
+    snapshot = store.load("workspace-a")
+    dataset = snapshot.datasets[0]
+    response = client.get(
+        GRAPH_URL,
+        params={
+            "catalog": "generated",
+            "root_type": "dataset_version",
+            "root_id": dataset.version_id,
+            "direction": "upstream",
+            "revision": snapshot.scope.revision,
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["scope"]["revision"] == snapshot.scope.revision
+    assert {node["kind"] for node in body["nodes"]} <= {
+        "source",
+        "file",
+        "candidate_sample",
+        "dataset_version",
+    }
+    assert all("operator_run" not in node["kind"] for node in body["nodes"])
+    assert all(edge["relation"] in {"provides", "included_in"} for edge in body["edges"])
+
+
 def test_snapshots_expire_at_900_seconds_without_read_renewal():
     now = [0.0]
     store = GraphSnapshots(clock=lambda: now[0])
@@ -149,7 +244,7 @@ def graph_api(settings):
     engine = create_engine(
         "sqlite+pysqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
     )
-    models = {User, Workspace, Membership, LineageEdge, *WORKSPACE_MODELS.values()}
+    models = {User, Workspace, Membership, LineageEdge, NodeRun, *WORKSPACE_MODELS.values()}
     for model in models:
         model.__table__.create(engine)
     with Session(engine) as session:
@@ -164,6 +259,35 @@ def graph_api(settings):
                 Source(id="source-a", workspace_id="workspace-a", name="A", kind="other"),
                 Source(id="source-a2", workspace_id="workspace-a", name="A2", kind="other"),
                 Source(id="source-b", workspace_id="workspace-b", name="B", kind="other"),
+                Asset(
+                    id="asset-a",
+                    workspace_id="workspace-a",
+                    source_id="source-a",
+                    blob_id="blob-a",
+                    filename="a.txt",
+                    format="txt",
+                ),
+                PipelineRun(
+                    id="run-a",
+                    workspace_id="workspace-a",
+                    batch_id="batch-a",
+                    asset_id="asset-a",
+                    pipeline_version_id="pipeline-a",
+                    config_snapshot={},
+                    snapshot_hash="hash-a",
+                    status="running",
+                ),
+                NodeRun(
+                    id="node-a",
+                    run_id="run-a",
+                    node_id="normalize",
+                    attempt_no=2,
+                    status="running",
+                    operator_key="normalize",
+                    operator_version="v1",
+                    config_snapshot={"mode": "unicode"},
+                    input_count=1,
+                ),
                 LineageEdge(
                     workspace_id="workspace-a",
                     from_type="Source",
@@ -171,6 +295,14 @@ def graph_api(settings):
                     to_type="Source",
                     to_id="source-a2",
                     relation="contains",
+                ),
+                LineageEdge(
+                    workspace_id="workspace-a",
+                    from_type="Asset",
+                    from_id="asset-a",
+                    to_type="PipelineRun",
+                    to_id="run-a",
+                    relation="processed_by",
                 ),
                 # Corrupt cross-workspace reference must never expose the other source.
                 LineageEdge(
@@ -234,6 +366,34 @@ def test_http_snapshot_preserves_rows_nodes_scope_and_supports_another_root(grap
     assert client.get(GRAPH_URL, params={**GRAPH_PARAMS, "root_id": "source-a2"}).status_code == 404
 
 
+def test_workspace_graph_includes_real_node_run_attempt_details(graph_api):
+    client, _ = graph_api
+    response = client.get(
+        GRAPH_URL,
+        params={
+            "catalog": "workspace",
+            "root_type": "file",
+            "root_id": "asset-a",
+            "direction": "downstream",
+            "max_depth": 3,
+        },
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    node = next(item for item in body["nodes"] if item["ref"]["id"] == "node-a")
+    assert node["kind"] == "operator_run"
+    assert node["detail"]["attempt"] == 2
+    assert node["detail"]["operator_key"] == "normalize"
+    assert {
+        (edge["source"], edge["target"], edge["relation"])
+        for edge in body["edges"]
+        if edge["target"].endswith(":node-a")
+    } >= {
+        ("workspace:file:asset-a", "workspace:operator_run:node-a", "processed_by"),
+        ("workspace:operator_run:run-a", "workspace:operator_run:node-a", "processed_by"),
+    }
+
+
 def test_http_snapshots_bound_to_workspace_and_auth_rechecked(graph_api):
     client, engine = graph_api
     revision = client.get(GRAPH_URL, params=GRAPH_PARAMS).json()["scope"]["revision"]
@@ -260,7 +420,7 @@ def test_http_snapshots_bound_to_workspace_and_auth_rechecked(graph_api):
     assert client.get(GRAPH_URL, params=params).status_code == 403
 
 
-def test_http_expired_snapshot_and_generated_catalog_errors(graph_api):
+def test_http_expired_snapshot_and_missing_generated_catalog_errors(graph_api):
     client, _ = graph_api
     now = [0.0]
     client.app.state.lineage_snapshots = GraphSnapshots(clock=lambda: now[0])
@@ -269,6 +429,6 @@ def test_http_expired_snapshot_and_generated_catalog_errors(graph_api):
     expired = client.get(GRAPH_URL, params={**GRAPH_PARAMS, "revision": revision})
     assert expired.status_code == 409
     assert expired.json()["error"]["code"] == "SNAPSHOT_EXPIRED"
-    unavailable = client.get(GRAPH_URL, params={**GRAPH_PARAMS, "catalog": "generated"})
-    assert unavailable.status_code == 503
-    assert unavailable.json()["error"]["code"] == "CATALOG_UNAVAILABLE"
+    missing = client.get(GRAPH_URL, params={**GRAPH_PARAMS, "catalog": "generated"})
+    assert missing.status_code == 404
+    assert missing.json()["error"]["code"] == "NOT_FOUND"
