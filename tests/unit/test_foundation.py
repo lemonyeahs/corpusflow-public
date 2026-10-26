@@ -96,12 +96,14 @@ def test_originals_preserved():
         "CorpusFlow_V3_1_CHANGELOG.md": (
             "10733bade01c525a523ad320960d84697896c526a6f2cbdb4d82b4f47a5f3b50"
         ),
-        "《CorpusFlow 需求分析与确认》.md": (
+        "docs/specs/CorpusFlow_01_需求分析与确认_V1.0.md": (
             "f9065571c0f625cb26712ba1197bcd01ebf327bb1d0d8d2df9ee25bdf207c1a3"
         ),
     }
     for name, checksum in expected.items():
-        assert hashlib.sha256(Path(name).read_bytes()).hexdigest() == checksum
+        # Git's text checkout may use CRLF on Windows; preserve the canonical LF content.
+        content = Path(name).read_bytes().replace(b"\r\n", b"\n")
+        assert hashlib.sha256(content).hexdigest() == checksum
 
 
 @pytest.mark.parametrize("dependency", ["postgresql", "redis", "s3"])
