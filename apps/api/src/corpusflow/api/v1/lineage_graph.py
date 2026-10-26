@@ -384,6 +384,29 @@ def _generated_projection(
     )
 
 
+def _generated_node_details(
+    snapshot: CatalogSnapshot,
+) -> dict[tuple[str, str], dict[str, object]]:
+    details: dict[tuple[str, str], dict[str, object]] = {}
+    for file in snapshot.files:
+        details[("Asset", file.id)] = {"label": file.filename, "filename": file.filename}
+    for sample in snapshot.samples:
+        details[("CandidateSample", sample.id)] = {
+            "dataset_id": sample.dataset_id,
+            "dataset_version": sample.dataset_version,
+            "dataset_kind": sample.kind,
+            "label": f"{sample.kind} 样本 {sample.id[:12]}",
+        }
+    for dataset in snapshot.datasets:
+        details[("DatasetVersion", dataset.version_id)] = {
+            "dataset_id": dataset.id,
+            "dataset_version": dataset.version,
+            "dataset_kind": dataset.kind,
+            "label": f"{dataset.name} · {dataset.version}",
+        }
+    return details
+
+
 @router.get("/lineage/graph", response_model=LineageGraph)
 def graph(
     request: Request,
@@ -408,6 +431,7 @@ def graph(
             revision=generated_snapshot.scope.revision,
             as_of=generated_snapshot.scope.as_of,
             visible=visible,
+            node_details=_generated_node_details(generated_snapshot),
         )
     store = _snapshots(request)
     if query.revision is not None:

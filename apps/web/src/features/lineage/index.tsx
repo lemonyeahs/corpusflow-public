@@ -9,13 +9,14 @@ import {
   type Node,
 } from "@xyflow/react";
 import dagre from "@dagrejs/dagre";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ApiError } from "../../api/client";
 import { ErrorState, EmptyState, LoadingState, PageHeader, Panel } from "../../ui";
 import { useWorkspaceContext } from "../../app/auth";
 import { useCatalogScope } from "../../app/catalog";
 import { trainingKeys } from "../../app/query";
 import type { Catalog, LineageGraph, ObjectType } from "../../contracts/training-center";
+import { objectLink, scopeLink } from "../training-home/components/format";
 import { fetchLineageGraph, type LineageDirection } from "./api";
 import styles from "./lineage.module.css";
 import "@xyflow/react/dist/style.css";
@@ -31,6 +32,27 @@ const RELATION_LABELS: Record<string, string> = {
   included_in: "纳入",
   split_into: "拆分为",
 };
+const NODE_LINK_LABELS: Record<ObjectType, string> = {
+  source: "来源",
+  file: "文件",
+  operator_run: "处理记录",
+  segment: "片段",
+  sample: "样本",
+  dataset_version: "数据集版本",
+};
+
+function nodeLink(node: LineageGraph["nodes"][number], scope: LineageGraph["scope"]) {
+  const detail = node.detail;
+  if (node.ref.type === "file") return scopeLink("/data/all", scope, { file_id: node.ref.id, detail_tab: "detail" });
+  if (node.ref.type === "sample" && typeof detail.dataset_kind === "string" && typeof detail.dataset_id === "string" && typeof detail.dataset_version === "string") {
+    return scopeLink(`/datasets/${detail.dataset_kind}`, scope, { dataset_id: detail.dataset_id, version: detail.dataset_version, sample_id: node.ref.id });
+  }
+  if (node.ref.type === "dataset_version" && typeof detail.dataset_kind === "string" && typeof detail.dataset_id === "string" && typeof detail.dataset_version === "string") {
+    return scopeLink(`/datasets/${detail.dataset_kind}`, scope, { dataset_id: detail.dataset_id, version: detail.dataset_version });
+  }
+  if (node.ref.type === "operator_run") return scopeLink("/advanced/processing", scope, { run_id: node.ref.id });
+  return objectLink(node.ref, scope);
+}
 
 function layout(graph: LineageGraph): { nodes: Node[]; edges: Edge[] } {
   const dag = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
@@ -102,6 +124,7 @@ export default function LineagePage() {
         <strong>{selectedNode.label}</strong>
         <span>{selectedNode.kind} · {selectedNode.ref.id}</span>
         <p>{selectedNode.description}</p>
+        {query.data?.scope && <Link className={styles.detailLink} to={nodeLink(selectedNode, query.data.scope)}>打开{NODE_LINK_LABELS[selectedNode.kind]} ↗</Link>}
         {Object.keys(selectedNode.detail).length > 0 && <pre>{JSON.stringify(selectedNode.detail, null, 2)}</pre>}
       </div>}
     </Panel>}

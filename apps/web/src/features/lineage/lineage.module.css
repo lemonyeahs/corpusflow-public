@@ -13,5 +13,6 @@
 .detail strong { color: #173d42; }
 .detail span { font-size: 12px; color: #718088; }
 .detail p { margin: 2px 0; }
+.detailLink { width: fit-content; color: #16766b; font-size: 13px; }
 .detail pre { margin: 0; padding: 8px; overflow: auto; border-radius: 6px; background: #f4f7f7; font-size: 11px; }
 @media (max-width: 900px) { .toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); } .graph { height: 460px; } }

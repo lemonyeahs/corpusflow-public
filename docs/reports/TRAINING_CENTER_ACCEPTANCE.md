@@ -31,7 +31,7 @@ M1 已接入 workspace/generated 图查询适配器和独立血缘页面；本�
 |---|---|---|---|
 | 起点 | `catalog/root_type/root_id` | 新接口已采用 V1 参数；旧接口保持不变 | workspace/generated 均已接入 |
 | 方向 | `both/upstream/downstream` | 旧接口固定一跳双向 | 适配层保持存储边方向，查询方向只控制遍历 |
-| 深度/规模 | 默认 6；上限 12/500 | 无参数 | 图服务已实现校验和截断语义 |
+| 深度/规模 | 默认 6；上限 12/500 | API 支持 `max_depth`/`max_nodes`，并返回截断原因 | 图服务已实现校验和截断语义 |
 | 节点 | `id/ref/kind/label/description/status/metrics/detail` | workspace/generated 均生成完整 DTO；workspace operator 节点带 run/step/attempt 详情 | 处理引用以 C 的 summary adapter 为来源 |
 | 边 | `id/source/target/relation` | API 按五元组生成稳定 id | 适配层按五元组去重 |
 | 关系 | 英文代码，前端中文映射 | API 规范化关系代码；页面显示中文关系 | 未知关系统一为 `derived_from/关联` |
@@ -50,9 +50,9 @@ Contract 文本本身有一处重复的 `description` 字段示例；属于 A �
 | A | 从 `Asset` 查询下游，追到解析版本和处理产物 | Asset → PipelineRun → DocumentVersion；关系 `processed_by/produced` | 图响应节点、边集合 | C 真实 run、认证 workspace | NOT RUN |
 | B | 从 generated `DatasetVersion` 查询上游来源 | DatasetVersion ← CandidateSample/File ← Source | 固定 revision 图响应集合 | 已发布 generated catalog | PASS（投影/发布目录 HTTP/单测） |
 | C | 2、3、6 跳查询 | 节点按深度增加，达到边界 `truncated=true` | 精确集合比对 | D 深度参数 | NOT RUN |
-| D | 清洗/解析执行追踪 | run、node/operator、输入输出引用可关联 | run_id、attempt、input_refs/output_refs 一致 | C summary adapter、真实 Worker | PASS（隔离 SQLite run/step）；真实 Worker NOT RUN |
+| D | 清洗/解析执行追踪 | run、node/operator、输入输出引用可关联 | run_id、attempt、input_refs/output_refs 一致 | C summary adapter、真实 Worker | PASS（隔离 SQLite summary adapter）；真实 Worker input/output refs NOT RUN |
 | E | 悬空边、错误节点、重复路径和环路 | 悬空边不出现在响应；节点/边去重；环路终止 | fixture 单元测试 | 图适配层 | PASS（fixture） |
-| F | 前后端一致性 | 页面节点/边与真实 API 完全一致 | UI 响应快照与 API 集合比对 | 认证 workspace、浏览器回归 | PASS（真实浏览器图/目录切换）；完整跨页面比对 NOT RUN |
+| F | 前后端一致性 | 页面节点/边与真实 API 完全一致 | UI 图、目录切换和节点深链 | 认证 workspace、浏览器回归 | PASS（真实浏览器图/目录切换/节点深链）；完整 API 节点边集合比对 NOT RUN |
 | G | 分叉与汇合 | 两个 Segment 汇合到同一 DatasetVersion 只保留一个节点 | 节点 ID 集合与五元组边集合 | D 图接口 | PASS（fixture） |
 | H | 参数/规模边界 | 非法 direction/depth/nodes 返回 422；规模截断有原因 | 单元测试 + HTTP 合约测试 | D 路由 | PASS（服务层/HTTP） |
 
@@ -67,10 +67,10 @@ PYTHONPATH=apps/api/src uv run python scripts/verify_training_center_m0.py --cat
 ```
 
 本轮 workspace/generated API 适配器、处理节点详情和页面代码已完成定向验证；真实隔离 PostgreSQL/API 验收通过 63 项，
-真实浏览器验收 6 项全部通过，覆盖目录读取、授权、快照、workspace 图和目录切换。完整跨页面数据一致性和真实 Worker
+真实浏览器验收 7 项全部通过，覆盖目录读取、授权、快照、workspace/generated 图、目录切换和节点深链。完整跨页面数据一致性和真实 Worker
 产生的多跳边仍为 `NOT RUN`，因为本轮没有启动 Worker/Redis/MinIO。
 
-结果：后端 `358 passed, 15 deselected`，图路由单测及发布目录 HTTP 测试 `13 passed`，隔离真实 HTTP `63 checks`、真实浏览器 `6 passed`，Ruff、mypy、契约导出检查均通过；
+结果：后端 `358 passed, 15 deselected`，图路由单测及发布目录 HTTP 测试 `13 passed`，隔离真实 HTTP `63 checks`、真实浏览器 `7 passed`，Ruff、mypy、契约导出检查均通过；
 前端 `typecheck`、`lint`、`build` 均通过。构建仅报告已有的大 chunk warning。
 
 部署限制：workspace 冻结快照当前保存在单进程内存，900 秒过期且读取不续期，每个 workspace 最多保留 10 份；

@@ -383,6 +383,8 @@ def main():
             "datasets": datasets,
             "graph_root_id": source_ids[0],
             "graph_revision": latest["scope"]["revision"],
+            "generated_graph_root_id": generated_root,
+            "generated_graph_revision": generated_snapshot.scope.revision,
         }
         context_path.write_text(
             json.dumps(context, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n"
