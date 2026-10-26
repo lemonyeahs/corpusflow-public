@@ -68,9 +68,11 @@ class TextParserAdapter:
             raise ParserError("INVALID_INPUT", "text parser requires a bytes payload")
         normalized_name = filename.lower()
         normalized_media_type = media_type.split(";", 1)[0].strip().lower()
-        is_text = normalized_name.endswith(_TEXT_EXTENSIONS) or (
-            normalized_media_type in _TEXT_MEDIA_TYPES
-        ) or normalized_media_type in _FALLBACK_MEDIA_TYPES
+        is_text = (
+            normalized_name.endswith(_TEXT_EXTENSIONS)
+            or (normalized_media_type in _TEXT_MEDIA_TYPES)
+            or normalized_media_type in _FALLBACK_MEDIA_TYPES
+        )
         if not is_text:
             raise ParserError("UNSUPPORTED_FORMAT", "text parser requires TXT or Markdown input")
         if b"\x00" in content:

@@ -4,7 +4,9 @@ from pathlib import Path
 
 def test_lineage_fixture_has_contract_safe_edges_and_endpoints():
     payload = json.loads(
-        (Path(__file__).parents[1] / "fixtures" / "lineage_graph_fixture.json").read_text()
+        (Path(__file__).parents[1] / "fixtures" / "lineage_graph_fixture.json").read_text(
+            encoding="utf-8"
+        )
     )
     node_keys = {(node["kind"], node["id"]) for node in payload["nodes"]}
     assert payload["scope"]["catalog"] in {"generated", "workspace"}

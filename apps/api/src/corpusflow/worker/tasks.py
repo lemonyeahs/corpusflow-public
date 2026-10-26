@@ -294,10 +294,13 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                 "application/xhtml+xml",
             }:
                 parser = HTMLParserAdapter()
-            elif (
-                asset_format in {"txt", "md", "markdown", "mdown", "mkdn"}
-                or media_type.startswith("text/")
-            ):
+            elif asset_format in {
+                "txt",
+                "md",
+                "markdown",
+                "mdown",
+                "mkdn",
+            } or media_type.startswith("text/"):
                 parser = TextParserAdapter()
             else:
                 # TextParserAdapter performs strict binary/encoding validation for unknown
