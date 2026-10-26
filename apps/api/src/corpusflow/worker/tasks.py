@@ -9,7 +9,12 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
-from corpusflow.adapters.parser import HTMLParserAdapter, ParserError, PDFParserAdapter
+from corpusflow.adapters.parser import (
+    HTMLParserAdapter,
+    ParserError,
+    PDFParserAdapter,
+    TextParserAdapter,
+)
 from corpusflow.adapters.parser.base import ParserAdapter
 from corpusflow.adapters.parser.layout import LayoutParserAdapter
 from corpusflow.adapters.parser.ocr import OCRParserAdapter
@@ -280,11 +285,24 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                 settings.object_store_access_key.get_secret_value(),
                 settings.object_store_secret_key.get_secret_value(),
             ).get(blob.storage_key)
-            parser: ParserAdapter = (
-                PDFParserAdapter()
-                if asset.format.lower() == "pdf" or blob.media_type == "application/pdf"
-                else HTMLParserAdapter()
-            )
+            asset_format = asset.format.lower()
+            media_type = blob.media_type.split(";", 1)[0].strip().lower()
+            if asset_format == "pdf" or media_type == "application/pdf":
+                parser: ParserAdapter = PDFParserAdapter()
+            elif asset_format in {"html", "htm"} or media_type in {
+                "text/html",
+                "application/xhtml+xml",
+            }:
+                parser = HTMLParserAdapter()
+            elif (
+                asset_format in {"txt", "md", "markdown", "mdown", "mkdn"}
+                or media_type.startswith("text/")
+            ):
+                parser = TextParserAdapter()
+            else:
+                # TextParserAdapter performs strict binary/encoding validation for unknown
+                # extensions, preserving the existing adapter error contract.
+                parser = TextParserAdapter()
             parser_kind = run.config_snapshot.get("parser", "builtin")
             if parser_kind not in {"builtin", "ocr", "layout"}:
                 raise ParserError("PARSER_CONFIG_INVALID", "Unknown parser")
