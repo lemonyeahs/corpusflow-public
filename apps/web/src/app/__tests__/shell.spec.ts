@@ -1,5 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
 import process from "node:process";
+import type { ApiErrorBody, FormatStatsResponse } from "../../contracts/training-center";
+
+// Unknown ingestion time must remain unavailable, even for a successfully generated file.
+const unavailableTrend: Pick<FormatStatsResponse, "ingestion_trend" | "availability"> = {
+  ingestion_trend: null, availability: { ingestion_trend: "ingested_at_missing" },
+};
 
 const session = { token: "m0-test-token", user_id: "m0-user", workspace_id: "m0-space-a", role: "admin" };
 const fixtureMode = process.env.M0_FIXTURES === "true";
@@ -138,4 +144,33 @@ test("query keys isolate scope and download preserves bytes and filename", async
     return { isolated, filename: file.filename, text: await file.blob.text() };
   });
   expect(result).toEqual({ isolated: true, filename: "样例.txt", text: "one\ntwo\n" });
+});
+
+test("backend error envelope survives JSON and download clients", async ({ page }) => {
+  await authenticated(page);
+  const body: ApiErrorBody = {
+    error: { code: "SNAPSHOT_EXPIRED", message: "快照已过期", details: [], retryable: false },
+    request_id: "integration-request-001",
+  };
+  await page.route("**/api/v1/contract-error", route => route.fulfill({ status: 409, json: body }));
+  await page.route("**/api/v1/contract-invalid", route => route.fulfill({ status: 200, contentType: "text/html", body: "<html>proxy response</html>" }));
+  const result = await page.evaluate(async () => {
+    const clientPath = "/src/api/client.ts";
+    const downloadPath = "/src/api/download.ts";
+    const { request } = await import(clientPath);
+    const { download } = await import(downloadPath);
+    const ctx = { token: "m0-test-token", workspaceId: "m0-space-a" };
+    const results = [];
+    for (const call of [() => request("/contract-error", ctx), () => download("/contract-error", ctx, "data.jsonl"), () => request("/contract-invalid", ctx)]) {
+      try { await call(); results.push(null); }
+      catch (error) {
+        const { code, status, requestId, retryable } = error as { code: string; status: number; requestId?: string; retryable: boolean };
+        results.push({ code, status, requestId, retryable });
+      }
+    }
+    return results;
+  });
+  const expected = { code: "SNAPSHOT_EXPIRED", status: 409, requestId: body.request_id, retryable: false };
+  expect(result).toEqual([expected, expected, { code: "INVALID_RESPONSE", status: 200, requestId: undefined, retryable: false }]);
+  expect(unavailableTrend.ingestion_trend).toBeNull();
 });

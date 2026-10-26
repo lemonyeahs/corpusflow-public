@@ -143,3 +143,14 @@ npm --prefix apps/web run test:m0 -- --grep 'fixtures require'
 M0 测试位于 Agent 1 自有 `src/app/__tests__/`，不占用 Agent 4 的 `tests/training-center/`。测试各自启动 5187/5188、禁止复用已有服务，默认使用本机 Chrome；可设置 `M0_BROWSER_CHANNEL=msedge`。测试中的认证与业务请求响应由 Playwright 提供，不写共享数据库。生产样例剔除另以显式开关构建并检查 dist；结果记录见本轮交付报告。
 
 实现参考：[React Router HashRouter](https://reactrouter.com/api/declarative-routers/HashRouter)、[QueryClientProvider](https://tanstack.com/query/latest/docs/framework/react/reference/functions/QueryClientProvider)、[Ant Design 主题](https://ant.design/docs/react/customize-theme/)。
+
+## 9. 2026-10-27 集成修订
+
+Agent 1 的 `8e42e56` 和 Agent 2 的 `3afb47f` 已在集成仓库依次合并。本轮仅接收前端骨架与离线生成器/响应提案，未冻结完整后端契约。独立复核结果见 [集成报告](../reports/TRAINING_CENTER_M0_MERGE.md)。
+
+- `ApiErrorBody` 对齐现有 `core/errors.py`：`request_id` 位于顶层，`error.details` 为对象数组。共享 JSON/下载客户端读取顶层请求 ID，并兼容旧嵌套字段。
+- `FormatStatsResponse.ingestion_trend` 允许 `null`，可用 `availability.ingestion_trend` 说明没有真实接入时间；不以空时间序列冒充已知统计。
+- `DatasetOverviewResponse.destination_counts` 暂为 `unknown`。Agent 2 建议按 split 返回带单位的桶，原 DTO 曾假定为数值字典，但契约未定义业务含义。没有运行时消费者，本轮不强行选择；接入数据集概览前由 Agent 1/2 确认含义与结构。
+- Agent 2 的 `contract_examples/` 仍是独立、可重放的提案，未接到浏览器拦截器或真实 HTTP。前端最小手工样例继续保留自身 provenance；不能把两套样例说成已经统一冻结。
+- 生成器新增测试改名为 `test_catalog_generation.py`，避免与已有 `tests/unit/test_generation.py` 冲突。其他 agent 应运行仓库级 pytest 收集，而不只测试自己的子目录。
+- P0-I、responsive 测试的登录落点已改为新首页。其余历史端到端测试仍含早于本轮的失效页面/按钮，需 Agent 4 结合当前旧业务流程独立修订，不能仅批量替换导航后声称业务验收通过。

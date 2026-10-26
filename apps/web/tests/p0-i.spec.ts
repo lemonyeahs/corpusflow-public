@@ -22,7 +22,7 @@ test.describe("P0-I 系统级真实 API 验收", () => {
     await page.goto("/");
     await page.evaluate((session) => localStorage.setItem("corpusflow.p0h.session", JSON.stringify(session)), admin);
     await page.reload();
-    await expect(page.getByRole("heading", { name: "工作台总览" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "训练数据中心", exact: true })).toBeVisible();
 
     const sourceResponse = await page.request.post("/api/v1/sources", {
       headers: jsonHeaders,

@@ -10,12 +10,12 @@ export class ApiError extends Error {
   requestId?: string;
   retryable: boolean;
   status: number;
-  constructor(status: number, body: { error?: { code?: string; message?: string; retryable?: boolean; request_id?: string } }) {
+  constructor(status: number, body: { request_id?: string; error?: { code?: string; message?: string; retryable?: boolean; request_id?: string } }) {
     const detail = body.error ?? {};
     super(detail.message || `请求失败（${status}）`);
     this.name = "ApiError";
     this.code = detail.code || "HTTP_ERROR";
-    this.requestId = detail.request_id;
+    this.requestId = body.request_id ?? detail.request_id;
     this.retryable = Boolean(detail.retryable);
     this.status = status;
   }
@@ -40,7 +40,7 @@ export async function request<T>(path: string, context?: ApiContext, init: Reque
   try { body = text ? JSON.parse(text) : {}; } catch {
     throw new ApiError(response.status, { error: { code: "INVALID_RESPONSE", message: "接口响应不是有效 JSON" } });
   }
-  if (!response.ok) throw new ApiError(response.status, body as { error?: { code?: string; message?: string; retryable?: boolean; request_id?: string } });
+  if (!response.ok) throw new ApiError(response.status, body as { request_id?: string; error?: { code?: string; message?: string; retryable?: boolean; request_id?: string } });
   return body as T;
 }
 

@@ -13,7 +13,7 @@ export type SourceKind = "web" | "book" | "paper" | "other";
 export type ObjectType = "source" | "file" | "operator_run" | "segment" | "sample" | "dataset_version";
 export interface ObjectRef { catalog: Catalog; type: ObjectType; id: string }
 export interface Scope { workspace_id: string; catalog: Catalog; revision: string; as_of: string; metric_definition_version: string }
-export interface ApiErrorBody { error: { code: string; message: string; retryable?: boolean; request_id?: string; details?: Record<string, unknown> } }
+export interface ApiErrorBody { error: { code: string; message: string; retryable?: boolean; details?: Record<string, unknown>[] }; request_id: string }
 export interface Paginated<T> { scope: Scope; items: T[]; total_count: number; offset: number; limit: number }
 export interface CatalogParams { catalog: Catalog; revision?: string }
 export interface PaginationParams { offset?: number; limit?: number }
@@ -57,13 +57,15 @@ export interface OverviewResponse {
   flow: Flow; recent_activities: unknown[];
 }
 export interface FormatStatsResponse {
-  scope: Scope; metrics: Record<string, Metric>; flow: Flow; ingestion_trend: TimeSeries;
+  scope: Scope; metrics: Record<string, Metric>; flow: Flow; ingestion_trend: TimeSeries | null;
+  availability?: { ingestion_trend?: string };
   length_distribution: Distribution; language_distribution: Distribution; source_distribution: Distribution; dataset_refs: ObjectRef[];
 }
 export interface DatasetsResponse { scope: Scope; items: DatasetSummary[] }
 export interface DatasetOverviewResponse {
   scope: Scope; dataset: DatasetSummary; split_counts: Record<Split, number>;
-  source_distribution: Distribution; destination_counts: Record<string, number>;
+  // Agent 2 proposes split buckets; downstream destination semantics are not frozen yet.
+  source_distribution: Distribution; destination_counts: unknown;
   length_distribution: Distribution; language_distribution: Distribution; lineage_root_ref: ObjectRef;
 }
 export interface ProcessingStepSummary {
