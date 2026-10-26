@@ -19,6 +19,7 @@ from corpusflow.api.health import router
 from corpusflow.api.v1.blind_review import router as blind_review_router
 from corpusflow.api.v1.business import router as business_router
 from corpusflow.api.v1.collection import router as collection_router
+from corpusflow.api.v1.lineage_graph import router as lineage_graph_router
 from corpusflow.api.v1.rag import router as rag_router
 from corpusflow.core.config import Settings, load_settings
 from corpusflow.core.errors import ErrorResponse, error_response
@@ -134,6 +135,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "COMPARISON_NOT_AVAILABLE",
             "CATALOG_LIMIT_EXCEEDED",
             "EXPORT_LIMIT_EXCEEDED",
+            "CATALOG_UNAVAILABLE",
         }
         return error_response(
             request,
@@ -175,6 +177,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.include_router(collection_router)
     app.include_router(rag_router)
+    app.include_router(lineage_graph_router)
     app.include_router(blind_review_router)
     app.include_router(router)
     app.include_router(business_router)

@@ -1722,7 +1722,7 @@
     "/api/v1/lineage/graph": {
       "get": {
         "operationId": "design_lineage_graph",
-        "x-implementation-status": "planned",
+        "x-implementation-status": "implemented",
         "parameters": [
           {
             "name": "X-Workspace-ID",

@@ -10,7 +10,11 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from corpusflow.adapters.parser import (
+    CSVParserAdapter,
+    DOCXParserAdapter,
     HTMLParserAdapter,
+    JSONLParserAdapter,
+    JSONParserAdapter,
     ParserError,
     PDFParserAdapter,
     TextParserAdapter,
@@ -300,8 +304,18 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                 "markdown",
                 "mdown",
                 "mkdn",
-            } or media_type.startswith("text/"):
+            } or (media_type.startswith("text/") and media_type != "text/csv"):
                 parser = TextParserAdapter()
+            elif asset_format == "csv" or media_type == "text/csv":
+                parser = CSVParserAdapter()
+            elif asset_format == "docx" or media_type == (
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            ):
+                parser = DOCXParserAdapter()
+            elif asset_format == "jsonl" or media_type == "application/jsonl":
+                parser = JSONLParserAdapter()
+            elif asset_format == "json" or media_type == "application/json":
+                parser = JSONParserAdapter()
             else:
                 # TextParserAdapter performs strict binary/encoding validation for unknown
                 # extensions, preserving the existing adapter error contract.
