@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict, deque
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Literal, cast
 
 Direction = Literal["both", "upstream", "downstream"]
 
@@ -73,7 +73,7 @@ def _validate_query(direction: str, max_depth: int, max_nodes: int) -> tuple[Dir
         raise GraphQueryError("max_nodes must be an integer")
     if max_nodes < 1 or max_nodes > MAX_NODES:
         raise GraphQueryError(f"max_nodes must be between 1 and {MAX_NODES}")
-    return direction, max_depth, max_nodes
+    return cast(Direction, direction), max_depth, max_nodes
 
 
 def _coerce_node(value: GraphNode | Mapping[str, object]) -> GraphNode:
@@ -86,12 +86,13 @@ def _coerce_node(value: GraphNode | Mapping[str, object]) -> GraphNode:
         raise GraphQueryError("node must contain kind and id") from exc
     if not kind or not node_id:
         raise GraphQueryError("node kind and id cannot be empty")
+    detail = value.get("detail", {})
     return GraphNode(
         kind=kind,
         id=node_id,
         label=str(value.get("label")) if value.get("label") is not None else None,
         status=str(value.get("status")) if value.get("status") is not None else None,
-        detail=value.get("detail", {}) if isinstance(value.get("detail", {}), Mapping) else {},
+        detail=detail if isinstance(detail, Mapping) else {},
     )
 
 
@@ -150,8 +151,8 @@ def query_graph(
         visible[root_node.key] = root_node
 
     unique_edges: dict[tuple[str, str, str, str, str], GraphEdge] = {}
-    for value in edges:
-        edge = _coerce_edge(value)
+    for edge_value in edges:
+        edge = _coerce_edge(edge_value)
         if nodes is not None and (edge.source not in visible or edge.target not in visible):
             continue
         unique_edges[

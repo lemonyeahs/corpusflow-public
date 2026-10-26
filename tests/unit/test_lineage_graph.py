@@ -8,7 +8,7 @@ FIXTURE = Path(__file__).parents[1] / "fixtures" / "lineage_graph_fixture.json"
 
 
 def _fixture():
-    payload = json.loads(FIXTURE.read_text())
+    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
     return payload["edges"], payload["nodes"]
 
 

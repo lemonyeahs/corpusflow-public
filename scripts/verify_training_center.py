@@ -26,7 +26,7 @@ def _keys(result):
 
 
 def run_fixture() -> dict[str, object]:
-    payload = json.loads(FIXTURE.read_text())
+    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
     edges = payload["edges"]
     nodes = payload["nodes"]
     cases: list[dict[str, object]] = []
