@@ -58,7 +58,8 @@ def main():
         "not_run": [
             "Worker processing",
             "MinIO/Redis readiness",
-            "workspace/processing/graph APIs",
+            "workspace catalog and processing APIs",
+            "generated graph and Worker-produced lineage",
         ],
     }
 

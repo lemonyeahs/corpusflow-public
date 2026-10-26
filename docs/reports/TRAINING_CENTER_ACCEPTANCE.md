@@ -1,5 +1,7 @@
 # Training Center Agent 4 验收清单（首轮）
 
+> 本文保留 Agent 4 原交付时的验收范围。后续集成补齐 workspace 图冻结快照，并完成隔离 PostgreSQL/HTTP/浏览器验证，详见 [M1 集成报告](TRAINING_CENTER_M1_INTEGRATION.md)。这些验证使用显式测试边，不代替本文中真实 Worker 多跳链路的待验收场景。
+
 状态基线：`58fe070`（`public/main`），worktree：`feat/tc-lineage-validation`。
 M1 已接入 workspace 图查询适配器和独立血缘页面；本报告仍不把静态 fixture 当作真实数据库血缘验收。
 

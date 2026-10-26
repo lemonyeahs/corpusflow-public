@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 
 import httpx
 from corpusflow.contracts.training_center import models as m
-from corpusflow.db.models import Membership, User
+from corpusflow.db.models import LineageEdge, Membership, User
 from corpusflow.modules.training_center.catalog import GeneratedCatalog
 from corpusflow.modules.training_center.generation import (
     build_catalog,
@@ -236,6 +236,73 @@ def main():
         call(PREFIX + "/overview", headers=viewer_auth, model=m.OverviewResponse)
         engine = create_engine(os.environ["DATABASE_URL"])
         try:
+            # Seed only explicit test lineage in the disposable database, not Worker history.
+            source_ids = [
+                call(
+                    "/api/v1/sources",
+                    headers=auth,
+                    data={"name": f"isolated-graph-{index}", "kind": "other"},
+                )["source_id"]
+                for index in range(3)
+            ]
+            with Session(engine) as session:
+                session.add(
+                    LineageEdge(
+                        workspace_id=workspace,
+                        from_type="Source",
+                        from_id=source_ids[0],
+                        to_type="Source",
+                        to_id=source_ids[1],
+                        relation="provides",
+                    )
+                )
+                session.commit()
+            graph_params = {
+                "catalog": "workspace",
+                "root_type": "source",
+                "root_id": source_ids[0],
+            }
+            graph_path = "/api/v1/lineage/graph"
+            graph = call(graph_path, headers=auth, params=graph_params, model=m.LineageGraph)
+            assert {node["ref"]["id"] for node in graph["nodes"]} == set(source_ids[:2])
+            assert {edge["relation"] for edge in graph["edges"]} == {"provides"}
+            graph_revision = graph["scope"]["revision"]
+            with Session(engine) as session:
+                session.add(
+                    LineageEdge(
+                        workspace_id=workspace,
+                        from_type="Source",
+                        from_id=source_ids[1],
+                        to_type="Source",
+                        to_id=source_ids[2],
+                        relation="provides",
+                    )
+                )
+                session.commit()
+            frozen = call(
+                graph_path,
+                headers=auth,
+                params={**graph_params, "revision": graph_revision},
+                model=m.LineageGraph,
+            )
+            assert frozen == graph
+            latest = call(graph_path, headers=auth, params=graph_params, model=m.LineageGraph)
+            assert {node["ref"]["id"] for node in latest["nodes"]} == set(source_ids)
+            call(
+                graph_path,
+                409,
+                headers=auth,
+                params={**graph_params, "revision": "missing-graph-snapshot"},
+                code="SNAPSHOT_EXPIRED",
+            )
+            call(graph_path, 404, headers=other_auth, params=graph_params, code="NOT_FOUND")
+            call(
+                graph_path,
+                503,
+                headers=auth,
+                params={**graph_params, "catalog": "generated"},
+                code="CATALOG_UNAVAILABLE",
+            )
             with Session(engine) as session:
                 membership = session.scalar(
                     select(Membership).where(
@@ -246,6 +313,13 @@ def main():
                 membership.status = "revoked"
                 session.commit()
             call(PREFIX + "/overview", 403, headers=viewer_auth, code="PERMISSION_DENIED")
+            call(
+                graph_path,
+                403,
+                headers=viewer_auth,
+                params={**graph_params, "revision": graph_revision},
+                code="PERMISSION_DENIED",
+            )
             with Session(engine) as session:
                 session.get(User, viewer["user_id"]).disabled = True
                 session.commit()
@@ -297,6 +371,8 @@ def main():
             "first_file": raw_files[0],
             "source_counts": source_counts,
             "datasets": datasets,
+            "graph_root_id": source_ids[0],
+            "graph_revision": latest["scope"]["revision"],
         }
         context_path.write_text(
             json.dumps(context, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n"

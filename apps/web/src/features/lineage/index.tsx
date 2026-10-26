@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Background,
@@ -13,6 +13,7 @@ import { useSearchParams } from "react-router-dom";
 import { ApiError } from "../../api/client";
 import { ErrorState, EmptyState, LoadingState, PageHeader, Panel } from "../../ui";
 import { useWorkspaceContext } from "../../app/auth";
+import { useCatalogScope } from "../../app/catalog";
 import { trainingKeys } from "../../app/query";
 import type { Catalog, LineageGraph, ObjectType } from "../../contracts/training-center";
 import { fetchLineageGraph, type LineageDirection } from "./api";
@@ -58,9 +59,10 @@ function layout(graph: LineageGraph): { nodes: Node[]; edges: Edge[] } {
 
 export default function LineagePage() {
   const ctx = useWorkspaceContext();
+  const scope = useCatalogScope();
   const [params, setParams] = useSearchParams();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const catalog = (params.get("catalog") === "workspace" ? "workspace" : "generated") as Catalog;
+  const catalog = scope.catalog;
   const rootType = (params.get("root_type") || "file") as ObjectType;
   const rootId = params.get("root_id") || "";
   const direction = (directions.includes(params.get("direction") as LineageDirection) ? params.get("direction") : "both") as LineageDirection;
@@ -71,6 +73,10 @@ export default function LineagePage() {
     enabled: rootId.length > 0 && TYPES.includes(rootType),
     queryFn: ({ signal }) => fetchLineageGraph(ctx, { catalog, revision: params.get("revision"), rootType, rootId, direction, maxDepth, maxNodes }, signal),
   });
+  useEffect(() => {
+    if (!scope.revision && query.data?.scope.catalog === scope.catalog && query.data.scope.workspace_id === ctx.workspaceId) scope.pinScope(query.data.scope);
+    // Pin only a successful response for the currently selected workspace and catalog.
+  }, [query.data, scope.revision, scope.catalog, ctx.workspaceId]);
   const positioned = useMemo(() => query.data ? layout(query.data) : null, [query.data]);
   const selectedNode = query.data?.nodes.find(node => node.id === selectedNodeId);
   function update(key: string, value: string) { const next = new URLSearchParams(params); if (value) next.set(key, value); else next.delete(key); setParams(next); }
@@ -78,7 +84,7 @@ export default function LineagePage() {
     <PageHeader title="数据血缘" description="按方向和深度追踪真实来源、处理执行与数据集关系。" />
     <Panel title="查询图">
       <div className={styles.toolbar}>
-        <label className={styles.field}>目录<select value={catalog} onChange={event => update("catalog", event.target.value)}><option value="generated">generated</option><option value="workspace">workspace</option></select></label>
+        <label className={styles.field}>目录<select value={catalog} onChange={event => { setSelectedNodeId(null); scope.changeCatalog(event.target.value as Catalog); }}><option value="generated">generated</option><option value="workspace">workspace</option></select></label>
         <label className={styles.field}>根节点 ID<input value={rootId} onChange={event => update("root_id", event.target.value)} placeholder="输入真实对象 ID" /></label>
         <label className={styles.field}>节点类型<select value={rootType} onChange={event => update("root_type", event.target.value)}>{TYPES.map(type => <option key={type}>{type}</option>)}</select></label>
         <label className={styles.field}>方向<select value={direction} onChange={event => update("direction", event.target.value)}>{directions.map(item => <option key={item}>{item}</option>)}</select></label>
@@ -87,9 +93,9 @@ export default function LineagePage() {
       </div>
     </Panel>
     {query.isPending && rootId && <LoadingState label="正在读取血缘图…" />}
-    {query.error && <ErrorState error={query.error instanceof ApiError ? `${query.error.code}：${query.error.message}` : query.error} onRetry={() => void query.refetch()} />}
+    {query.error && <ErrorState error={query.error instanceof ApiError ? new Error(`${query.error.code}：${query.error.message}`) : query.error} onRetry={() => { if (query.error instanceof ApiError && query.error.code === "SNAPSHOT_EXPIRED") void scope.refreshSnapshot(); else void query.refetch(); }} />}
     {!rootId && <EmptyState description="请输入根节点 ID 后查询。" />}
-    {query.data && <Panel title={`图 · ${query.data.nodes.length} 个节点 / ${query.data.edges.length} 条边`}>
+    {query.data && !query.error && <Panel title={`图 · ${query.data.nodes.length} 个节点 / ${query.data.edges.length} 条边`}>
       {query.data.truncated && <div className={styles.notice}>图已截断：达到 {query.data.truncation_reason} 限制。</div>}
       {positioned && <div className={styles.graph}><ReactFlow nodes={positioned.nodes} edges={positioned.edges} fitView nodesConnectable={false} onNodeClick={(_, node) => setSelectedNodeId(node.id)}><Background /><Controls /><MiniMap /></ReactFlow></div>}
       {selectedNode && <div className={styles.detail}>

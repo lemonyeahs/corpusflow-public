@@ -21,7 +21,10 @@ from sqlalchemy import func, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from corpusflow.api.dependencies import actor_id, db, role_required, workspace_id
+from corpusflow.api.dependencies import actor_id as actor_id
+from corpusflow.api.dependencies import db as db
+from corpusflow.api.dependencies import role_required as role_required
+from corpusflow.api.dependencies import workspace_id as workspace_id
 from corpusflow.db.models import (
     Artifact,
     Asset,

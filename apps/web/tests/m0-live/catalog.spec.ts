@@ -5,6 +5,7 @@ interface CatalogContext {
   user_id: string; workspace_name: string; workspace_id: string; revision: string;
   file_count: number; record_count: number; first_file: { id: string; filename: string };
   source_counts: Record<string, number>;
+  graph_root_id: string; graph_revision: string;
 }
 const contextPath = process.env.M1_CATALOG_CONTEXT;
 const catalog: CatalogContext | null = contextPath ? JSON.parse(readFileSync(contextPath, "utf-8")) : null;
@@ -83,4 +84,21 @@ test("real expired revision refreshes the whole page; workspace adapter failure 
   expect((await response.json()).error.code).toBe("ADAPTER_UNAVAILABLE");
   await expect(page.getByRole("alert")).toContainText("当前数据适配器暂不可用");
   await expect(page.locator("tbody tr.ant-table-row")).toHaveCount(0);
+});
+
+test("real workspace graph preserves its database snapshot and isolates catalog switching", async ({ page }) => {
+  if (!catalog) throw new Error("Missing isolated catalog context");
+  const ctx = await login(page, `/lineage?catalog=workspace&root_type=source&root_id=${catalog.graph_root_id}&revision=${catalog.graph_revision}`);
+  await expect(page.locator(".react-flow__node")).toHaveCount(3);
+  await page.getByRole("combobox", { name: "方向", exact: true }).selectOption("downstream");
+  await expect(page.locator(".react-flow__node")).toHaveCount(3);
+  await expect(page).toHaveURL(new RegExp(`revision=${ctx.graph_revision}`));
+  await page.reload();
+  await expect(page.locator(".react-flow__node")).toHaveCount(3);
+  await page.screenshot({ path: test.info().outputPath("real-lineage-desktop.png"), fullPage: true });
+  await page.getByRole("combobox", { name: "目录", exact: true }).selectOption("generated");
+  await expect(page).not.toHaveURL(/revision=|root_id=|root_type=/);
+  await expect(page.locator(".react-flow__node")).toHaveCount(0);
+  await page.goto(`/#/lineage?catalog=generated&root_type=source&root_id=${ctx.graph_root_id}`);
+  await expect(page.getByRole("alert")).toContainText("CATALOG_UNAVAILABLE");
 });

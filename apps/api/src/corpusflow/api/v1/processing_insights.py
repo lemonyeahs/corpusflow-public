@@ -43,7 +43,7 @@ def pipeline_run_export(
     request: Request,
     export_format: str = Query(default="jsonl"),
     session: Session = Depends(db),
-)-> StreamingResponse:
+) -> StreamingResponse:
     run = _authorized_run(run_id, request, session)
     if run.status not in {"succeeded", "partial"}:
         raise HTTPException(409, "INVALID_STATE_TRANSITION")
@@ -86,7 +86,7 @@ def pipeline_step_comparison(
     request: Request,
     record_id: str | None = None,
     session: Session = Depends(db),
-)-> None:
+) -> None:
     _authorized_run(run_id, request, session)
     # A stable pre/post record ID mapping is not persisted by the current schema.
     # Returning the contract error prevents silently pairing rows by position.

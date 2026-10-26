@@ -65,6 +65,8 @@ publish 全量校验候选版本后，通过同目录临时文件、flush/fsync 
 
 ## 完整性、限额与缓存
 
+集成修复要求 generated-v1 恰好含 CPT/SFT/DPO 各一份数据集，空目录也保留三类实体；索引发布前按读取端相同的 1 MiB 上限检查。文件采用最多 64 KiB 分块读取，保持完整 SHA256 与读取期间增长超限检测，避免 Windows 小文件按整目录限额反复分配缓冲。
+
 校验 manifest 内容 revision、完整内容清单哈希、物理行数、字节数、workspace 归属、各实体唯一 ID、样本类型/字符数、来源组 split 隔离、source/dataset_version 引用和计数。拒绝重复 JSON key、非法 JSON、绝对路径、父目录穿越、符号链接及 Windows junction；同根目录内指向别的工作空间的链接也拒绝。
 
 按 Settings 限制单目录顶层训练记录最多 100000 条、内容文件累计 100 MiB，可下调不能放大。manifest 和索引也有有界读取，超限返回 413 CATALOG_LIMIT_EXCEEDED。内容/引用/已发布元数据损坏返回 409 CHECKSUM_MISMATCH，不泄露磁盘路径或切换目录。当前 v1 读取器只接受没有处理产物的生成目录；非空 segments/processing-runs/lineage-edges 返回 503 ADAPTER_UNAVAILABLE，等待 Agent 3/4 的持久化结构接入，不忽略它们再声称没有处理。

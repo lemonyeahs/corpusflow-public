@@ -1,5 +1,7 @@
 """Shared request dependencies without importing the business router."""
 
+from collections.abc import Iterator
+
 from fastapi import HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
@@ -7,7 +9,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from corpusflow.db.models import Membership, User
 
 
-def db(request: Request):
+def db(request: Request) -> Iterator[Session]:
     factory: sessionmaker[Session] = request.app.state.sessions
     with factory() as session:
         yield session

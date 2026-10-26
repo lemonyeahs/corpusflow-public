@@ -1,4 +1,4 @@
-import { request } from "../../api/client";
+import { scopedRequest } from "../training-home/api";
 import type { Catalog, LineageGraph, ObjectType } from "../../contracts/training-center";
 import type { ApiContext } from "../../api/client";
 
@@ -26,5 +26,5 @@ export async function fetchLineageGraph(
     max_nodes: String(query.maxNodes),
   });
   if (query.revision) params.set("revision", query.revision);
-  return request<LineageGraph>(`/lineage/graph?${params}`, ctx, { signal });
+  return scopedRequest<LineageGraph>(`/lineage/graph?${params}`, ctx, query.catalog, query.revision ?? null, signal);
 }

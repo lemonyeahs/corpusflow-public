@@ -144,6 +144,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             detail if detail in known else codes.get(exc.status_code, "HTTP_ERROR"),
             {
                 "ADAPTER_UNAVAILABLE": "当前数据适配器暂不可用，请检查服务配置或稍后重试",
+                "CATALOG_UNAVAILABLE": "当前目录暂不支持此查询",
                 "SNAPSHOT_EXPIRED": "快照已过期，请刷新整个查询范围",
                 "COMPARISON_NOT_AVAILABLE": "暂无清洗对比",
                 "CATALOG_LIMIT_EXCEEDED": "目录超过允许的数据规模",
