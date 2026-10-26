@@ -87,3 +87,13 @@ workspace ID 不同会改变 revision，因此不与开发者 `tc-agent2` 的 re
 进一步核对发现：`202730b` 主动删除了根目录需求文档，但 `docs/specs/CorpusFlow_01_需求分析与确认_V1.0.md` 自初始提交起一直保留，Git blob 的 SHA-256 正好是测试原有预期 `f9065571c0f625cb26712ba1197bcd01ebf327bb1d0d8d2df9ee25bdf207c1a3`。修复将校验路径指向该保留版本，并仅将文本 CRLF 规范为 LF 后计算哈希。三个预期哈希均不变，没有 skip/xfail，也没有恢复已删除的重复文档。
 
 修复后在同一项目依赖环境重跑 CI `make check` 对应的全部命令：ruff 通过，141 个文件格式通过，mypy 54 个源文件通过，非集成 pytest **155 passed、11 deselected**。这些替代上文首次集成的本地失败结论；历史检查记录仍保留。完整远程环境验证结果以修复提交对应的 GitHub Actions 为准。
+
+## 后续迁移验证修正（2026-10-27）
+
+`2fdc7d6` 对应的 [Actions 40370166969](https://github.com/lemonyeahs/corpusflow-public/actions/runs/40370166969) 已通过代码检查、镜像构建及隔离服务启动，随后 `migration-and-storage.log` 报告 7 passed、3 skipped、1 failed。原迁移测试仍硬编码 head 为 `0020_dpo_import_idempotency`，实际已有 `0021_metadata_proposals`。修正为从 Alembic 读取单一 head，同时保留数据库版本和 `command.check` 的实际断言，并在最终 reupgrade 后补充这两项验证。
+
+在本次新建、绑定随机 loopback 端口的 PostgreSQL 16 容器中继续验证后，发现旧断言掩盖的真实模型差异：0021 的五个 JSON 字段应为 PostgreSQL JSONB，两张表的 created_at/updated_at 应为 NOT NULL。新增 `0022_metadata_schema_alignment` 对齐既有模型，不修改已发布的 0021。迁移先检查所有历史时间戳；存在 NULL 时抛出 `LEGACY_TIMESTAMP_MISSING` 并回滚，不填造历史记录。降级还原 0021 的 JSON 与 nullable 结构，JSON 语义内容保留。
+
+实际本地验证：`pytest tests/integration/test_migration.py -q` **5 passed**，覆盖完整 upgrade/downgrade/reupgrade、模型无漂移、已存在嵌套 JSON/中文数组与时间戳保留，以及两表各两时间戳的失败前置检查和回滚。仅使用本次专用容器 `cf-ci-migration-20261027-2fdc7d6` 和随机测试数据库，不连接共享数据库。ruff 全仓通过，142 个文件格式通过，mypy 54 个源文件通过。非集成回归结果及最终远程状态见交付消息。
+
+数据库负责人需同步新增 Alembic head。真实工作空间升级前如遇空历史时间戳，应由数据负责人依据记录恢复后再迁移；本次没有对现有开发/生产数据库执行升级。HTTP 接口和业务模型本身未变化。
