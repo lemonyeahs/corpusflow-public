@@ -31,6 +31,7 @@ def segment_records(session: Session, document_version_id: str) -> list[dict[str
     return [
         {
             "segment_id": row.id,
+            "record_id": row.record_key or row.id,
             "text": row.text,
             "content_hash": row.content_hash,
             "source_id": row.source_id,
@@ -103,6 +104,11 @@ def create_derived_version(
             source_id=str(record["source_id"]),
             text=text,
             content_hash=hashlib.sha256(text.encode()).hexdigest(),
+            record_key=(
+                str(record.get("record_id") or record.get("segment_id"))
+                if record.get("record_id") or record.get("segment_id")
+                else None
+            ),
             quality_state="unreviewed",
             location_json=record.get("location") or {},
             token_count=len(text.split()),

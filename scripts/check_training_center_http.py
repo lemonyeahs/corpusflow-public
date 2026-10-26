@@ -246,6 +246,8 @@ def main():
                 )["source_id"]
                 for index in range(3)
             ]
+            listed_sources = call("/api/v1/sources", headers=auth)
+            assert set(source_ids) <= {row["source_id"] for row in listed_sources["items"]}
             with Session(engine) as session:
                 session.add(
                     LineageEdge(
@@ -268,6 +270,26 @@ def main():
             assert {node["ref"]["id"] for node in graph["nodes"]} == set(source_ids[:2])
             assert {edge["relation"] for edge in graph["edges"]} == {"provides"}
             graph_revision = graph["scope"]["revision"]
+            for invalid_graph_params in (
+                {"max_depth": 13},
+                {"max_nodes": 501},
+                {"direction": "sideways"},
+            ):
+                call(
+                    graph_path,
+                    422,
+                    headers=auth,
+                    params={**graph_params, **invalid_graph_params},
+                    code="VALIDATION_FAILED",
+                )
+            limited_graph = call(
+                graph_path,
+                headers=auth,
+                params={**graph_params, "max_nodes": 1},
+                model=m.LineageGraph,
+            )
+            assert limited_graph["truncated"] is True
+            assert limited_graph["truncation_reason"] == "max_nodes"
             with Session(engine) as session:
                 session.add(
                     LineageEdge(
@@ -297,13 +319,21 @@ def main():
                 code="SNAPSHOT_EXPIRED",
             )
             call(graph_path, 404, headers=other_auth, params=graph_params, code="NOT_FOUND")
-            call(
+            generated_snapshot = store.load(workspace)
+            generated_root = next(iter(generated_snapshot.sources))
+            generated_graph = call(
                 graph_path,
-                503,
                 headers=auth,
-                params={**graph_params, "catalog": "generated"},
-                code="CATALOG_UNAVAILABLE",
+                params={
+                    "catalog": "generated",
+                    "root_type": "source",
+                    "root_id": generated_root,
+                    "revision": generated_snapshot.scope.revision,
+                },
+                model=m.LineageGraph,
             )
+            assert generated_graph["scope"]["revision"] == generated_snapshot.scope.revision
+            assert all(node["kind"] != "operator_run" for node in generated_graph["nodes"])
             with Session(engine) as session:
                 membership = session.scalar(
                     select(Membership).where(
@@ -375,6 +405,8 @@ def main():
             "workspace_catalog": workspace_context,
             "graph_root_id": source_ids[0],
             "graph_revision": latest["scope"]["revision"],
+            "generated_graph_root_id": generated_root,
+            "generated_graph_revision": generated_snapshot.scope.revision,
         }
         context_path.write_text(
             json.dumps(context, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n"

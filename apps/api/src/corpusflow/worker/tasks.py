@@ -36,6 +36,7 @@ from corpusflow.db.models import (
     LineageEdge,
     NodeRun,
     PipelineRun,
+    ProcessingRecordMap,
     Segment,
 )
 from corpusflow.db.session import build_engine
@@ -48,6 +49,85 @@ from corpusflow.services.quality_rework import resolve_reworked_issues
 from corpusflow.worker.celery_app import celery_app
 
 log = logging.getLogger(__name__)
+
+
+def _ref(kind: str, object_id: str) -> dict[str, str]:
+    return {"catalog": "workspace", "type": kind, "id": object_id}
+
+
+def _segment_rows(session: Session, version_id: str) -> list[Segment]:
+    return list(
+        session.scalars(
+            select(Segment)
+            .where(Segment.document_version_id == version_id)
+            .order_by(Segment.created_at, Segment.id)
+        ).all()
+    )
+
+
+def _segment_refs(rows: list[Segment]) -> list[dict[str, str]]:
+    return [_ref("segment", row.id) for row in rows]
+
+
+def _record_key(record: dict[str, Any]) -> str | None:
+    value = record.get("record_id")
+    return str(value) if value else None
+
+
+def _parsed_record_key(asset_id: str, index: int, text: str, location: dict[str, Any]) -> str:
+    payload = json.dumps(location, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    digest = hashlib.sha256(f"{asset_id}:{index}:{payload}:{text}".encode()).hexdigest()
+    return f"{asset_id}:{index}:{digest}"
+
+
+def _persist_record_maps(
+    session: Session,
+    run: PipelineRun,
+    node: NodeRun,
+    before_records: list[dict[str, Any]],
+    after_records: list[dict[str, Any]],
+    after_rows: list[Segment],
+) -> tuple[list[dict[str, str]], list[dict[str, str]], int]:
+    """Persist only explicit record-key mappings; never pair records by position."""
+    before_by_key = {
+        key: record for record in before_records if (key := _record_key(record)) is not None
+    }
+    after_by_key = {
+        key: record for record in after_records if (key := _record_key(record)) is not None
+    }
+    after_by_record_id = {
+        (row.record_key or row.id): row for row in after_rows
+    }
+    input_refs: list[dict[str, str]] = []
+    output_refs: list[dict[str, str]] = []
+    modified = 0
+    for key in sorted(set(before_by_key) | set(after_by_key)):
+        before = before_by_key.get(key)
+        after = after_by_key.get(key)
+        before_segment_id = (
+            str(before["segment_id"]) if before and before.get("segment_id") else None
+        )
+        after_row = after_by_record_id.get(key)
+        after_segment_id = after_row.id if after_row else None
+        if before_segment_id:
+            input_refs.append(_ref("segment", before_segment_id))
+        if after_segment_id:
+            output_refs.append(_ref("segment", after_segment_id))
+        if before is not None and after is not None and before.get("text") != after.get("text"):
+            modified += 1
+        session.add(
+            ProcessingRecordMap(
+                workspace_id=run.workspace_id,
+                run_id=run.id,
+                node_run_id=node.id,
+                record_id=key,
+                before_segment_id=before_segment_id,
+                after_segment_id=after_segment_id,
+                before_hash=str(before.get("content_hash")) if before else None,
+                after_hash=str(after.get("content_hash")) if after else None,
+            )
+        )
+    return input_refs, output_refs, modified
 
 
 def _session() -> sessionmaker[Session]:
@@ -142,18 +222,28 @@ def _run_processing_chain(
             )
             session.add(node)
             session.flush()
+        before_records = segment_records(session, current.id)
         node.status = "running"
         node.operator_key = key
         node.config_snapshot = operator_config
-        node.input_count = len(segment_records(session, current.id))
+        node.input_unit = "segment"
+        node.output_unit = "segment"
+        node.input_count = len(before_records)
+        node.output_count = None
+        node.filtered_count = None
+        node.modified_count = None
+        node.failed_count = None
+        node.input_refs = _segment_refs(_segment_rows(session, current.id))
+        node.output_refs = None
         started = datetime.now(UTC)
+        node.started_at = started
         session.commit()
         try:
-            records = segment_records(session, current.id)
-            result = run_processor(key, records, operator_config)
+            result = run_processor(key, before_records, operator_config)
             node.operator_version = result.operator_version
             node.output_count = len(result.records)
             node.filtered_count = result.filtered_count
+            node.failed_count = 0
             node.duration_ms = (datetime.now(UTC) - started).total_seconds() * 1000
             prefix = (
                 f"artifacts/{run.id}"
@@ -192,10 +282,17 @@ def _run_processing_chain(
                 session.add(artifact)
                 session.flush()
             node.log_ref = artifact_key
-            if key != "builtin.quality" and result.records != records:
+            if key != "builtin.quality" and result.records != before_records:
                 current = create_derived_version(
                     session, run.workspace_id, current, run.id, result, operator_config
                 )
+            after_rows = _segment_rows(session, current.id)
+            input_refs, output_refs, modified_count = _persist_record_maps(
+                session, run, node, before_records, result.records, after_rows
+            )
+            node.input_refs = input_refs
+            node.output_refs = output_refs
+            node.modified_count = modified_count
             if key == "builtin.quality" and operator_config.get("create_issues", False):
                 short_count = int(result.metrics.get("short_records", 0))
                 if short_count:
@@ -212,7 +309,8 @@ def _run_processing_chain(
                             rule_version=result.operator_version,
                         )
                     )
-            node.status = "succeeded"
+            node.status = "partial" if result.filtered_count else "succeeded"
+            node.completed_at = datetime.now(UTC)
             _write_log(
                 session,
                 run,
@@ -227,6 +325,11 @@ def _run_processing_chain(
             if failed:
                 failed.status = "failed"
                 failed.failure_code = exc.code
+                failed.output_count = None
+                failed.filtered_count = None
+                failed.modified_count = None
+                failed.failed_count = None
+                failed.completed_at = datetime.now(UTC)
                 failed.duration_ms = (datetime.now(UTC) - started).total_seconds() * 1000
                 _write_log(session, run, f"operator failure {exc.code}", "ERROR", node_id=node_id)
                 session.commit()
@@ -271,6 +374,16 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
         node.status = "running"
         run.status = "running"
         run.started_at = run.started_at or datetime.now(UTC)
+        node.input_unit = "file"
+        node.output_unit = "segment"
+        node.input_count = 1
+        node.output_count = None
+        node.filtered_count = None
+        node.modified_count = None
+        node.failed_count = None
+        node.input_refs = [_ref("file", run.asset_id)]
+        node.output_refs = None
+        node.started_at = datetime.now(UTC)
         attempt = node.attempt_no
         session.commit()
 
@@ -333,7 +446,6 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
             parse_started = datetime.now(UTC)
             result = parser.parse(content, asset.filename, blob.media_type)
             node.duration_ms = (datetime.now(UTC) - parse_started).total_seconds() * 1000
-            node.input_count = 1
             node.output_count = len(result.sections)
             prefix = (
                 f"artifacts/{run.id}" if attempt == 1 else f"artifacts/{run.id}/attempt-{attempt}"
@@ -400,13 +512,16 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                 )
                 session.add(dv)
                 session.flush()
-                for section in result.sections:
+                for index, section in enumerate(result.sections):
                     seg = Segment(
                         workspace_id=run.workspace_id,
                         document_version_id=dv.id,
                         source_id=asset.source_id,
                         text=section.text,
                         content_hash=hashlib.sha256(section.text.encode()).hexdigest(),
+                        record_key=_parsed_record_key(
+                            asset.id, index, section.text, section.location
+                        ),
                         location_json=section.location,
                         token_count=len(section.text.split()),
                         section_title=section.title,
@@ -454,6 +569,32 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                         to_type="DocumentVersion",
                         to_id=dv.id,
                         relation="parsed_to",
+                    )
+                )
+            output_rows = _segment_rows(session, dv.id)
+            for row in output_rows:
+                if not row.record_key:
+                    row.record_key = _parsed_record_key(
+                        asset.id,
+                        output_rows.index(row),
+                        row.text,
+                        row.location_json,
+                    )
+            node.output_refs = _segment_refs(output_rows)
+            node.filtered_count = None
+            node.failed_count = None
+            node.modified_count = None
+            for row in output_rows:
+                session.add(
+                    ProcessingRecordMap(
+                        workspace_id=run.workspace_id,
+                        run_id=run.id,
+                        node_run_id=node.id,
+                        record_id=row.record_key or row.id,
+                        before_segment_id=None,
+                        after_segment_id=row.id,
+                        before_hash=None,
+                        after_hash=row.content_hash,
                     )
                 )
             session.add(
@@ -507,6 +648,7 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                 )
             _run_processing_chain(session, settings, run, dv)
             node.status = "succeeded"
+            node.completed_at = datetime.now(UTC)
             session.flush()
             run.status = "succeeded" if resolve_reworked_issues(session, run) else "awaiting_review"
             run.finished_at = datetime.now(UTC)
@@ -523,6 +665,11 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
         except (ParserError, ProcessingError) as exc:
             node.failure_code = exc.code
             node.status = "failed"
+            node.output_count = None
+            node.filtered_count = None
+            node.modified_count = None
+            node.failed_count = None
+            node.completed_at = datetime.now(UTC)
             run.status = "failed"
             run.error_code = exc.code
             run.finished_at = datetime.now(UTC)
@@ -537,6 +684,19 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                 )
                 if retry_run:
                     retries = int(getattr(getattr(self, "request", None), "retries", 0))
+                    retry_nodes = retry_session.scalars(
+                        select(NodeRun).where(
+                            NodeRun.run_id == retry_run.id, NodeRun.status == "running"
+                        )
+                    ).all()
+                    for retry_node in retry_nodes:
+                        retry_node.status = "failed"
+                        retry_node.failure_code = "PROCESSING_RETRY"
+                        retry_node.output_count = None
+                        retry_node.filtered_count = None
+                        retry_node.modified_count = None
+                        retry_node.failed_count = None
+                        retry_node.completed_at = datetime.now(UTC)
                     retry_run.status = "queued" if retries < 3 else "failed"
                     retry_run.error_code = "PROCESSING_RETRY" if retries < 3 else "PROCESSING_ERROR"
                     retry_run.finished_at = datetime.now(UTC) if retries >= 3 else None

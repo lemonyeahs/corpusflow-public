@@ -1,4 +1,4 @@
-"""Build contract-shaped summaries from persisted pipeline execution records."""
+"""Build contract-shaped processing views from persisted execution evidence."""
 
 from __future__ import annotations
 
@@ -17,15 +17,16 @@ from corpusflow.contracts.training_center.models import (
     ProcessingTotal,
     Scope,
 )
-from corpusflow.db.models import Asset, DocumentVersion, NodeRun, PipelineRun, Segment
+from corpusflow.db.models import Asset, NodeRun, PipelineRun
 
 RunStatus = Literal["queued", "running", "succeeded", "partial", "failed"]
 Unit = Literal["file", "record", "segment"]
 
 
 def _utc(value: datetime | None) -> str:
-    instant = (value or datetime.now(UTC)).astimezone(UTC)
-    return instant.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    if value is None:
+        value = datetime.now(UTC)
+    return value.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 
 def _config_hash(config: dict[str, Any]) -> str:
@@ -41,31 +42,29 @@ def _ref(object_type: str, object_id: str) -> ObjectRef:
 def _run_status(status: str) -> RunStatus:
     if status in {"queued", "running", "succeeded", "partial", "failed"}:
         return cast(RunStatus, status)
+    if status == "awaiting_review":
+        return "partial"
     return "failed" if status in {"rejected", "isolated"} else "queued"
 
 
-def _segments(session: Session, version_id: str) -> list[Segment]:
-    return list(
-        session.scalars(
-            select(Segment)
-            .where(Segment.document_version_id == version_id)
-            .order_by(Segment.created_at, Segment.id)
-        ).all()
-    )
+def _refs(value: list[dict[str, Any]] | None) -> list[ObjectRef]:
+    if not value:
+        return []
+    result: list[ObjectRef] = []
+    for item in value:
+        if isinstance(item, dict) and item.get("catalog") and item.get("type") and item.get("id"):
+            result.append(ObjectRef.model_validate(item))
+    return result
+
+
+def _unit(value: str | None, fallback: Unit) -> Unit:
+    return cast(Unit, value if value in {"file", "record", "segment"} else fallback)
 
 
 def build_processing_summary(session: Session, run: PipelineRun) -> ProcessingSummaryResponse:
-    """Map database rows to the frozen ProcessingSummaryResponse contract."""
+    """Map only values persisted by the Worker into the frozen response contract."""
     asset = session.get(Asset, run.asset_id)
     file_ref = _ref("file", asset.id if asset else run.asset_id)
-    versions = list(
-        session.scalars(
-            select(DocumentVersion)
-            .where(DocumentVersion.run_id == run.id)
-            .order_by(DocumentVersion.version_no, DocumentVersion.created_at)
-        ).all()
-    )
-    latest_segments = _segments(session, versions[-1].id) if versions else []
     nodes = list(
         session.scalars(
             select(NodeRun).where(NodeRun.run_id == run.id).order_by(NodeRun.created_at, NodeRun.id)
@@ -75,57 +74,84 @@ def build_processing_summary(session: Session, run: PipelineRun) -> ProcessingSu
     previous_refs = [file_ref]
     for sequence, node in enumerate(nodes, start=1):
         status = _run_status(node.status)
-        is_parse = node.node_id == "parse"
-        input_unit: Unit = "file" if is_parse else "segment"
-        output_unit: Unit = "segment"
-        output_refs = [_ref("segment", segment.id) for segment in latest_segments]
-        if is_parse:
-            input_refs = [file_ref]
-        else:
-            input_refs = previous_refs
-        failed_count = node.input_count if status == "failed" and input_unit == output_unit else 0
-        step = ProcessingStepSummary(
-            id=node.id,
-            run_id=run.id,
-            attempt=max(1, node.attempt_no),
-            operator_key=node.operator_key or node.node_id,
-            operator_version=node.operator_version or "unknown",
-            config_hash=_config_hash(node.config_snapshot or {}),
-            sequence=sequence,
-            status=status,
-            input_count=node.input_count if node.status not in {"pending", "running"} else None,
-            output_count=node.output_count if node.status not in {"pending", "running"} else None,
-            input_unit=input_unit,
-            output_unit=output_unit,
-            modified_count=None,
-            filtered_count=(
-                node.filtered_count if node.status not in {"pending", "running"} else None
-            ),
-            failed_count=failed_count if node.status not in {"pending", "running"} else None,
-            input_refs=input_refs,
-            output_refs=output_refs if status in {"succeeded", "partial"} else [],
-            started_at=None,
-            completed_at=(
-                _utc(run.finished_at) if status in {"succeeded", "partial", "failed"} else None
-            ),
+        input_unit = _unit(
+            getattr(node, "input_unit", None), "file" if node.node_id == "parse" else "segment"
         )
-        steps.append(step)
-        previous_refs = output_refs or previous_refs
+        output_unit = _unit(getattr(node, "output_unit", None), "segment")
+        raw_input_refs = getattr(node, "input_refs", None)
+        input_refs = _refs(raw_input_refs) if raw_input_refs is not None else previous_refs
+        output_refs = _refs(getattr(node, "output_refs", None))
+        steps.append(
+            ProcessingStepSummary(
+                id=node.id,
+                run_id=run.id,
+                attempt=max(1, node.attempt_no),
+                operator_key=node.operator_key or node.node_id,
+                operator_version=node.operator_version or "unknown",
+                config_hash=_config_hash(node.config_snapshot or {}),
+                sequence=sequence,
+                status=status,
+                input_count=node.input_count if node.status not in {"pending", "running"} else None,
+                output_count=(
+                    node.output_count if node.status not in {"pending", "running"} else None
+                ),
+                input_unit=input_unit,
+                output_unit=output_unit,
+                modified_count=getattr(node, "modified_count", None)
+                if node.status not in {"pending", "running"}
+                else None,
+                filtered_count=getattr(node, "filtered_count", None)
+                if node.status not in {"pending", "running"}
+                else None,
+                failed_count=getattr(node, "failed_count", None)
+                if node.status not in {"pending", "running"}
+                else None,
+                input_refs=input_refs,
+                output_refs=output_refs,
+                started_at=_utc(getattr(node, "started_at", None))
+                if getattr(node, "started_at", None)
+                else None,
+                completed_at=_utc(getattr(node, "completed_at", None))
+                if getattr(node, "completed_at", None)
+                else None,
+            )
+        )
+        if output_refs:
+            previous_refs = output_refs
 
-    parse_count = next(
-        (step.output_count for step in steps if step.input_unit == "file"),
-        None,
+    parse_steps = [step for step in steps if step.input_unit == "file"]
+    parse = parse_steps[-1] if parse_steps else None
+    final_outputs = steps[-1].output_refs if steps and steps[-1].output_refs else []
+    final_output_count = (
+        len(final_outputs)
+        if final_outputs
+        else (
+            steps[-1].output_count
+            if steps and steps[-1].status in {"succeeded", "partial"}
+            else None
+        )
     )
-    segment_count = len(latest_segments)
+    file_output_count = 1 if parse and parse.status in {"succeeded", "partial"} else None
     totals = [
-        ProcessingTotal(unit="file", input_count=1, output_count=1 if asset else 0),
-        ProcessingTotal(unit="segment", input_count=parse_count, output_count=segment_count),
+        ProcessingTotal(
+            unit="file", input_count=1 if asset else None, output_count=file_output_count
+        ),
+        ProcessingTotal(
+            unit="segment",
+            input_count=parse.output_count if parse else None,
+            output_count=final_output_count,
+        ),
     ]
+    as_of = (
+        getattr(run, "finished_at", None)
+        or getattr(run, "updated_at", None)
+        or getattr(run, "created_at", None)
+    )
     scope = Scope(
         workspace_id=run.workspace_id,
         catalog="workspace",
         revision=str(run.revision),
-        as_of=_utc(run.finished_at),
+        as_of=_utc(as_of),
         metric_definition_version="1.0.0",
     )
     return ProcessingSummaryResponse(
@@ -133,7 +159,7 @@ def build_processing_summary(session: Session, run: PipelineRun) -> ProcessingSu
         run_id=run.id,
         status=_run_status(run.status),
         input_refs=[file_ref],
-        output_refs=[_ref("segment", segment.id) for segment in latest_segments],
+        output_refs=final_outputs,
         steps=steps,
         totals=totals,
     )

@@ -60,7 +60,7 @@ def main():
         "not_run": [
             "Worker processing",
             "Redis readiness and processing APIs",
-            "generated graph and Worker-produced lineage",
+            "Worker-produced lineage",
         ],
     }
 

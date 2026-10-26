@@ -5,7 +5,7 @@ interface CatalogContext {
   user_id: string; workspace_name: string; workspace_id: string; revision: string;
   file_count: number; record_count: number; first_file: { id: string; filename: string };
   source_counts: Record<string, number>;
-  graph_root_id: string; graph_revision: string;
+  graph_root_id: string; graph_revision: string; generated_graph_root_id: string; generated_graph_revision: string;
   workspace_catalog: {
     scope: { revision: string };
     datasets: { id: string; kind: string; version: string; sample_ids: string[] }[];
@@ -105,7 +105,16 @@ test("real workspace graph preserves its database snapshot and isolates catalog 
   await expect(page).not.toHaveURL(/revision=|root_id=|root_type=/);
   await expect(page.locator(".react-flow__node")).toHaveCount(0);
   await page.goto(`/#/lineage?catalog=generated&root_type=source&root_id=${ctx.graph_root_id}`);
-  await expect(page.getByRole("alert")).toContainText("CATALOG_UNAVAILABLE");
+  await expect(page.getByRole("alert")).toContainText("NOT_FOUND");
+});
+
+test("real generated graph renders published source and file nodes", async ({ page }) => {
+  if (!catalog) throw new Error("Missing isolated catalog context");
+  const ctx = await login(page, `/lineage?catalog=generated&root_type=source&root_id=${catalog.generated_graph_root_id}&revision=${catalog.generated_graph_revision}&max_nodes=5`);
+  await expect(page.locator(".react-flow__node")).toHaveCount(5);
+  await expect(page.getByText(/图 · 5 个节点/)).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`revision=${ctx.generated_graph_revision}`));
+  await expect(page.locator(".react-flow__node").filter({ hasText: /file ·/ }).first()).toBeVisible();
 });
 
 for (const kind of ["cpt", "sft", "dpo"]) {
