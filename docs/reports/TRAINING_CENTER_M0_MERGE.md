@@ -79,3 +79,11 @@ workspace ID 不同会改变 revision，因此不与开发者 `tc-agent2` 的 re
 - Agent 2 完成只读 HTTP 与旧构建页 product_type/嵌入适配；Agent 3 提供序列化器及真实处理记录；Agent 4 更新旧导航回归与图语义，并独立复核后续业务功能。
 - 其余历史 E2E 本身还引用基线已无入口的质量/RAG/盲评等按钮以及旧发布页面；本轮不把这些旧测试改造成新的业务实现。
 - 公共字段改动为集成负责人跨模块授权范围；共享契约维持草案。其他 agent 以最终推送的 main 提交作为共同基线，不依据某一开发分支单独继续共享接口工作。
+
+## CI 失败后的修正（2026-10-27）
+
+首次推送 `0d07e10` 后，[Actions 40369158630](https://github.com/lemonyeahs/corpusflow-public/actions/runs/40369158630) 的 `checks.log` 确认 ruff、格式、mypy 均通过，pytest 为 154 通过、1 失败；失败正是原始需求文档路径不存在。因此此前“历史失败不是本次阻断”的结论不足以保证 CI 通过，首次集成没有完成远程验证闭环。
+
+进一步核对发现：`202730b` 主动删除了根目录需求文档，但 `docs/specs/CorpusFlow_01_需求分析与确认_V1.0.md` 自初始提交起一直保留，Git blob 的 SHA-256 正好是测试原有预期 `f9065571c0f625cb26712ba1197bcd01ebf327bb1d0d8d2df9ee25bdf207c1a3`。修复将校验路径指向该保留版本，并仅将文本 CRLF 规范为 LF 后计算哈希。三个预期哈希均不变，没有 skip/xfail，也没有恢复已删除的重复文档。
+
+修复后在同一项目依赖环境重跑 CI `make check` 对应的全部命令：ruff 通过，141 个文件格式通过，mypy 54 个源文件通过，非集成 pytest **155 passed、11 deselected**。这些替代上文首次集成的本地失败结论；历史检查记录仍保留。完整远程环境验证结果以修复提交对应的 GitHub Actions 为准。
