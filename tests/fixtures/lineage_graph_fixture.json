@@ -1,0 +1,32 @@
+{
+  "scope": {
+    "workspace_id": "ws-lineage-fixture",
+    "catalog": "workspace",
+    "revision": "fixture-v1"
+  },
+  "root": {"kind": "Asset", "id": "asset-a"},
+  "nodes": [
+    {"kind": "Source", "id": "source-1", "label": "原始来源"},
+    {"kind": "Asset", "id": "asset-a", "label": "原始文件 A", "status": "registered"},
+    {"kind": "PipelineRun", "id": "run-1", "label": "解析执行"},
+    {"kind": "DocumentVersion", "id": "doc-v1", "label": "解析版本 B", "status": "succeeded"},
+    {"kind": "Segment", "id": "segment-1", "label": "片段 1"},
+    {"kind": "Segment", "id": "segment-2", "label": "片段 2"},
+    {"kind": "CandidateSample", "id": "sample-1", "label": "训练样本"},
+    {"kind": "DatasetVersion", "id": "dataset-v1", "label": "数据集 E", "status": "published"},
+    {"kind": "Asset", "id": "asset-b", "label": "分叉文件 B"}
+  ],
+  "edges": [
+    {"from_type": "Source", "from_id": "source-1", "to_type": "Asset", "to_id": "asset-a", "relation": "contains"},
+    {"from_type": "Asset", "from_id": "asset-a", "to_type": "PipelineRun", "to_id": "run-1", "relation": "processed_by"},
+    {"from_type": "PipelineRun", "from_id": "run-1", "to_type": "DocumentVersion", "to_id": "doc-v1", "relation": "produced"},
+    {"from_type": "DocumentVersion", "from_id": "doc-v1", "to_type": "Segment", "to_id": "segment-1", "relation": "contains"},
+    {"from_type": "DocumentVersion", "from_id": "doc-v1", "to_type": "Segment", "to_id": "segment-2", "relation": "contains"},
+    {"from_type": "Segment", "from_id": "segment-1", "to_type": "CandidateSample", "to_id": "sample-1", "relation": "materialized_in"},
+    {"from_type": "CandidateSample", "from_id": "sample-1", "to_type": "DatasetVersion", "to_id": "dataset-v1", "relation": "included_in"},
+    {"from_type": "Segment", "from_id": "segment-1", "to_type": "DatasetVersion", "to_id": "dataset-v1", "relation": "materialized_in"},
+    {"from_type": "Segment", "from_id": "segment-2", "to_type": "DatasetVersion", "to_id": "dataset-v1", "relation": "materialized_in"},
+    {"from_type": "Source", "from_id": "source-1", "to_type": "DatasetVersion", "to_id": "dataset-v1", "relation": "contributed_to"},
+    {"from_type": "Asset", "from_id": "asset-a", "to_type": "Asset", "to_id": "asset-b", "relation": "derived_from"}
+  ]
+}
