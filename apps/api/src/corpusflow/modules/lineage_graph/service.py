@@ -142,8 +142,8 @@ def query_graph(
 
     visible: dict[tuple[str, str], GraphNode] = {}
     if nodes is not None:
-        for value in nodes:
-            node = _coerce_node(value)
+        for node_value in nodes:
+            node = _coerce_node(node_value)
             visible.setdefault(node.key, node)
         if root_node.key not in visible:
             raise GraphQueryError("root node not found")
