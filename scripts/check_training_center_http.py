@@ -334,6 +334,31 @@ def main():
             )
             assert generated_graph["scope"]["revision"] == generated_snapshot.scope.revision
             assert all(node["kind"] != "operator_run" for node in generated_graph["nodes"])
+            generated_sample = generated_snapshot.samples[0]
+            sample_graph = call(
+                graph_path,
+                headers=auth,
+                params={
+                    "catalog": "generated",
+                    "root_type": "sample",
+                    "root_id": generated_sample.id,
+                    "revision": generated_snapshot.scope.revision,
+                    "direction": "downstream",
+                    "max_depth": 1,
+                },
+                model=m.LineageGraph,
+            )
+            expected_version = next(
+                dataset.version_id
+                for dataset in generated_snapshot.datasets
+                if dataset.id == generated_sample.dataset_id
+                and dataset.version == generated_sample.dataset_version
+            )
+            assert {
+                node["ref"]["id"]
+                for node in sample_graph["nodes"]
+                if node["kind"] == "dataset_version"
+            } == {expected_version}
             with Session(engine) as session:
                 membership = session.scalar(
                     select(Membership).where(
@@ -407,6 +432,7 @@ def main():
             "graph_revision": latest["scope"]["revision"],
             "generated_graph_root_id": generated_root,
             "generated_graph_revision": generated_snapshot.scope.revision,
+            "generated_sample_id": generated_sample.id,
         }
         context_path.write_text(
             json.dumps(context, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n"

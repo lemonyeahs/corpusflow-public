@@ -428,10 +428,20 @@ def test_agent3_serializer_preserves_structures_and_utf8(database, kind, export_
             assert data.index(b"user") < data.index(b"assistant")
         if kind == "dpo":
             assert b"**Chosen**" in data and b"**Rejected**" in data
-    elif kind == "cpt":
-        assert data.decode("utf-8").strip() == text
     else:
-        assert json.loads(data) == expected
+        rendered = data.decode("utf-8")
+        assert rendered.startswith(sample.id + "\n\n")
+        assert text in rendered
+        if kind == "cpt":
+            assert rendered == f"{sample.id}\n\n{text}\n"
+        elif kind == "sft":
+            assert f"user:\n{text}" in rendered
+            assert "assistant:\n答复" in rendered
+            assert rendered.index("user:") < rendered.index("assistant:")
+        else:
+            assert f"Prompt:\n{text}" in rendered
+            assert f"Chosen:\n{expected['chosen']}" in rendered
+            assert f"Rejected:\n{expected['rejected']}" in rendered
 
 
 def test_manifest_reads_real_object_checks_hash_and_closes(database, settings, monkeypatch):

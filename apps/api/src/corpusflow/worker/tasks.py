@@ -95,9 +95,7 @@ def _persist_record_maps(
     after_by_key = {
         key: record for record in after_records if (key := _record_key(record)) is not None
     }
-    after_by_record_id = {
-        (row.record_key or row.id): row for row in after_rows
-    }
+    after_by_record_id = {(row.record_key or row.id): row for row in after_rows}
     input_refs: list[dict[str, str]] = []
     output_refs: list[dict[str, str]] = []
     modified = 0
@@ -209,12 +207,15 @@ def _run_processing_chain(
             .where(NodeRun.run_id == run.id, NodeRun.node_id == node_id)
             .order_by(NodeRun.attempt_no.desc())
         )
-        if node and node.status == "succeeded":
-            continue
-        if not node:
+        # A restarted chain begins at source_version, so every operator must run
+        # on this attempt's output. Skipping a completed node loses its derived
+        # version; reusing its ID overwrites evidence and collides with record maps.
+        # Explicit review rework may already have allocated an unused attempt.
+        if node is None or node.status != "pending":
             node = NodeRun(
                 run_id=run.id,
                 node_id=node_id,
+                attempt_no=node.attempt_no + 1 if node is not None else 1,
                 status="pending",
                 operator_key=key,
                 operator_version="builtin",
@@ -309,7 +310,9 @@ def _run_processing_chain(
                             rule_version=result.operator_version,
                         )
                     )
-            node.status = "partial" if result.filtered_count else "succeeded"
+            # Filtering is a successful operator result, not an incomplete attempt.
+            # Keep its measured count without blocking the existing review/rework gate.
+            node.status = "succeeded"
             node.completed_at = datetime.now(UTC)
             _write_log(
                 session,
@@ -317,6 +320,7 @@ def _run_processing_chain(
                 f"operator {key} input={node.input_count} output={node.output_count} "
                 f"filtered={node.filtered_count}",
                 node_id=node_id,
+                attempt=node.attempt_no,
             )
             session.commit()
         except ProcessingError as exc:
@@ -331,7 +335,14 @@ def _run_processing_chain(
                 failed.failed_count = None
                 failed.completed_at = datetime.now(UTC)
                 failed.duration_ms = (datetime.now(UTC) - started).total_seconds() * 1000
-                _write_log(session, run, f"operator failure {exc.code}", "ERROR", node_id=node_id)
+                _write_log(
+                    session,
+                    run,
+                    f"operator failure {exc.code}",
+                    "ERROR",
+                    node_id=node_id,
+                    attempt=failed.attempt_no,
+                )
                 session.commit()
             raise
     return current

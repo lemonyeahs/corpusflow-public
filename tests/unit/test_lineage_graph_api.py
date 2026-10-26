@@ -142,11 +142,14 @@ def test_generated_projection_uses_explicit_refs_without_operator_history() -> N
             SimpleNamespace(
                 id="sample-1",
                 source_refs=(source,),
-                dataset_version="dataset-v1",
+                dataset_id="dataset-1",
+                dataset_version="1",
             ),
         ),
         datasets=(
-            SimpleNamespace(version_id="dataset-v1", source_refs=(source,)),
+            SimpleNamespace(
+                id="dataset-1", version="1", version_id="dataset-v1", source_refs=(source,)
+            ),
         ),
     )
 
@@ -160,9 +163,10 @@ def test_generated_projection_uses_explicit_refs_without_operator_history() -> N
     }
     assert all("Run" not in edge.from_type and "Run" not in edge.to_type for edge in rows)
     assert FrozenEdge("Source", "source-1", "Asset", "file-1", "provides") in rows
-    assert FrozenEdge(
-        "CandidateSample", "sample-1", "DatasetVersion", "dataset-v1", "included_in"
-    ) in rows
+    assert (
+        FrozenEdge("CandidateSample", "sample-1", "DatasetVersion", "dataset-v1", "included_in")
+        in rows
+    )
 
 
 @pytest.mark.parametrize(
@@ -200,11 +204,49 @@ def test_http_generated_graph_uses_published_revision_and_explicit_refs(graph_ap
     assert {node["kind"] for node in body["nodes"]} <= {
         "source",
         "file",
-        "candidate_sample",
+        "sample",
         "dataset_version",
     }
     assert all("operator_run" not in node["kind"] for node in body["nodes"])
     assert all(edge["relation"] in {"provides", "included_in"} for edge in body["edges"])
+    expected_samples = {
+        sample.id
+        for sample in snapshot.samples
+        if (sample.dataset_id, sample.dataset_version) == (dataset.id, dataset.version)
+    }
+    assert {
+        node["ref"]["id"] for node in body["nodes"] if node["kind"] == "sample"
+    } == expected_samples
+    assert {node["ref"]["id"] for node in body["nodes"] if node["kind"] == "dataset_version"} == {
+        dataset.version_id
+    }
+    assert {
+        edge["source"]
+        for edge in body["edges"]
+        if edge["relation"] == "included_in" and edge["source"].startswith("generated:sample:")
+    } == {f"generated:sample:{sample_id}" for sample_id in expected_samples}
+    for sample in snapshot.samples:
+        response = client.get(
+            GRAPH_URL,
+            params={
+                "catalog": "generated",
+                "root_type": "sample",
+                "root_id": sample.id,
+                "direction": "downstream",
+                "revision": snapshot.scope.revision,
+            },
+        )
+        assert response.status_code == 200, response.text
+        matching_version = next(
+            item.version_id
+            for item in snapshot.datasets
+            if (item.id, item.version) == (sample.dataset_id, sample.dataset_version)
+        )
+        assert {
+            node["ref"]["id"]
+            for node in response.json()["nodes"]
+            if node["kind"] == "dataset_version"
+        } == {matching_version}
 
 
 def test_snapshots_expire_at_900_seconds_without_read_renewal():

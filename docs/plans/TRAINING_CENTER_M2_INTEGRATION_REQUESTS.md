@@ -2,6 +2,8 @@
 
 状态：2026-10-27 审查后提出；以下依赖尚未交付或确认，不能视为真实联调通过。Agent 1 仅在 `feat/tc-shell-explorer` 工作，不自行合并其他开发分支。
 
+集成更新：本页保留提出时的请求基线。后续已接入 workspace 目录与数据集页面、统一 ExportQuery.q 和 OpenAPI，并整合远程处理证据/generated 图；当前已完成项、验收边界和剩余责任以 [后续集成报告](../reports/TRAINING_CENTER_M1_FOLLOWUP_INTEGRATION.md) 及 Agent 2 HANDOFF 为准。统一 workspace 快照仍由 Agent 2 提供，处理 router 尚未注册。
+
 ## Agent 2：workspace 查询与文件关联
 
 1. 保留 generated 9 个 GET 的响应、授权和统计口径，实现同路径的 workspace 适配器。目前 Reader.query 对 workspace 返回 503 ADAPTER_UNAVAILABLE。

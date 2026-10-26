@@ -1,6 +1,9 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from hashlib import sha256
 from types import SimpleNamespace
 
+import pytest
+from corpusflow.adapters.processing.base import ProcessingError
 from corpusflow.api.dependencies import db
 from corpusflow.api.v1.processing_insights import router
 from corpusflow.db.models import (
@@ -8,6 +11,7 @@ from corpusflow.db.models import (
     AssetBlob,
     Document,
     DocumentVersion,
+    ExecutionLog,
     Membership,
     NodeRun,
     PipelineRun,
@@ -21,9 +25,10 @@ from corpusflow.db.models import (
     Workspace,
 )
 from corpusflow.db.session import Base
+from corpusflow.worker import tasks
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -147,6 +152,7 @@ def _fixture() -> tuple[sessionmaker[Session], str, str, str]:
             output_refs=[{"catalog": "workspace", "type": "segment", "id": before.id}],
             started_at=now,
             completed_at=now,
+            created_at=now,
         )
         clean_node = NodeRun(
             run_id=run.id,
@@ -166,6 +172,7 @@ def _fixture() -> tuple[sessionmaker[Session], str, str, str]:
             output_refs=[{"catalog": "workspace", "type": "segment", "id": after.id}],
             started_at=now,
             completed_at=now,
+            created_at=now + timedelta(seconds=1),
         )
         session.add_all([parse_node, clean_node])
         session.flush()
@@ -275,3 +282,134 @@ def test_processing_routes_keep_workspace_boundary_and_failed_export_closed():
     closed = client.get(f"/api/v1/pipeline-runs/{run_id}/export", headers=headers)
     assert closed.status_code == 409
     assert closed.json()["detail"] == "INVALID_STATE_TRANSITION"
+
+
+def test_chain_retry_preserves_partial_evidence_and_uses_current_step_output(settings, monkeypatch):
+    factory, _, _, run_id = _fixture()
+    processor = tasks.run_processor
+
+    def fail_quality(key, records, config):
+        if key == "builtin.quality":
+            raise ProcessingError("PROCESSING_TEST_FAILURE", "downstream failure")
+        return processor(key, records, config)
+
+    monkeypatch.setattr(tasks, "_store", lambda *args: None)
+    try:
+        with factory() as session:
+            run = session.get(PipelineRun, run_id)
+            run.config_snapshot = {
+                "operators": ["builtin.clean", "builtin.deduplicate", "builtin.quality"]
+            }
+            source = session.scalar(
+                select(DocumentVersion).where(
+                    DocumentVersion.run_id == run_id, DocumentVersion.version_no == 1
+                )
+            )
+            original = session.scalar(
+                select(Segment).where(Segment.document_version_id == source.id)
+            )
+            original.text = "  same   record  "
+            original.content_hash = sha256(original.text.encode()).hexdigest()
+            session.add(
+                Segment(
+                    workspace_id=run.workspace_id,
+                    document_version_id=source.id,
+                    source_id=original.source_id,
+                    text=original.text,
+                    content_hash=original.content_hash,
+                    record_key="record-2",
+                )
+            )
+            session.commit()
+            monkeypatch.setattr(tasks, "run_processor", fail_quality)
+            with pytest.raises(ProcessingError, match="downstream failure"):
+                tasks._run_processing_chain(session, settings, run, source)
+            dedup = session.scalar(
+                select(NodeRun).where(NodeRun.run_id == run_id, NodeRun.node_id == "deduplicate")
+            )
+            assert dedup.status == "succeeded" and dedup.filtered_count == 1
+            # Older workers persisted completed filtering attempts as partial.
+            dedup.status = "partial"
+            session.commit()
+            old_rows = list(
+                session.scalars(
+                    select(ProcessingRecordMap).where(ProcessingRecordMap.run_id == run_id)
+                )
+            )
+            old_maps = {
+                row.id: (
+                    row.node_run_id,
+                    row.record_id,
+                    row.before_segment_id,
+                    row.after_segment_id,
+                )
+                for row in old_rows
+            }
+            old_dedup_output = dedup.output_refs
+            monkeypatch.setattr(tasks, "run_processor", processor)
+            final = tasks._run_processing_chain(session, settings, run, source)
+            nodes = list(
+                session.scalars(
+                    select(NodeRun).where(NodeRun.run_id == run_id).order_by(NodeRun.attempt_no)
+                )
+            )
+            latest = {node.node_id: node for node in nodes}
+            assert latest["clean"].attempt_no == 3  # The fixture has an older completed attempt.
+            assert latest["deduplicate"].attempt_no == 2
+            assert latest["quality"].attempt_no == 2
+            assert latest["quality"].input_count == 1
+            assert latest["deduplicate"].status == "succeeded"
+            assert latest["deduplicate"].filtered_count == 1
+            assert latest["quality"].input_refs == latest["deduplicate"].output_refs
+            assert latest["deduplicate"].output_refs != old_dedup_output
+            final_segments = list(
+                session.scalars(select(Segment).where(Segment.document_version_id == final.id))
+            )
+            assert [segment.text for segment in final_segments] == ["same record"]
+            assert any(
+                node.node_id == "quality" and node.attempt_no == 1 and node.status == "failed"
+                for node in nodes
+            )
+            assert dedup.status == "partial"  # Historical status/evidence remain untouched.
+            attempts = {node.id: node.attempt_no for node in nodes}
+            logs = session.scalars(select(ExecutionLog).where(ExecutionLog.run_id == run_id))
+            assert all(log.attempt_no == attempts[log.node_run_id] for log in logs)
+            session.expire_all()
+            for identifier, evidence in old_maps.items():
+                row = session.get(ProcessingRecordMap, identifier)
+                assert (
+                    row.node_run_id,
+                    row.record_id,
+                    row.before_segment_id,
+                    row.after_segment_id,
+                ) == (evidence)
+    finally:
+        factory.kw["bind"].dispose()
+
+
+def test_chain_reuses_preallocated_pending_attempt(settings, monkeypatch):
+    factory, _, _, run_id = _fixture()
+    monkeypatch.setattr(tasks, "_store", lambda *args: None)
+    try:
+        with factory() as session:
+            run = session.get(PipelineRun, run_id)
+            run.config_snapshot = {"operators": ["builtin.clean"]}
+            source = session.scalar(
+                select(DocumentVersion).where(
+                    DocumentVersion.run_id == run_id, DocumentVersion.version_no == 1
+                )
+            )
+            pending = NodeRun(run_id=run_id, node_id="clean", attempt_no=2, status="pending")
+            session.add(pending)
+            session.commit()
+            tasks._run_processing_chain(session, settings, run, source)
+            assert pending.status == "succeeded"
+            nodes = list(
+                session.scalars(
+                    select(NodeRun).where(NodeRun.run_id == run_id, NodeRun.node_id == "clean")
+                )
+            )
+            assert {node.attempt_no for node in nodes} == {1, 2}
+            assert pending.output_refs
+    finally:
+        factory.kw["bind"].dispose()

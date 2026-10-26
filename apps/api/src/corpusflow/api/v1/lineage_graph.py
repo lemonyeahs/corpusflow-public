@@ -338,6 +338,7 @@ def _generated_projection(
     """
     visible: set[tuple[str, str]] = set()
     edges: set[FrozenEdge] = set()
+    versions = {(dataset.id, dataset.version): dataset.version_id for dataset in snapshot.datasets}
     for source_id in snapshot.sources:
         visible.add(("Source", source_id))
     for file in snapshot.files:
@@ -345,22 +346,21 @@ def _generated_projection(
         edges.add(FrozenEdge("Source", file.source_ref.id, "Asset", file.id, "provides"))
         for file_dataset in file.dataset_refs:
             edges.add(
-                FrozenEdge(
-                    "Asset", file.id, "DatasetVersion", file_dataset.id, "included_in"
-                )
+                FrozenEdge("Asset", file.id, "DatasetVersion", file_dataset.id, "included_in")
             )
     for sample in snapshot.samples:
+        version_id = versions.get((sample.dataset_id, sample.dataset_version))
+        if version_id is None:
+            raise HTTPException(409, "CHECKSUM_MISMATCH")
         visible.add(("CandidateSample", sample.id))
         for source_ref in sample.source_refs:
-            edges.add(
-                FrozenEdge("Source", source_ref.id, "CandidateSample", sample.id, "provides")
-            )
+            edges.add(FrozenEdge("Source", source_ref.id, "CandidateSample", sample.id, "provides"))
         edges.add(
             FrozenEdge(
                 "CandidateSample",
                 sample.id,
                 "DatasetVersion",
-                sample.dataset_version,
+                version_id,
                 "included_in",
             )
         )
@@ -482,9 +482,7 @@ def _capture_snapshot(session: Session, workspace: str, store: GraphSnapshots) -
         if (row.from_type, row.from_id) in visible and (row.to_type, row.to_id) in visible
     ]
     node_details: dict[tuple[str, str], dict[str, object]] = {}
-    for run in session.scalars(
-        select(PipelineRun).where(PipelineRun.workspace_id == workspace)
-    ):
+    for run in session.scalars(select(PipelineRun).where(PipelineRun.workspace_id == workspace)):
         try:
             summary = build_processing_summary(session, run)
         except ValueError:

@@ -6,6 +6,7 @@ interface CatalogContext {
   file_count: number; record_count: number; first_file: { id: string; filename: string };
   source_counts: Record<string, number>;
   graph_root_id: string; graph_revision: string; generated_graph_root_id: string; generated_graph_revision: string;
+  generated_sample_id: string;
   workspace_catalog: {
     scope: { revision: string };
     datasets: { id: string; kind: string; version: string; sample_ids: string[] }[];
@@ -115,6 +116,13 @@ test("real generated graph renders published source and file nodes", async ({ pa
   await expect(page.getByText(/图 · 5 个节点/)).toBeVisible();
   await expect(page).toHaveURL(new RegExp(`revision=${ctx.generated_graph_revision}`));
   await expect(page.locator(".react-flow__node").filter({ hasText: /file ·/ }).first()).toBeVisible();
+  await page.goto(`/#/lineage?catalog=generated&root_type=sample&root_id=${ctx.generated_sample_id}&revision=${ctx.generated_graph_revision}&direction=downstream&max_depth=1`);
+  await expect(page.locator('.react-flow__node [data-kind="dataset_version"]')).toHaveCount(1);
+  await page.locator('.react-flow__node [data-kind="sample"]').click();
+  await page.getByRole("link", { name: "打开样本 ↗", exact: true }).click();
+  await expect(page).toHaveURL(/tab=samples/);
+  await expect(page).toHaveURL(new RegExp(`revision=${ctx.generated_graph_revision}`));
+  await expect(page.getByRole("dialog")).toContainText(ctx.generated_sample_id);
 });
 
 for (const kind of ["cpt", "sft", "dpo"]) {

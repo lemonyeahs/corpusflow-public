@@ -154,17 +154,13 @@ def pipeline_run_export(
                 "id": segment.record_key or segment.id,
                 "text": segment.text,
                 "source_id": segment.source_id,
-                "source_refs": [
-                    {"catalog": "workspace", "type": "file", "id": run.asset_id}
-                ],
+                "source_refs": [{"catalog": "workspace", "type": "file", "id": run.asset_id}],
                 "location": segment.location_json,
                 "split": "unassigned",
             }
 
     try:
-        path, size, extension = _materialize_export(
-            records(), export_format, max_bytes
-        )
+        path, size, extension = _materialize_export(records(), export_format, max_bytes)
     except ExportError as exc:
         if str(exc) == "EXPORT_LIMIT_EXCEEDED":
             raise HTTPException(413, "EXPORT_LIMIT_EXCEEDED") from exc
@@ -180,7 +176,7 @@ def pipeline_run_export(
         _stream_file(path, size), media_type=f"{content_types[extension]}; charset=utf-8"
     )
     response.headers["Content-Disposition"] = (
-        f'attachment; filename="{filename}"; filename*=UTF-8\'\'{quote(filename)}'
+        f"attachment; filename=\"{filename}\"; filename*=UTF-8''{quote(filename)}"
     )
     response.headers["Content-Length"] = str(size)
     return response
@@ -195,9 +191,7 @@ def pipeline_step_comparison(
     session: Session = Depends(db),
 ) -> dict[str, object]:
     run = _authorized_run(run_id, request, session)
-    node = session.scalar(
-        select(NodeRun).where(NodeRun.id == step_id, NodeRun.run_id == run.id)
-    )
+    node = session.scalar(select(NodeRun).where(NodeRun.id == step_id, NodeRun.run_id == run.id))
     if not node:
         raise HTTPException(404, "NOT_FOUND")
     maps = select(ProcessingRecordMap).where(
@@ -227,9 +221,7 @@ def pipeline_step_comparison(
     summary = build_processing_summary(session, run)
     all_steps = list(
         session.scalars(
-            select(NodeRun)
-            .where(NodeRun.run_id == run.id)
-            .order_by(NodeRun.created_at, NodeRun.id)
+            select(NodeRun).where(NodeRun.run_id == run.id).order_by(NodeRun.created_at, NodeRun.id)
         ).all()
     )
     step_position = next(

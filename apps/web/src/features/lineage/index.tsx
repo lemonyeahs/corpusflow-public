@@ -15,8 +15,8 @@ import { ErrorState, EmptyState, LoadingState, PageHeader, Panel } from "../../u
 import { useWorkspaceContext } from "../../app/auth";
 import { useCatalogScope } from "../../app/catalog";
 import { trainingKeys } from "../../app/query";
+import { scopeDestination } from "../../app/scope-navigation";
 import type { Catalog, LineageGraph, ObjectType } from "../../contracts/training-center";
-import { objectLink, scopeLink } from "../training-home/components/format";
 import { fetchLineageGraph, type LineageDirection } from "./api";
 import styles from "./lineage.module.css";
 import "@xyflow/react/dist/style.css";
@@ -35,7 +35,7 @@ const RELATION_LABELS: Record<string, string> = {
 const NODE_LINK_LABELS: Record<ObjectType, string> = {
   source: "来源",
   file: "文件",
-  operator_run: "处理记录",
+  operator_run: "处理工具",
   segment: "片段",
   sample: "样本",
   dataset_version: "数据集版本",
@@ -43,15 +43,18 @@ const NODE_LINK_LABELS: Record<ObjectType, string> = {
 
 function nodeLink(node: LineageGraph["nodes"][number], scope: LineageGraph["scope"]) {
   const detail = node.detail;
-  if (node.ref.type === "file") return scopeLink("/data/all", scope, { file_id: node.ref.id, detail_tab: "detail" });
+  const current = new URLSearchParams({ catalog: node.ref.catalog, ...(node.ref.catalog === scope.catalog ? { revision: scope.revision } : {}) });
+  const destination = (path: string, extra: Record<string, string>) => `${scopeDestination(path, "/lineage", current)}&${new URLSearchParams(extra)}`;
+  if (node.ref.type === "file") return destination("/data/all", { file_id: node.ref.id, detail_tab: "detail" });
   if (node.ref.type === "sample" && typeof detail.dataset_kind === "string" && typeof detail.dataset_id === "string" && typeof detail.dataset_version === "string") {
-    return scopeLink(`/datasets/${detail.dataset_kind}`, scope, { dataset_id: detail.dataset_id, version: detail.dataset_version, sample_id: node.ref.id });
+    return destination(`/datasets/${detail.dataset_kind}`, { dataset_id: detail.dataset_id, version: detail.dataset_version, sample_id: node.ref.id, tab: "samples" });
   }
   if (node.ref.type === "dataset_version" && typeof detail.dataset_kind === "string" && typeof detail.dataset_id === "string" && typeof detail.dataset_version === "string") {
-    return scopeLink(`/datasets/${detail.dataset_kind}`, scope, { dataset_id: detail.dataset_id, version: detail.dataset_version });
+    return destination(`/datasets/${detail.dataset_kind}`, { dataset_id: detail.dataset_id, version: detail.dataset_version });
   }
-  if (node.ref.type === "operator_run") return scopeLink("/advanced/processing", scope, { run_id: node.ref.id });
-  return objectLink(node.ref, scope);
+  // The legacy tool does not consume run_id, so offer its general entry only.
+  if (node.ref.type === "operator_run") return "/advanced/processing";
+  return destination("/lineage", { root_type: node.ref.type, root_id: node.ref.id });
 }
 
 function layout(graph: LineageGraph): { nodes: Node[]; edges: Edge[] } {
