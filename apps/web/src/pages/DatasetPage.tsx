@@ -5,12 +5,12 @@ import { Badge, Card, Empty, ErrorBox, Field, Page } from "../components";
 
 const PURPOSES: Record<string, string> = { sft: "training", pretrain: "training", rag: "rag", evaluation: "evaluation" };
 
-export function DatasetPage({ ctx, onPublished }: { ctx: ApiContext; onPublished: () => void }) {
+export function DatasetPage({ ctx, onPublished, initialProductType }: { ctx: ApiContext; onPublished: () => void; initialProductType?: "pretrain" | "sft" }) {
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [productTypes, setProductTypes] = useState<DatasetProductType[]>([]);
-  const [productType, setProductType] = useState("sft");
+  const [productType, setProductType] = useState<string>(initialProductType || "sft");
   const [selectedDataset, setSelectedDataset] = useState("");
-  const [name, setName] = useState("SFT 数据产品");
+  const [name, setName] = useState(initialProductType === "pretrain" ? "CPT 数据产品" : "SFT 数据产品");
   const [segmentIds, setSegmentIds] = useState("");
   const [preview, setPreview] = useState<{ included_count: number; excluded_count: number; included: Array<{ segment_id: string; reason: string }>; excluded: Array<{ segment_id: string; reason: string }> }>();
   const [build, setBuild] = useState<{ build_id: string; config_hash: string; status: string; candidate_count: number; metrics?: Record<string, unknown>; excluded?: Array<Record<string, string>> }>();
@@ -35,9 +35,10 @@ export function DatasetPage({ ctx, onPublished }: { ctx: ApiContext; onPublished
       const [datasetResult, productResult] = await Promise.all([api.datasets(ctx), api.datasetProductTypes(ctx)]);
       setDatasets(datasetResult.items);
       setProductTypes(productResult.items);
-      if (!selectedDataset && datasetResult.items[0]) {
-        setSelectedDataset(datasetResult.items[0].dataset_id);
-        setProductType(datasetResult.items[0].product_type);
+      const initial = initialProductType ? datasetResult.items.find(item => item.product_type === initialProductType) : datasetResult.items[0];
+      if (!selectedDataset && initial) {
+        setSelectedDataset(initial.dataset_id);
+        setProductType(initial.product_type);
       }
     } catch (err) { setError(err instanceof ApiError ? `${err.code}：${err.message}` : "数据产品加载失败"); }
   }

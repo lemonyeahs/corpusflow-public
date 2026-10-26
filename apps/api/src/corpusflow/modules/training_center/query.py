@@ -8,7 +8,7 @@ from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from corpusflow.contracts.training_center import models as m
-from corpusflow.modules.training_center.catalog import CatalogError, CatalogSnapshot
+from corpusflow.modules.training_center.catalog import CatalogError, CatalogSegment, CatalogSnapshot
 
 FORMATS: tuple[m.FileFormat, ...] = (
     "pdf",
@@ -54,7 +54,9 @@ def metric(value: int | None, unit: m.Unit) -> m.Metric:
     return m.Metric(value=value, unit=unit)
 
 
-def lengths(samples: list[m.Sample], unit: m.Unit, measure: str) -> m.Distribution:
+def lengths(
+    samples: list[m.Sample] | list[CatalogSegment], unit: m.Unit, measure: str
+) -> m.Distribution:
     return distribution(
         [
             "0-127" if s.char_count < 128 else "128-255" if s.char_count < 256 else "256+"
@@ -66,13 +68,15 @@ def lengths(samples: list[m.Sample], unit: m.Unit, measure: str) -> m.Distributi
     )
 
 
-def flow(label: str, files: list[m.FileSummary], samples: list[m.Sample]) -> m.Flow:
+def flow(
+    label: str, files: list[m.FileSummary], samples: list[m.Sample], segment_count: int = 0
+) -> m.Flow:
     counts = Counter(sample.kind for sample in samples)
     return m.Flow(
         scope_label=label,
         stages=[
             m.FlowStage(key="files", label="文件", count=len(files), unit="file"),
-            m.FlowStage(key="segments", label="片段", count=0, unit="segment"),
+            m.FlowStage(key="segments", label="片段", count=segment_count, unit="segment"),
             *[
                 m.FlowStage(key=kind, label=kind.upper(), count=counts[kind], unit=UNITS[kind])
                 for kind in KINDS
@@ -95,7 +99,7 @@ class CatalogQueries:
             scope=self.scope,
             metrics={
                 "file_count": metric(len(files), "file"),
-                "segment_count": metric(0, "segment"),
+                "segment_count": metric(len(self.snapshot.segments), "segment"),
                 "training_record_count": metric(len(samples), "record"),
                 "token_count": metric(None, "token"),
                 "quality_pass_rate": metric(None, "ratio"),
@@ -104,7 +108,12 @@ class CatalogQueries:
                 m.FormatCount(format=fmt, file_count=counts[fmt], unit="file") for fmt in FORMATS
             ],
             datasets=self.datasets().items,
-            flow=flow("generated catalog: all files and training records", files, samples),
+            flow=flow(
+                f"{self.scope.catalog} catalog: all files and published training records",
+                files,
+                samples,
+                len(self.snapshot.segments),
+            ),
             recent_activities=[],
         )
 
@@ -148,7 +157,13 @@ class CatalogQueries:
                     **{key: source[key] for key in ("id", "kind", "author", "url", "license")},
                 }
             ),
-            processing_summary_ref=None,
+            processing_summary_ref=(
+                m.ProcessingRunRef(
+                    catalog="workspace", type="pipeline_run", id=self.snapshot.file_runs[file_id]
+                )
+                if file_id in self.snapshot.file_runs
+                else None
+            ),
             dataset_refs=file.dataset_refs,
         )
 
@@ -182,10 +197,21 @@ class CatalogQueries:
                 )
             ]
         source_ids = {file.source_ref.id for file in files}
+        file_ids = {file.id for file in files}
+        segments = [s for s in self.snapshot.segments if s.file_id in file_ids]
         samples = [
             sample
             for sample in self.snapshot.samples
-            if any(reference.id in source_ids for reference in sample.source_refs)
+            if (
+                bool(
+                    self.snapshot.sample_files.get(
+                        (sample.dataset_id, sample.dataset_version, sample.id), set()
+                    )
+                    & file_ids
+                )
+                if self.scope.catalog == "workspace"
+                else any(reference.id in source_ids for reference in sample.source_refs)
+            )
         ]
         dataset_ids = {reference.id for file in files for reference in file.dataset_refs}
         trend, availability = self._trend(files, start, end, zone)
@@ -193,18 +219,20 @@ class CatalogQueries:
             scope=self.scope,
             metrics={
                 "file_count": metric(len(files), "file"),
-                "segment_count": metric(0, "segment"),
+                "segment_count": metric(len(segments), "segment"),
                 "size_bytes": metric(sum(file.size_bytes for file in files), "byte"),
                 "token_count": metric(None, "token"),
                 "quality_pass_rate": metric(None, "ratio"),
             },
             flow=flow(
-                f"format={fmt}; filtered files and linked records via source_ref", files, samples
+                f"format={fmt}; filtered files and linked records", files, samples, len(segments)
             ),
             ingestion_trend=trend,
             availability=m.Availability(ingestion_trend=availability),
-            length_distribution=lengths([], "segment", "segment_char_length"),
-            language_distribution=distribution([], ("zh", "en"), "segment_language", "segment"),
+            length_distribution=lengths(segments, "segment", "segment_char_length"),
+            language_distribution=distribution(
+                [s.language for s in segments], ("zh", "en"), "segment_language", "segment"
+            ),
             source_distribution=distribution(
                 [f.source_kind for f in files],
                 ("web", "book", "paper", "other"),
@@ -212,7 +240,7 @@ class CatalogQueries:
                 "file",
             ),
             dataset_refs=[
-                m.ObjectRef(catalog="generated", type="dataset_version", id=version_id)
+                m.ObjectRef(catalog=self.scope.catalog, type="dataset_version", id=version_id)
                 for version_id in sorted(dataset_ids)
             ],
         )
@@ -335,12 +363,16 @@ class CatalogQueries:
                 dataset.record_unit,
             ),
             lineage_root_ref=m.ObjectRef(
-                catalog="generated", type="dataset_version", id=dataset.version_id
+                catalog=self.scope.catalog, type="dataset_version", id=dataset.version_id
             ),
         )
 
     def manifest(self, dataset_id: str, version: str) -> m.ManifestResponse:
         self._dataset(dataset_id, version)
+        if self.scope.catalog == "workspace":
+            raise CatalogError(
+                "ADAPTER_UNAVAILABLE", 503
+            )  # Loaded from immutable object storage by Reader.
         return m.ManifestResponse(
             scope=self.scope,
             dataset_id=dataset_id,

@@ -1,4 +1,4 @@
-"""Agent 2 generated-catalog reads. Agent 1 registers this router in create_app."""
+"""Agent 2 catalog reads. Agent 1 registers this router in create_app."""
 
 from __future__ import annotations
 
@@ -7,13 +7,22 @@ from threading import Lock
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from starlette.background import BackgroundTask
 
 from corpusflow.api.dependencies import actor_id, db, workspace_id
 from corpusflow.contracts.training_center import models as m
 from corpusflow.core.config import Settings
 from corpusflow.modules.training_center.catalog import CatalogError, GeneratedCatalog
+from corpusflow.modules.training_center.downloads import (
+    authorize_export,
+    chunks,
+    prepare_export,
+    stored_manifest,
+)
 from corpusflow.modules.training_center.query import CatalogQueries
+from corpusflow.modules.training_center.workspace import WorkspaceSnapshots
 
 router = APIRouter(prefix="/api/v1/training-center", tags=["training-center"])
 _store_lock = Lock()
@@ -39,22 +48,45 @@ def catalog_store(request: Request) -> GeneratedCatalog:
 
 
 class Reader:
-    def __init__(self, store: GeneratedCatalog, workspace: str) -> None:
+    def __init__(
+        self, store: GeneratedCatalog, workspace: str, session: Session, request: Request
+    ) -> None:
         self.store = store
         self.workspace = workspace
+        self.session = session
+        self.request = request
+        self.settings: Settings = request.app.state.config
 
     def query(self, params: m.CatalogQuery) -> CatalogQueries:
-        if params.catalog != "generated":
-            raise CatalogError("ADAPTER_UNAVAILABLE", 503)
+        if params.catalog == "workspace":
+            with _store_lock:
+                cache = getattr(self.request.app.state, "training_center_workspace", None)
+                if not isinstance(cache, WorkspaceSnapshots):
+                    cache = WorkspaceSnapshots(
+                        self.settings.training_center_snapshot_ttl_seconds,
+                        self.settings.training_center_snapshot_max_per_workspace,
+                    )
+                    self.request.app.state.training_center_workspace = cache
+            return CatalogQueries(
+                cache.load(
+                    self.workspace,
+                    params.revision,
+                    self.session,
+                    self.settings.training_center_max_records,
+                    self.settings.training_center_max_bytes,
+                )
+            )
         return CatalogQueries(self.store.load(self.workspace, params.revision))
 
 
 def reader(
+    request: Request,
     workspace: Annotated[str, Depends(authorized_workspace)],
     store: Annotated[GeneratedCatalog, Depends(catalog_store)],
+    session: Annotated[Session, Depends(db)],
 ) -> Iterator[Reader]:
     try:
-        yield Reader(store, workspace)
+        yield Reader(store, workspace, session, request)
     except CatalogError as exc:
         raise HTTPException(exc.status, exc.code) from None
 
@@ -117,4 +149,60 @@ def samples(
 def manifest(
     dataset_id: str, read: Read, query: Annotated[m.DatasetQuery, Query()]
 ) -> m.ManifestResponse:
-    return read.query(query).manifest(dataset_id, query.version)
+    queries = read.query(query)
+    if query.catalog == "workspace":
+        return stored_manifest(
+            queries.snapshot, queries._dataset(dataset_id, query.version), read.settings
+        )
+    return queries.manifest(dataset_id, query.version)
+
+
+@router.get("/datasets/{dataset_id}/export")
+def export(
+    dataset_id: str, read: Read, query: Annotated[m.ExportQuery, Query()]
+) -> StreamingResponse:
+    from corpusflow.api.v1.business import audit
+
+    queries = read.query(query)
+    dataset = queries._dataset(dataset_id, query.version)
+    authorize_export(read.session, queries.snapshot, dataset)
+    samples = [
+        s
+        for s in queries._samples(dataset_id, query.version)
+        if query.split is None or s.split == query.split
+    ]
+    stream, content_type, disposition, size = prepare_export(
+        samples,
+        dataset,
+        query.export_format,
+        read.settings.training_center_max_records,
+        read.settings.training_center_max_bytes,
+    )
+    try:
+        audit(
+            read.session,
+            read.request,
+            read.workspace,
+            actor_id(read.request, read.session),
+            "training_center.dataset.export",
+            "dataset_version",
+            dataset.version_id,
+            {
+                "catalog": query.catalog,
+                "revision": queries.scope.revision,
+                "split": query.split,
+                "purpose": "training",
+                "export_format": query.export_format,
+                "record_count": len(samples),
+            },
+        )
+        read.session.commit()
+    except Exception:
+        stream.close()
+        raise
+    return StreamingResponse(
+        chunks(stream),
+        media_type=content_type,
+        headers={"Content-Disposition": disposition, "Content-Length": str(size)},
+        background=BackgroundTask(stream.close),
+    )

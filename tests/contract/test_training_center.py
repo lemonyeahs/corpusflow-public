@@ -8,6 +8,7 @@ from __future__ import annotations
 import pytest
 from corpusflow.contracts.training_center import models as m
 from corpusflow.db.models import Membership, User, Workspace
+from corpusflow.db.session import Base
 from corpusflow.modules.training_center.catalog import GeneratedCatalog
 from corpusflow.modules.training_center.generation import build_catalog, write_catalog
 from fastapi.testclient import TestClient
@@ -30,8 +31,7 @@ def api(tmp_path, settings):
     engine = create_engine(
         "sqlite+pysqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
     )
-    for model in (User, Workspace, Membership):
-        model.__table__.create(engine)
+    Base.metadata.create_all(engine)
     with Session(engine) as session:
         session.add_all(
             [
@@ -71,6 +71,83 @@ def api(tmp_path, settings):
 
 
 PREFIX = "/api/v1/training-center"
+
+
+def test_workspace_http_has_independent_frozen_empty_snapshot(api):
+    client, _, _ = api
+    first = client.get(PREFIX + "/overview", params={"catalog": "workspace"})
+    assert first.status_code == 200, first.text
+    parsed = m.OverviewResponse.model_validate(first.json())
+    assert parsed.metrics["training_record_count"].value == 0
+    assert parsed.scope.catalog == "workspace"
+    params = {"catalog": "workspace", "revision": parsed.scope.revision}
+    response = client.get(PREFIX + "/files", params=params)
+    assert response.status_code == 200 and response.json()["items"] == []
+    assert response.json()["scope"] == first.json()["scope"]
+    cross_workspace = client.get(
+        PREFIX + "/files",
+        params=params,
+        headers={"Authorization": "Bearer token-b", "X-Workspace-ID": "workspace-b"},
+    )
+    assert cross_workspace.status_code == 409
+    assert cross_workspace.json()["error"]["code"] == "SNAPSHOT_EXPIRED"
+    response = client.get(PREFIX + "/files", params={"catalog": "workspace", "revision": "missing"})
+    assert response.status_code == 409
+
+
+def test_export_http_uses_full_split_and_audits_only_success(api, monkeypatch):
+    from types import SimpleNamespace
+
+    from corpusflow.db.models import AuditEvent
+    from corpusflow.modules.training_center import downloads
+
+    client, store, engine = api
+    snapshot = store.load("workspace-a")
+    dataset = snapshot.datasets[0]
+    captured = []
+
+    def serializer(records, kind, export_format):
+        captured.extend(records)
+        return SimpleNamespace(
+            chunks=iter([b"complete\n"]), content_type="text/plain", extension="txt"
+        )
+
+    monkeypatch.setattr(downloads, "serializer", serializer)
+    params = {
+        "version": dataset.version,
+        "revision": snapshot.scope.revision,
+        "export_format": "txt",
+        "split": "train",
+    }
+    response = client.get(f"{PREFIX}/datasets/{dataset.id}/export", params=params)
+    assert response.status_code == 200 and response.content == b"complete\n"
+    assert int(response.headers["content-length"]) == 9
+    assert "filename*=UTF-8''" in response.headers["content-disposition"]
+    assert len(captured) == dataset.split_counts.train
+    assert all(item["split"] == "train" for item in captured)
+    with Session(engine) as session:
+        audit = session.scalar(select(AuditEvent))
+        assert audit.summary["revision"] == snapshot.scope.revision
+        assert audit.summary["record_count"] == len(captured)
+
+
+def test_export_unavailable_never_returns_success_headers(api, monkeypatch):
+    from corpusflow.modules.training_center import downloads
+    from corpusflow.modules.training_center.catalog import CatalogError
+
+    client, store, _ = api
+    dataset = store.load("workspace-a").datasets[0]
+
+    def unavailable(*args):
+        raise CatalogError("ADAPTER_UNAVAILABLE", 503)
+
+    monkeypatch.setattr(downloads, "serializer", unavailable)
+    response = client.get(
+        f"{PREFIX}/datasets/{dataset.id}/export", params={"version": dataset.version}
+    )
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "ADAPTER_UNAVAILABLE"
+    assert "content-disposition" not in response.headers
 
 
 def test_http_endpoints_use_verified_files_and_canonical_responses(api):
@@ -163,7 +240,6 @@ def test_workspace_scoping_and_membership_revocation_even_with_warm_cache(api):
         ("/files", {"workspace_id": "workspace-b"}, 422, "VALIDATION_FAILED"),
         ("/files", {"revision": "../escape"}, 422, "INVALID_ARGUMENT"),
         ("/files", {"revision": "a" * 64}, 409, "SNAPSHOT_EXPIRED"),
-        ("/files", {"catalog": "workspace"}, 503, "ADAPTER_UNAVAILABLE"),
         ("/formats/binary/stats", {}, 422, "VALIDATION_FAILED"),
         ("/formats/txt/stats", {"timezone": "Bad/Zone"}, 422, "INVALID_ARGUMENT"),
         ("/datasets/absent/samples", {}, 422, "VALIDATION_FAILED"),
