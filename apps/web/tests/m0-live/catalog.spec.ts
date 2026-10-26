@@ -100,5 +100,5 @@ test("real workspace graph preserves its database snapshot and isolates catalog 
   await expect(page).not.toHaveURL(/revision=|root_id=|root_type=/);
   await expect(page.locator(".react-flow__node")).toHaveCount(0);
   await page.goto(`/#/lineage?catalog=generated&root_type=source&root_id=${ctx.graph_root_id}`);
-  await expect(page.getByRole("alert")).toContainText("CATALOG_UNAVAILABLE");
+  await expect(page.getByRole("alert")).toContainText("NOT_FOUND");
 });

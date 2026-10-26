@@ -52,9 +52,9 @@ Contract 文本本身有一处重复的 `description` 字段示例；属于 A �
 | C | 2、3、6 跳查询 | 节点按深度增加，达到边界 `truncated=true` | 精确集合比对 | D 深度参数 | NOT RUN |
 | D | 清洗/解析执行追踪 | run、node/operator、输入输出引用可关联 | run_id、attempt、input_refs/output_refs 一致 | C summary adapter、真实 Worker | PASS（隔离 SQLite run/step）；真实 Worker NOT RUN |
 | E | 悬空边、错误节点、重复路径和环路 | 悬空边不出现在响应；节点/边去重；环路终止 | fixture 单元测试 | 图适配层 | PASS（fixture） |
-| F | 前后端一致性 | 页面节点/边与真实 API 完全一致 | UI 响应快照与 API 集合比对 | 认证 workspace、浏览器回归 | NOT RUN |
+| F | 前后端一致性 | 页面节点/边与真实 API 完全一致 | UI 响应快照与 API 集合比对 | 认证 workspace、浏览器回归 | PASS（真实浏览器图/目录切换）；完整跨页面比对 NOT RUN |
 | G | 分叉与汇合 | 两个 Segment 汇合到同一 DatasetVersion 只保留一个节点 | 节点 ID 集合与五元组边集合 | D 图接口 | PASS（fixture） |
-| H | 参数/规模边界 | 非法 direction/depth/nodes 返回 422；规模截断有原因 | 单元测试 + HTTP 合约测试 | D 路由 | PASS（服务层）；NOT RUN（HTTP） |
+| H | 参数/规模边界 | 非法 direction/depth/nodes 返回 422；规模截断有原因 | 单元测试 + HTTP 合约测试 | D 路由 | PASS（服务层/HTTP） |
 
 ## 执行命令与结果
 
@@ -63,13 +63,14 @@ PYTHONPATH=apps/api/src uv run python scripts/verify_training_center.py
 uv run pytest -m 'not integration' -q
 uv run ruff check apps/api/src/corpusflow/api/v1/lineage_graph.py tests/unit/test_lineage_graph_api.py scripts/verify_training_center.py
 PYTHONPATH=apps/api/src uv run python scripts/export_training_center_contract.py --check
+PYTHONPATH=apps/api/src uv run python scripts/verify_training_center_m0.py --catalog
 ```
 
-本轮 workspace/generated API 适配器、处理节点详情和页面代码已完成定向验证；generated HTTP 使用临时发布目录和
-认证 SQLite fixture 验证通过。浏览器截图、跨页面数据一致性和真实 Worker 产生的多跳边仍为 `NOT RUN`，
-因为尚未提供共享认证浏览器 fixture 和独立 Worker 复核。
+本轮 workspace/generated API 适配器、处理节点详情和页面代码已完成定向验证；真实隔离 PostgreSQL/API 验收通过 63 项，
+真实浏览器验收 6 项全部通过，覆盖目录读取、授权、快照、workspace 图和目录切换。完整跨页面数据一致性和真实 Worker
+产生的多跳边仍为 `NOT RUN`，因为本轮没有启动 Worker/Redis/MinIO。
 
-结果：后端 `357 passed, 15 deselected`，图路由单测及发布目录 HTTP 测试 `13 passed`，Ruff、mypy、契约导出检查均通过；
+结果：后端 `358 passed, 15 deselected`，图路由单测及发布目录 HTTP 测试 `13 passed`，隔离真实 HTTP `63 checks`、真实浏览器 `6 passed`，Ruff、mypy、契约导出检查均通过；
 前端 `typecheck`、`lint`、`build` 均通过。构建仅报告已有的大 chunk warning。
 
 部署限制：workspace 冻结快照当前保存在单进程内存，900 秒过期且读取不续期，每个 workspace 最多保留 10 份；
@@ -83,7 +84,7 @@ PYTHONPATH=apps/api/src uv run python scripts/export_training_center_contract.py
 - 当前：共享 DTO、主路由注册和页面入口已由 M0/M1 合并；本轮已接入生成目录读取。
 - 需求：保留 generated catalog 的来源边和稳定 revision，未执行处理链不得生成 operator 节点。
 - 负责：Agent 2 提供目录发布与授权 fixture，Agent 4 接入图查询。
-- 阻塞：缺少共享真实目录 fixture，当前 HTTP 仅用临时发布目录验证；非空处理目录继续按 `ADAPTER_UNAVAILABLE` 失败。
+- 阻塞：共享目录 fixture 尚未进入默认开发服务；本轮已用专用 PostgreSQL/API 临时目录完成真实 HTTP/浏览器验证。非空处理目录继续按 `ADAPTER_UNAVAILABLE` 失败。
 
 ### Agent 2（中阻塞）
 
@@ -91,7 +92,7 @@ PYTHONPATH=apps/api/src uv run python scripts/export_training_center_contract.py
 - 缺口：需提供共享已发布 generated workspace 的浏览器复核；非空处理文件仍等待处理目录协议。
 - 建议：继续使用 `GeneratedCatalog.load()` 和 `source_ref/dataset_refs/source_refs`，未执行的 processing-runs 保持为空。
 - 负责：Agent 2 提供目录发布与授权 fixture，Agent 4 负责遍历。
-- 阻塞：缺少共享真实目录 fixture；临时发布目录 HTTP 已通过，浏览器复核仍未运行。
+- 阻塞：默认开发服务仍没有共享目录 fixture；专用发布目录 HTTP 和浏览器复核已通过。
 
 ### Agent 3（高阻塞）
 

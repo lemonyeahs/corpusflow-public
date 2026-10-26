@@ -245,6 +245,8 @@ def main():
                 )["source_id"]
                 for index in range(3)
             ]
+            listed_sources = call("/api/v1/sources", headers=auth)
+            assert set(source_ids) <= {row["source_id"] for row in listed_sources["items"]}
             with Session(engine) as session:
                 session.add(
                     LineageEdge(
@@ -296,13 +298,21 @@ def main():
                 code="SNAPSHOT_EXPIRED",
             )
             call(graph_path, 404, headers=other_auth, params=graph_params, code="NOT_FOUND")
-            call(
+            generated_snapshot = store.load(workspace)
+            generated_root = next(iter(generated_snapshot.sources))
+            generated_graph = call(
                 graph_path,
-                503,
                 headers=auth,
-                params={**graph_params, "catalog": "generated"},
-                code="CATALOG_UNAVAILABLE",
+                params={
+                    "catalog": "generated",
+                    "root_type": "source",
+                    "root_id": generated_root,
+                    "revision": generated_snapshot.scope.revision,
+                },
+                model=m.LineageGraph,
             )
+            assert generated_graph["scope"]["revision"] == generated_snapshot.scope.revision
+            assert all(node["kind"] != "operator_run" for node in generated_graph["nodes"])
             with Session(engine) as session:
                 membership = session.scalar(
                     select(Membership).where(
