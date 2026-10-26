@@ -130,6 +130,21 @@ METRICS: dict[str, tuple[str, str, float | None]] = {
         "higher",
         None,
     ),
+    "dpo.preference_resolution_rate": (
+        "approved preference pairs / DPO preference candidates",
+        "higher",
+        1.0,
+    ),
+    "dpo.response_difference_rate": (
+        "pairs with distinct chosen and rejected responses / DPO samples",
+        "higher",
+        1.0,
+    ),
+    "dpo.evidence_coverage": (
+        "DPO samples with persisted evidence / DPO samples",
+        "higher",
+        1.0,
+    ),
 }
 UNASSESSED = {
     "document.text_completeness": "no human reference transcription",
@@ -230,6 +245,8 @@ def sample_text(product: str, payload: dict[str, Any]) -> str:
         )
     if product == "evaluation":
         return str(payload.get("question", "")) + "\n" + str(payload.get("reference_answer", ""))
+    if product == "dpo":
+        return "\n".join(str(payload.get(key, "")) for key in ("prompt", "chosen", "rejected"))
     return str(payload.get("text", ""))
 
 
@@ -335,7 +352,7 @@ def composition(
         fields["year"].append(str(metadata.get("year", "unknown")))
         split = (
             _split_for_source(sample.source_id)
-            if dataset.product_type in {"sft", "pretrain"}
+            if dataset.product_type in {"sft", "pretrain", "dpo"}
             else "all"
         )
         if version:
@@ -431,9 +448,13 @@ def evaluate(
     release = read_release(settings, version) if settings and version else None
     samples = candidate_rows(session, build, version)
     product = dataset.product_type
-    purpose = {"sft": "training", "pretrain": "training", "rag": "rag", "evaluation": "evaluation"}[
-        product
-    ]
+    purpose = {
+        "sft": "training",
+        "pretrain": "training",
+        "rag": "rag",
+        "evaluation": "evaluation",
+        "dpo": "training",
+    }[product]
     run = QualityEvaluationRun(
         workspace_id=workspace_id,
         rule_set_id=rule_set.id,
@@ -686,6 +707,17 @@ def evaluate(
                 "method": "source OR exact evidence; semantic near-duplicates NOT_EVALUATED",
             },
         )
+    if product == "dpo":
+        resolved = sum(
+            bool(sample.payload.get("chosen")) and bool(sample.payload.get("rejected"))
+            for sample in samples
+        )
+        distinct = sum(
+            sample.payload.get("chosen") != sample.payload.get("rejected") for sample in samples
+        )
+        metric("dpo.preference_resolution_rate", resolved, size)
+        metric("dpo.response_difference_rate", distinct, size)
+        metric("dpo.evidence_coverage", evidence_valid, size)
     for key, reason in UNASSESSED.items():
         metrics.append(
             {
@@ -803,6 +835,8 @@ def evaluate(
                 if product == "evaluation"
                 else ["overlap", "unit"]
                 if product == "rag"
+                else ["preference_reason", "annotation_version"]
+                if product == "dpo"
                 else []
             )
         },

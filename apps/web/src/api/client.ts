@@ -1,5 +1,5 @@
 import type {
-  Asset, AssetDetail, CandidateSample, Dataset, DatasetProductType, DatasetVersion, LineageEdge, Manifest,
+  Asset, AssetDetail, CandidateSample, DashboardOverview, Dataset, DatasetProductType, DatasetVersion, DemoCase, DpoOverview, DpoPreference, LineageEdge, LineageView, Manifest,
   OperatorDefinition, PipelineRun, ProcessingArtifact, QualityIssue, QualityEvaluation, QualityRules, QualityRuleConfig, QualityReportData, QualityCoverage, QualityComparison, Session, Source, Workspace,
 } from "../types";
 
@@ -46,8 +46,21 @@ export const api = {
   sources: (ctx: ApiContext) => request<{ items: Source[] }>("/sources", ctx),
   createSource: (ctx: ApiContext, body: { name: string; kind: string }) => request<Source>("/sources", ctx, json(body)),
   stats: (ctx: ApiContext) => request<{ total_assets: number; as_of: string; metric_definition_version: string }>("/assets/stats", ctx),
-  assets: (ctx: ApiContext, offset = 0, limit = 20) => request<{ items: Asset[]; total_count: number }>(`/assets?offset=${offset}&limit=${limit}`, ctx),
+  dashboardOverview: (ctx: ApiContext, params = "") => request<DashboardOverview>(`/dashboard/overview${params ? `?${params}` : ""}`, ctx),
+  metadataProposals: (ctx: ApiContext, assetId: string) => request<{ items: Array<{ proposal_id: string; status: string; revision: number; fields: Record<string, unknown>; field_sources: Record<string, unknown>; confidence: Record<string, number> }>; confirmed: Record<string, unknown> | null }>(`/assets/${assetId}/metadata-proposals`, ctx),
+  updateMetadataProposal: (ctx: ApiContext, assetId: string, proposalId: string, fields: Record<string, unknown>) => request(`/assets/${assetId}/metadata-proposals/${proposalId}`, ctx, { ...json({ fields }), method: "PATCH" }),
+  confirmMetadataProposal: (ctx: ApiContext, assetId: string, proposalId: string) => request(`/assets/${assetId}/metadata-proposals/${proposalId}/confirm`, ctx, json({})),
+  demoCases: (ctx: ApiContext) => request<{ items: DemoCase[]; scope: { workspace_id: string }; as_of: string }>("/demo/cases", ctx),
+  dpoOverview: (ctx: ApiContext) => request<DpoOverview>("/dpo/overview", ctx),
+  dpoPreferences: (ctx: ApiContext, status?: string) => request<{ items: DpoPreference[] }>(`/dpo/preferences${status ? `?status=${encodeURIComponent(status)}` : ""}`, ctx),
+  importDpoPreferences: (ctx: ApiContext, body: { request_key: string; samples: Array<{ sample_key: string; prompt: string; response_a: string; response_b: string; source_id: string; evidence_ids: string[]; candidate_model?: string; model_version?: string; generation_config?: Record<string, unknown> }> }) => request<{ items: Array<{ preference_sample_id: string; sample_key: string }>; idempotent: boolean }>("/dpo/preferences/import", ctx, json(body)),
+  annotateDpo: (ctx: ApiContext, id: string, body: { choice: "a" | "b" | "tie" | "uncertain" | "both_invalid"; reason: string }) => request<{ preference_sample_id: string; status: string }>(`/dpo/preferences/${id}/annotations`, ctx, json(body)),
+  reviewDpo: (ctx: ApiContext, id: string, body: { decision: "approved" | "rejected"; note: string; choice?: "a" | "b" }) => request<{ preference_sample_id: string; status: string }>(`/dpo/preferences/${id}/review`, ctx, json(body)),
+  createDpoBuild: (ctx: ApiContext, body: { dataset_id: string; preference_sample_ids: string[]; config?: Record<string, unknown> }) => request<{ build_id: string; dataset_id: string; product_type: string; status: string; candidate_count: number; config_hash: string; metrics: Record<string, unknown>; excluded: Array<Record<string, string>> }>("/dpo/builds", ctx, json(body)),
+  assets: (ctx: ApiContext, offset = 0, limit = 20, params = "") => request<{ items: Asset[]; total_count: number }>(`/assets?offset=${offset}&limit=${limit}${params ? `&${params}` : ""}`, ctx),
+  datasetSamples: (ctx: ApiContext, datasetId: string, params = "") => request<{ items: Array<Record<string, unknown>>; total_count: number; dataset: Dataset }>(`/datasets/${datasetId}/samples${params ? `?${params}` : ""}`, ctx),
   asset: (ctx: ApiContext, id: string) => request<AssetDetail>(`/assets/${id}`, ctx),
+  assetLineageView: (ctx: ApiContext, id: string, versionId?: string) => request<LineageView>(`/assets/${id}/lineage-view${versionId ? `?document_version_id=${encodeURIComponent(versionId)}` : ""}`, ctx),
   initUpload: (ctx: ApiContext, body: { filename: string; size: number; content_type: string }) => request<{ upload_id: string; status: string; object_key: string }>("/uploads/init", ctx, json(body)),
   uploadContent: (ctx: ApiContext, id: string, file: Blob, onProgress?: (value: number) => void) => new Promise<{ upload_id: string; status: string; bytes: number; sha256: string }>((resolve, reject) => {
     const xhr = new XMLHttpRequest();

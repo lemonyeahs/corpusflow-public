@@ -290,11 +290,81 @@ class EvaluationDatasetBuilder:
         )
 
 
+class DpoBuilder:
+    """Build DPO candidates from already resolved preference annotations."""
+
+    product_type = "dpo"
+    purpose = "training"
+
+    def build(self, segments: list[Segment], config: dict[str, Any]) -> BuildResult:
+        raise BuilderError(
+            "DPO_PREFERENCE_INPUT_REQUIRED",
+            "DPO builds require approved PreferenceSample records",
+        )
+
+    def build_preferences(self, preferences: list[Any], config: dict[str, Any]) -> BuildResult:
+        selected: list[BuiltCandidate] = []
+        excluded: list[dict[str, str]] = []
+        seen_prompts: set[str] = set()
+        for preference in preferences:
+            prompt = str(preference.prompt or "").strip()
+            chosen = str(preference.chosen_response or "").strip()
+            rejected = str(preference.rejected_response or "").strip()
+            normalized_prompt = " ".join(prompt.split()).casefold()
+            if preference.status != "approved":
+                excluded.append({"sample_id": preference.id, "reason": "preference_not_approved"})
+                continue
+            if not prompt or not chosen or not rejected:
+                excluded.append({"sample_id": preference.id, "reason": "empty_preference_field"})
+                continue
+            if chosen == rejected:
+                excluded.append({"sample_id": preference.id, "reason": "identical_responses"})
+                continue
+            if normalized_prompt in seen_prompts:
+                excluded.append({"sample_id": preference.id, "reason": "duplicate_prompt"})
+                continue
+            seen_prompts.add(normalized_prompt)
+            evidence_ids = [str(item) for item in (preference.evidence_ids or [])]
+            selected.append(
+                BuiltCandidate(
+                    key=f"dpo:{preference.id}",
+                    source_id=preference.source_id,
+                    evidence_ids=evidence_ids,
+                    payload={
+                        "preference_sample_id": preference.id,
+                        "prompt": prompt,
+                        "chosen": chosen,
+                        "rejected": rejected,
+                        "evidence_ids": evidence_ids,
+                        "source_id": preference.source_id,
+                        "annotation_version": preference.annotation_version,
+                        "preference_reason": preference.preference_reason,
+                        "metadata": {"product_type": "dpo", "schema_version": "dpo.v1"},
+                    },
+                )
+            )
+        return BuildResult(
+            candidates=selected,
+            excluded=excluded,
+            metrics={
+                "product_type": self.product_type,
+                "schema_version": "dpo.v1",
+                "input_preference_count": len(preferences),
+                "candidate_count": len(selected),
+                "excluded_count": len(excluded),
+                "duplicate_prompt_count": sum(
+                    item["reason"] == "duplicate_prompt" for item in excluded
+                ),
+            },
+        )
+
+
 BUILDERS: dict[str, DatasetBuilder] = {
     "sft": SftBuilder(),
     "pretrain": PretrainBuilder(),
     "rag": RagDatasetBuilder(),
     "evaluation": EvaluationDatasetBuilder(),
+    "dpo": DpoBuilder(),
 }
 
 

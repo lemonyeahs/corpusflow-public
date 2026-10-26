@@ -24,6 +24,7 @@ from corpusflow.db.models import (
     DocumentVersion,
     LicenseGrant,
     LineageEdge,
+    PreferenceSample,
     SampleReview,
     Segment,
     uid,
@@ -94,6 +95,17 @@ def _validate_product_payload(product_type: str, payload: dict[str, Any]) -> Non
                 "INVALID_SAMPLE_FORMAT", "evaluation evidence schema is invalid"
             )
         return
+    if product_type == "dpo":
+        required = ("preference_sample_id", "prompt", "chosen", "rejected", "evidence_ids")
+        if any(not payload.get(key) for key in required):
+            raise MaterializationError(
+                "INVALID_SAMPLE_FORMAT", "dpo preference schema is incomplete"
+            )
+        if payload["chosen"] == payload["rejected"]:
+            raise MaterializationError("INVALID_SAMPLE_FORMAT", "dpo responses must differ")
+        if not isinstance(payload["evidence_ids"], list) or not payload["evidence_ids"]:
+            raise MaterializationError("INVALID_SAMPLE_EVIDENCE", "dpo evidence is empty")
+        return
     raise MaterializationError("UNSUPPORTED_PRODUCT_TYPE", product_type)
 
 
@@ -110,6 +122,10 @@ def _payload_token_count(product_type: str, payload: dict[str, Any]) -> int:
         return sum(len(message["content"].split()) for message in payload["messages"])
     if product_type in {"pretrain", "rag"}:
         return len(str(payload.get("text", "")).split())
+    if product_type == "dpo":
+        return sum(
+            len(str(payload.get(key, "")).split()) for key in ("prompt", "chosen", "rejected")
+        )
     text = f"{payload.get('question', '')} {payload.get('reference_answer', '')}"
     return len(text.split())
 
@@ -213,7 +229,7 @@ def materialize(
             (
                 sample,
                 _split_for_source(sample.source_id)
-                if product_type in {"sft", "pretrain"}
+                if product_type in {"sft", "pretrain", "dpo"}
                 else "all",
                 messages if product_type == "sft" else [],
                 [str(x) for x in evidence_ids],
@@ -410,6 +426,21 @@ def materialize(
                     relation="included_in",
                 )
             )
+            if product_type == "dpo":
+                preference_id = str(sample.payload.get("preference_sample_id", ""))
+                preference = session.get(PreferenceSample, preference_id)
+                if preference and not preference.published_version_id:
+                    preference.published_version_id = version.id
+                    session.add(
+                        LineageEdge(
+                            workspace_id=workspace_id,
+                            from_type="PreferenceSample",
+                            from_id=preference.id,
+                            to_type="DatasetVersion",
+                            to_id=version.id,
+                            relation="published_as",
+                        )
+                    )
             for evidence_id in evidence_ids:
                 session.add(
                     LineageEdge(

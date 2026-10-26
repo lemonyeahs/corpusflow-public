@@ -1,6 +1,6 @@
-# CorpusFlow Web（P0-H）
+# 玄知大模型 Web（P0-H）
 
-这是 CorpusFlow 的 TypeScript + React + Vite Web 工作台。核心业务页面通过 `src/api/client.ts` 调用真实 FastAPI，不使用固定业务演示数据；V3.1 HTML 原型保留在 `docs/prototype/`。
+这是 玄知大模型 的 TypeScript + React + Vite Web 工作台。核心业务页面通过 `src/api/client.ts` 调用真实 FastAPI，不使用固定业务演示数据；V3.1 HTML 原型保留在 `docs/prototype/`。
 
 ## 本地启动
 
@@ -33,4 +33,4 @@ npm run e2e
 
 ## 页面边界
 
-已接入真实 API 的页面包括登录/空间、数据接入、资产和结构化片段、处理 Run、质量审核、SFT 构建、发布下载、血缘和系统审计。生产 OIDC、RAG、AI 智能采集、外部解析服务、正式模型生成和 Parquet 导出仍显示为 DEMO/未接入。
+已接入真实 API 的页面包括登录/空间、数据接入、资产和结构化片段、处理 Run、质量审核、SFT/DPO 构建、发布下载、血缘和系统审计。生产 OIDC、AI 智能采集、外部解析服务、正式模型生成和 Parquet 导出仍显示为 DEMO/未接入；DPO 页面仅准备偏好数据，不执行 DPO 训练。

@@ -35,7 +35,7 @@ export function ProcessingPage({ ctx }: { ctx: ApiContext }) {
         api.runLogs(ctx, run.run_id),
         api.runArtifacts(ctx, run.run_id),
       ]);
-      setLogs(prev => ({ ...prev, [run.run_id]: log.items.map(item => `[${item.level}] ${item.message}`) }));
+      setLogs(prev => ({ ...prev, [run.run_id]: log.items.map(item => `${formatTime(item.created_at)} [${item.level}] ${item.message}`) }));
       setArtifacts(prev => ({ ...prev, [run.run_id]: artifactResult.items }));
     }
     if (result.some(run => ["queued", "running"].includes(run.status))) {
@@ -124,11 +124,13 @@ export function ProcessingPage({ ctx }: { ctx: ApiContext }) {
                   <span data-testid="run-status"><Badge value={run.status} /></span>
                 </div>
                 {run.error_code && <div className="bad-text">错误：{run.error_code}</div>}
+                {run.dag?.edges?.length ? <div className="pipeline-edges">实际 DAG：{run.dag.edges.map(edge => edge.join(" → ")).join(" · ")}</div> : null}
                 {run.nodes?.map(node => (
                   <div className="node-row" key={`${run.run_id}-${node.node_id}`}>
                     <span><strong>{node.node_id}</strong> · {node.operator_version ?? "—"}</span>
                     <small>{node.input_count} → {node.output_count}，过滤 {node.filtered_count}，{Math.round(node.duration_ms ?? 0)} ms</small>
                     <Badge value={node.status} />
+                    <details><summary>参数</summary><pre>{JSON.stringify(node.config ?? {}, null, 2)}</pre></details>
                   </div>
                 ))}
                 {artifacts[run.run_id]?.map(artifact => <code className="log-line" key={artifact.artifact_id}>产物 {artifact.kind} · {artifact.sha256.slice(0, 12)}</code>)}
@@ -136,7 +138,7 @@ export function ProcessingPage({ ctx }: { ctx: ApiContext }) {
                   <button className="button tiny" onClick={() => void refreshRuns()}>刷新</button>
                   {["failed", "ready_to_resume"].includes(run.status) && <button className="button tiny" onClick={() => void resume(run)}>恢复</button>}
                 </div>
-                {logs[run.run_id]?.map((line, index) => <code className="log-line" key={`${line}-${index}`}>{formatTime()} {line}</code>)}
+                {logs[run.run_id]?.map((line, index) => <code className="log-line" key={`${line}-${index}`}>{line}</code>)}
               </div>
             ))}
             {!runs.length && <Empty>创建批次后将显示每个独立 Run、节点指标和真实产物。</Empty>}

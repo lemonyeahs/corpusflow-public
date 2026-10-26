@@ -158,6 +158,49 @@ class Asset(Timestamped):
     metadata_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
 
 
+class DocumentMetadata(Timestamped):
+    """Confirmed, workspace-scoped document metadata."""
+
+    __tablename__ = "document_metadata"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id"), index=True)
+    document_type: Mapped[str] = mapped_column(String(50), default="unidentified", index=True)
+    title: Mapped[str | None] = mapped_column(Text, nullable=True)
+    authors: Mapped[list[str]] = mapped_column(JSON, default=list)
+    abstract: Mapped[str | None] = mapped_column(Text, nullable=True)
+    keywords: Mapped[list[str]] = mapped_column(JSON, default=list)
+    research_field: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    journal: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    conference: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    publication_year: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    doi: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    language: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    license_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    confirmed_by: Mapped[str] = mapped_column(String(36))
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "asset_id", name="uq_document_metadata_asset"),
+    )
+
+
+class MetadataProposal(Timestamped):
+    """Machine extracted metadata awaiting explicit human confirmation."""
+
+    __tablename__ = "metadata_proposals"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id"), index=True)
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    parser_name: Mapped[str] = mapped_column(String(100), default="builtin-metadata")
+    parser_version: Mapped[str] = mapped_column(String(40), default="1")
+    fields: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    field_sources: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    confidence: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    confirmed_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    __table_args__ = (Index("ix_metadata_proposals_asset_created", "asset_id", "created_at"),)
+
+
 class DiscoveryCandidate(Timestamped):
     __tablename__ = "discovery_candidates"
     workspace_id: Mapped[str] = mapped_column(String(36), index=True)
@@ -449,6 +492,58 @@ class SampleReview(Timestamped):
     reviewer_id: Mapped[str] = mapped_column(String(36))
     decision: Mapped[str] = mapped_column(String(30))
     note: Mapped[str] = mapped_column(Text, default="")
+
+
+class PreferenceSample(Timestamped):
+    """An immutable-after-publication pair of candidate answers for DPO."""
+
+    __tablename__ = "preference_samples"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    sample_key: Mapped[str] = mapped_column(String(160))
+    import_request_key: Mapped[str] = mapped_column(String(120), index=True)
+    import_request_hash: Mapped[str] = mapped_column(String(64))
+    prompt: Mapped[str] = mapped_column(Text)
+    prompt_messages: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON, nullable=True)
+    response_a: Mapped[str] = mapped_column(Text)
+    response_b: Mapped[str] = mapped_column(Text)
+    chosen_response: Mapped[str | None] = mapped_column(Text, nullable=True)
+    rejected_response: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    preference_reason: Mapped[str] = mapped_column(Text, default="")
+    source_id: Mapped[str] = mapped_column(String(36), index=True)
+    evidence_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    candidate_model: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    model_version: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    generation_config: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    imported_by: Mapped[str] = mapped_column(String(36))
+    reviewed_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    review_note: Mapped[str] = mapped_column(Text, default="")
+    annotation_version: Mapped[str] = mapped_column(String(40), default="dpo.preference.v1")
+    published_version_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "sample_key", name="uq_preference_sample_key"),
+        UniqueConstraint(
+            "workspace_id", "import_request_key", "sample_key", name="uq_preference_import_item"
+        ),
+    )
+
+
+class PreferenceAnnotation(Timestamped):
+    __tablename__ = "preference_annotations"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    preference_sample_id: Mapped[str] = mapped_column(
+        ForeignKey("preference_samples.id"), index=True
+    )
+    annotator_id: Mapped[str] = mapped_column(String(36), index=True)
+    choice: Mapped[str] = mapped_column(String(30))
+    reason: Mapped[str] = mapped_column(Text)
+    annotation_version: Mapped[str] = mapped_column(String(40), default="dpo.preference.v1")
+    presented_order: Mapped[dict[str, str]] = mapped_column(JSON, default=dict)
+    __table_args__ = (
+        UniqueConstraint(
+            "preference_sample_id", "annotator_id", name="uq_preference_annotation_annotator"
+        ),
+    )
 
 
 class DatasetVersion(Timestamped):
