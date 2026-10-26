@@ -1,0 +1,22 @@
+.shell { min-height:100vh; }
+.sidebar { position:fixed; inset:0 auto 0 0; width:230px; padding:28px 16px 18px; background:#14252c; color:#a2b1b6; display:flex; flex-direction:column; overflow:auto; }
+.brand { display:flex; align-items:center; gap:12px; color:#f5fbf8; font-size:19px; font-weight:600; padding:0 10px; }
+.brand>b { display:grid; place-items:center; width:36px; height:36px; background:#b8efda; color:#164d40; border-radius:10px; }
+.brand small { display:block; font-size:9px; letter-spacing:1.7px; color:#88a1a4; margin-top:5px; }
+.workspace { display:grid; gap:8px; margin:28px 4px 12px; font-size:11px; }
+.workspace select { width:100%; padding:10px; border:1px solid #35464b; border-radius:6px; background:#1b3036; color:#d3dfdf; text-overflow:ellipsis; }
+.group { padding:10px 14px; color:#88a1a4; font-size:11px; letter-spacing:1px; cursor:pointer; }
+.link { display:flex; align-items:center; gap:11px; padding:12px 14px; margin:3px 0; border-radius:7px; color:#a2b1b6; font-size:13px; text-decoration:none; }
+.link:hover { background:#22383e; color:#e7f2ed; }
+.link.active { background:#28443f; color:#c4f1db; }
+.user { display:grid; gap:7px; margin-top:auto; padding:28px 12px 0; overflow-wrap:anywhere; }
+.user small { color:#88a1a4; }
+.user button { display:flex; align-items:center; gap:9px; margin-top:10px; border:0; background:transparent; color:#c4d6d0; cursor:pointer; padding:8px 0; }
+.main { margin-left:230px; min-width:0; }
+.topbar { min-height:65px; background:#fff; border-bottom:1px solid #e8edef; display:flex; align-items:center; gap:16px; padding:0 34px; color:#71818d; }
+.topbar strong { color:#435966; font-weight:500; }
+.topbar small { margin-left:auto; }
+.content { max-width:1600px; margin:auto; padding:34px; }
+.menuButton { display:none; border:0; background:transparent; color:#435966; cursor:pointer; }
+.mobileNav { color:#a2b1b6; font-family:Inter,"Segoe UI","Microsoft YaHei",sans-serif; }
+@media(max-width:850px) { .sidebar { display:none; }.main { margin-left:0; }.menuButton { display:flex; }.topbar { padding:0 16px; }.content { padding:24px 16px; } }

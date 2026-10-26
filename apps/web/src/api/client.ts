@@ -3,7 +3,7 @@ import type {
   OperatorDefinition, PipelineRun, ProcessingArtifact, QualityIssue, QualityEvaluation, QualityRules, QualityRuleConfig, QualityReportData, QualityCoverage, QualityComparison, Session, Source, Workspace,
 } from "../types";
 
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) || "/api/v1";
+export const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) || "/api/v1";
 
 export class ApiError extends Error {
   code: string;
@@ -29,10 +29,17 @@ export async function request<T>(path: string, context?: ApiContext, init: Reque
   if (context?.token) headers.set("Authorization", `Bearer ${context.token}`);
   if (context?.workspaceId) headers.set("X-Workspace-ID", context.workspaceId);
   if (init.body && !(init.body instanceof Blob) && typeof init.body === "string") headers.set("Content-Type", "application/json");
-  const response = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+  let response: Response | undefined;
+  if (import.meta.env.DEV && import.meta.env.VITE_TC_FIXTURES === "true") {
+    const { fixtureResponse } = await import("../dev/training-center/interceptor");
+    response = fixtureResponse(path, headers, init);
+  }
+  response ??= await fetch(`${BASE_URL}${path}`, { ...init, headers });
   const text = await response.text();
   let body: unknown = {};
-  try { body = text ? JSON.parse(text) : {}; } catch { body = { error: { code: "INVALID_RESPONSE", message: text } }; }
+  try { body = text ? JSON.parse(text) : {}; } catch {
+    throw new ApiError(response.status, { error: { code: "INVALID_RESPONSE", message: "接口响应不是有效 JSON" } });
+  }
   if (!response.ok) throw new ApiError(response.status, body as { error?: { code?: string; message?: string; retryable?: boolean; request_id?: string } });
   return body as T;
 }

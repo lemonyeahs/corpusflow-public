@@ -1,0 +1,7 @@
+body { margin:0; min-width:320px; }
+.training-center-shell { --tc-bg:#f5f7f8; --tc-surface:#fff; --tc-text:#202e3b; --tc-muted:#71818d; --tc-border:#e8edef; --tc-primary:#168f78; font-family:Inter,"Segoe UI","Microsoft YaHei",sans-serif; color:var(--tc-text); background:var(--tc-bg); min-height:100vh; font-size:14px; }
+.training-center-shell *, .training-center-shell *::before, .training-center-shell *::after { box-sizing:border-box; }
+.training-center-shell a { color:inherit; text-decoration:none; }
+.training-center-shell button, .training-center-shell select { font:inherit; }
+.training-center-shell :focus-visible { outline:3px solid #76cbb5; outline-offset:3px; }
+.legacy-page { min-height:100vh; }
