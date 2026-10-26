@@ -74,7 +74,7 @@ test("SFT preserves role order and surfaces failed download", async ({ page }) =
   const sample = samples().find(s => s.kind === "sft")!;
   if (sample.kind !== "sft") throw new Error("fixture mismatch");
   expect(await page.locator("li[data-role]").evaluateAll(nodes => nodes.map(n => n.getAttribute("data-role")))).toEqual(sample.messages.map(m => m.role));
-  await page.getByRole("button", { name: "导出数据" }).hover();
+  await page.getByRole("button", { name: "导出数据" }).click();
   const item = page.getByRole("menuitem", { name: "JSONL" });
   await item.focus();
   const [failed] = await Promise.all([page.waitForResponse(response => response.url().includes("/export?")), item.press("Enter")]);
@@ -105,6 +105,50 @@ test("expired snapshot requires refresh and does not silently substitute fixture
   await expect(page.getByRole("heading", { name: "数据划分" })).toHaveCount(0);
   await page.unroute("**/api/v1/training-center/datasets?**");
   await page.getByRole("button", { name: "刷新快照" }).click();
+  await expect(page.getByRole("heading", { name: "数据划分" })).toBeVisible();
+});
+
+for (const field of ["as_of", "metric_definition_version"] as const) {
+  test(`rejects changed ${field} within a cached revision and hides stale exports`, async ({ page }) => {
+    await page.clock.install();
+    await open(page, "cpt");
+    await expect(page.getByRole("heading", { name: "数据划分" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "导出数据", exact: true })).toBeEnabled();
+    const pinnedRevision = new URLSearchParams(new URL(page.url()).hash.split("?")[1]).get("revision");
+    const pattern = "**/api/v1/training-center/datasets/*/overview?**";
+    await page.route(pattern, route => {
+      expect(new URL(route.request().url()).searchParams.get("revision")).toBe(pinnedRevision);
+      const data = datasetOverview("cpt");
+      return route.fulfill({ json: { ...data, scope: { ...data.scope, [field]: field === "as_of" ? "2099-01-01T00:00:00Z" : "unexpected-definition" } } });
+    });
+    await page.getByRole("button", { name: "样本浏览", exact: true }).click();
+    await page.clock.fastForward(31_000);
+    await page.getByRole("button", { name: "概览", exact: true }).click();
+    await expect(page.getByText("响应范围与当前工作空间、目录或快照不一致，请刷新数据。", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "数据划分" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "数据集版本", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "导出数据", exact: true })).toHaveCount(0);
+    await page.unroute(pattern);
+    await page.getByRole("button", { name: /^重\s*试$/ }).click();
+    await expect(page.getByRole("heading", { name: "数据划分" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "导出数据", exact: true })).toBeEnabled();
+  });
+}
+
+test("expired refetch hides an already cached overview and its download action", async ({ page }) => {
+  await page.clock.install();
+  await open(page, "cpt");
+  await expect(page.getByRole("heading", { name: "数据划分" })).toBeVisible();
+  const pattern = "**/api/v1/training-center/datasets/*/overview?**";
+  await page.route(pattern, route => route.fulfill({ status: 409, json: { error: { code: "SNAPSHOT_EXPIRED", message: "快照已过期" } } }));
+  await page.getByRole("button", { name: "样本浏览", exact: true }).click();
+  await page.clock.fastForward(31_000);
+  await page.getByRole("button", { name: "概览", exact: true }).click();
+  await expect(page.getByText("快照已过期", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "数据划分" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "导出数据", exact: true })).toHaveCount(0);
+  await page.unroute(pattern);
+  await page.getByRole("button", { name: "刷新快照", exact: true }).click();
   await expect(page.getByRole("heading", { name: "数据划分" })).toBeVisible();
 });
 
@@ -153,7 +197,7 @@ test("download sends all filters but never current page offset", async ({ page }
     expect(query.has("offset")).toBe(false); expect(query.has("limit")).toBe(false);
     return route.fulfill({ contentType: "application/x-ndjson; charset=utf-8", headers: { "Content-Disposition": "attachment; filename=records.jsonl" }, body: '{"text":"中文"}\n' });
   });
-  await page.getByRole("button", { name: "导出数据" }).hover();
+  await page.getByRole("button", { name: "导出数据" }).click();
   const [file] = await Promise.all([page.waitForEvent("download"), page.getByRole("menuitem", { name: "JSONL" }).click()]);
   expect(file.suggestedFilename()).toBe("records.jsonl");
   expect(await file.failure()).toBeNull();

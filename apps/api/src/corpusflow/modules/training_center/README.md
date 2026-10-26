@@ -4,6 +4,8 @@
 
 本模块提供 generated 文件读取、workspace 数据库适配、查询服务和导出。业务响应不导入开发样例。指定基线 `acb7ce0` 已在默认 `create_app` 注册本 router，契约测试直接使用默认应用，不再重复挂载。generated 的真实 PostgreSQL/API/前端验收见 [M1 集成报告](../../../../../../docs/reports/TRAINING_CENTER_M1_INTEGRATION.md)；该报告不替代本分支新增 workspace、导出和页面的验证。React 页面由现有入口自动发现。
 
+2026-10-27 集成已更新共享 ExportQuery.q、实际/设计 OpenAPI，并完成隔离 PostgreSQL/S3 查询下载及浏览器验证，见 [后续集成报告](../../../../../../docs/reports/TRAINING_CENTER_M1_FOLLOWUP_INTEGRATION.md)。该验证使用显式数据库版本记录，仍不代表 Worker 或实际发布门禁已经执行。
+
 ## 文件与接口
 
 - `catalog.py`：生成 v1 目录的限额读取、完整性/引用校验、发布/退役、解析结果缓存；无数据库依赖。
@@ -43,7 +45,7 @@ stats 的 from/to 是 UTC 时间戳、包含端点；未知 ingested_at 的文�
 
 PostgreSQL 使用独立 REPEATABLE READ 事务，SQLite 显式 BEGIN。样本、文件、来源和关联在一次读取中冻结；缓存返回深拷贝。快照最多存活900秒、每空间最多10份，可由现有配置下调；读取不续期。过期、淘汰、重启或其他空间的 revision 均返回409 SNAPSHOT_EXPIRED。**当前是进程内缓存，多进程部署前需共享存储或固定快照路由。**
 
-Agent 1 的统一快照接口尚在开发（用户已确认），本轮不新增 wire revision 协议。保留原临时 WorkspaceSnapshots，并提供 `WorkspaceCatalogProvider.load` 和 FastAPI `workspace_store` 注入点；真实共享存储接入仍未完成。具体签名和调用方责任见 [协作接入说明](HANDOFF.md)。
+统一快照由 Agent 2 提供唯一发行方、存储及冻结投影，Agent 3/4 消费，Agent 1 负责公共协议与应用注入。目前保留独立 WorkspaceSnapshots，并提供 `WorkspaceCatalogProvider.load` 和 FastAPI `workspace_store` 注入点；跨模块共享存储接入仍未完成。具体签名和调用方责任见 [协作接入说明](HANDOFF.md)。
 
 文件时间取 Asset.created_at，处理状态和 processing_summary_ref 来自真实 PipelineRun；没有运行就不制造成功状态。所有关联按 workspace 约束。缺失或跨空间 evidence 返回409 INVALID_SAMPLE_EVIDENCE。旧 whitespace token 数据不作为模型 Tokens，保持 null。当前统计采用“每份文档最新版本”的片段口径，已发布样本仍可引用历史片段；请 Agent 1 确认该口径。
 
@@ -53,7 +55,7 @@ workspace manifest 读取原发布版本记录指向的对象，限定读取字�
 
 ## 数据集导出
 
-`export_format=jsonl|markdown|csv|txt`，必填 version，可选 split/q，固定当前 catalog/revision。导出和样本列表复用 `filtered_samples`，包含过滤后全部分页；拒绝 offset/limit。共享 ExportQuery 暂无 q，本轮将其作为独立路由查询参数接入，等待 Agent 1 纳入共享 DTO。直接调用 `corpusflow.services.processing_exports.serialize_records`，没有复制格式逻辑。
+`export_format=jsonl|markdown|csv|txt`，必填 version，可选 split/q，固定当前 catalog/revision。导出和样本列表复用 `filtered_samples`，包含过滤后全部分页；拒绝 offset/limit。查询整体绑定共享 ExportQuery，q 已进入 Python/TypeScript 与 OpenAPI。直接调用 `corpusflow.services.processing_exports.serialize_records`，没有复制格式逻辑。
 
 workspace 每次下载重新检查版本仍已发布，以及完整版本所有证据文件的 training confirmed LicenseGrant；固定旧快照也不能绕过撤销授权。无可证明授权的文件则403 DOWNLOAD_NOT_AUTHORIZED。generated 使用当前 workspace 成员权限，不虚构授权记录。
 

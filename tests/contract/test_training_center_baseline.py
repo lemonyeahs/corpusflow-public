@@ -80,12 +80,16 @@ def test_artifacts_replay_and_openapi_references_resolve():
     }
     assert set(spec["paths"]) & set(live["paths"]) == implemented
     catalog_paths = {path for path in implemented if path.startswith("/api/v1/training-center/")}
-    assert len(catalog_paths) == 9
+    assert len(catalog_paths) == 11
     for path in catalog_paths:
         operation = live["paths"][path]["get"]
         assert operation["security"] == [{"TrainingCenterBearer": []}]
         assert {"401", "403", "404", "409", "413", "422", "503"} <= set(operation["responses"])
         assert any(p["name"] == "X-Workspace-ID" for p in operation["parameters"])
+        if path.endswith("/export"):
+            assert "application/x-ndjson" in operation["responses"]["200"]["content"]
+            assert any(p["name"] == "q" for p in operation["parameters"])
+            continue
         schema = operation["responses"]["200"]["content"]["application/json"]["schema"]
         assert (
             schema["$ref"]

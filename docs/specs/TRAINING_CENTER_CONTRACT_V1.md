@@ -6,7 +6,7 @@
 
 唯一类型来源是 `apps/api/src/corpusflow/contracts/training_center/models.py`。前端从 `src/contracts/training-center.ts` 导入自动生成的 wire DTO；禁止直接编辑 `.generated.ts`。统一样例为 `contracts/training-center/examples.json`。设计 OpenAPI 为 `docs/api/training-center.openapi.json`，路径按现状标记 planned/implemented；实际已注册路由仍以 `docs/api/openapi.json` 为准，implemented 不表示所有 catalog 均已实现。响应严格校验字段与语义，Query DTO 允许 FastAPI 解码 HTTP 字符串参数。
 
-M2 的 workspace 快照共用、文件关联与处理路由注册条件见 [公共接入请求](../plans/TRAINING_CENTER_M2_INTEGRATION_REQUESTS.md)。这些是对冻结语义的实现要求，未新增 wire 字段。基线 acb7ce0 的 workspace 目录尚未实现，图使用独立快照，处理 router 尚未通过注册审查；三者不能互相回显 revision 来冒充统一快照。
+M2 的 workspace 快照共用、文件关联与处理路由注册条件见 [公共接入请求](../plans/TRAINING_CENTER_M2_INTEGRATION_REQUESTS.md)。基线 acb7ce0 的 workspace 目录尚未实现；后续集成已接入目录适配器、样本详情和数据集导出，兼容新增 ExportQuery.q，见 [集成报告](../reports/TRAINING_CENTER_M1_FOLLOWUP_INTEGRATION.md)。图仍使用独立快照，处理 router 尚未通过注册审查；三者不能互相回显 revision 来冒充统一快照。
 
 ## 1. 全局约定
 
@@ -29,7 +29,7 @@ M2 的 workspace 快照共用、文件关联与处理路由注册条件见 [公�
 | `#/home` | E / training-home | catalog、revision |
 | `#/data/:format` | E / data-explorer | catalog、revision、q、source_kind、language、status、offset、limit |
 | `#/ingest` | F / ingestion | run_id、batch_id；此页始终操作 workspace |
-| `#/datasets/:kind` | G / training-datasets | catalog、revision、dataset_id、version、tab、split、offset、sample_id |
+| `#/datasets/:kind` | G / training-datasets | catalog、revision、dataset_id、version、tab、split、q、offset、sample_id |
 | `#/lineage` | D / lineage | catalog、root_type、root_id、direction、max_depth |
 | `#/advanced/assets` | 现有 AssetsPage | 兼容原资产筛选与跳转 |
 | `#/advanced/processing` | 现有 ProcessingPage | 兼容原运行查询 |
@@ -40,7 +40,7 @@ M2 的 workspace 快照共用、文件关联与处理路由注册条件见 [公�
 
 - `format = all | pdf | html | md | txt | docx | csv | json | jsonl | other`；首页展示八类，other 用于成功识别为文本的未知扩展名。
 - `kind = cpt | sft | dpo`；API/数据库现有产品类型映射为 `cpt -> pretrain`，其它同名。
-- `tab = overview | samples | build`。样本与构建标签也存 URL，刷新后可恢复。
+- `tab = overview | samples | manifest | build`。样本、清单与构建标签也存 URL，刷新后可恢复。
 - 各功能导出默认页面组件，由页面读取路由参数并调用 `useWorkspaceContext()` 获取现有 ApiContext；A 提供受保护的父路由。
 - 不使用 HTML 原型中的硬编码用户名、剩余容量、活动时间作为业务默认值。
 
@@ -97,8 +97,9 @@ type SourceKind = 'web' | 'book' | 'paper' | 'other';
 | `GET /datasets` | kind 可选 | items: DatasetSummary[] | E/G |
 | `GET /datasets/{dataset_id}/overview` | version | dataset, split_counts, source_distribution, destination_counts, length_distribution, language_distribution, lineage_root_ref | G |
 | `GET /datasets/{dataset_id}/samples` | version, split, q, offset, limit | 分页 Sample 联合类型 | G |
+| `GET /datasets/{dataset_id}/samples/{sample_id}` | version | SamplesResponse，items 一项、total_count=1、offset=0、limit=1；不存在或不属于版本返回404 | G |
 | `GET /datasets/{dataset_id}/manifest` | version | manifest 对象与内容哈希 | G/验收 |
-| `GET /datasets/{dataset_id}/export` | version, export_format, split 可选 | 下载响应，范围为对应版本和筛选后的全部记录 | G |
+| `GET /datasets/{dataset_id}/export` | version, export_format, split/q 可选 | 下载响应，范围为对应版本和筛选后的全部记录；拒绝 offset/limit | G |
 
 - `DatasetSummary`：id, workspace_id, version, version_id, kind, product_type, name, record_count, record_unit, split_counts, token_count, token_count_method, status, source_refs。version 是用户选择的版本字符串，version_id 是 dataset_version 引用的实体 ID；两者不可互换。generated 的 status=available 仅表示内容可读；workspace 保留现有版本状态，不代表自动通过发布门禁。
 - `flow`：`{scope_label, stages:[{key,label,count,unit}], transitions:[{from,to,relation,retention_ratio}]}`；仅同单位且确实为子集过滤时填写 retention_ratio，其他 null。

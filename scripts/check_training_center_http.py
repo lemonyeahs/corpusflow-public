@@ -8,6 +8,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 import httpx
+from check_training_center_workspace import verify_workspace
 from corpusflow.contracts.training_center import models as m
 from corpusflow.db.models import LineageEdge, Membership, User
 from corpusflow.modules.training_center.catalog import GeneratedCatalog
@@ -220,10 +221,9 @@ def main():
             ("/files", {"offset": -1}, 422, "VALIDATION_FAILED"),
             ("/files", {"revision": "../escape"}, 422, "INVALID_ARGUMENT"),
             ("/overview", {"revision": "a" * 64}, 409, "SNAPSHOT_EXPIRED"),
-            ("/overview", {"catalog": "workspace"}, 503, "ADAPTER_UNAVAILABLE"),
             ("/formats/txt/stats", {"timezone": "Bad/Zone"}, 422, "INVALID_ARGUMENT"),
             ("/datasets/missing/samples", {}, 422, "VALIDATION_FAILED"),
-            ("/datasets/missing/export", {}, 404, "NOT_FOUND"),
+            ("/datasets/missing/export", {"version": "1"}, 404, "NOT_FOUND"),
         ):
             call(PREFIX + path, status, headers=auth, params=params, code=code)
         # Independent real membership checks on a warm API cache, using this disposable DB only.
@@ -236,6 +236,7 @@ def main():
         call(PREFIX + "/overview", headers=viewer_auth, model=m.OverviewResponse)
         engine = create_engine(os.environ["DATABASE_URL"])
         try:
+            workspace_context = verify_workspace(engine, client, call, owner, auth, checks)
             # Seed only explicit test lineage in the disposable database, not Worker history.
             source_ids = [
                 call(
@@ -371,6 +372,7 @@ def main():
             "first_file": raw_files[0],
             "source_counts": source_counts,
             "datasets": datasets,
+            "workspace_catalog": workspace_context,
             "graph_root_id": source_ids[0],
             "graph_revision": latest["scope"]["revision"],
         }

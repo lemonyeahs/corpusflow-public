@@ -593,6 +593,7 @@ class ProcessingComparisonQuery(ProcessingQuery):
 class ExportQuery(DatasetQuery):
     export_format: Literal["jsonl", "markdown", "csv", "txt"] = "jsonl"
     split: Split | None = None
+    q: str | None = None
 
 
 class ProcessingExportQuery(QueryModel):

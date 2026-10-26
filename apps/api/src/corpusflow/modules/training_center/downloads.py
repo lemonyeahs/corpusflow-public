@@ -88,16 +88,20 @@ def authorize_export(
             files.update(evidence)
     if not files:
         raise CatalogError("DOWNLOAD_NOT_AUTHORIZED", 403)
-    allowed = set(
-        session.scalars(
-            select(LicenseGrant.asset_id).where(
-                LicenseGrant.workspace_id == snapshot.scope.workspace_id,
-                LicenseGrant.asset_id.in_(files),
-                LicenseGrant.purpose == "training",
-                LicenseGrant.status == "confirmed",
+    # Bound SQL bind parameters even at the 100,000-record catalog limit.
+    ordered_files = sorted(files)
+    allowed: set[str] = set()
+    for offset in range(0, len(ordered_files), 1000):
+        allowed.update(
+            session.scalars(
+                select(LicenseGrant.asset_id).where(
+                    LicenseGrant.workspace_id == snapshot.scope.workspace_id,
+                    LicenseGrant.asset_id.in_(ordered_files[offset : offset + 1000]),
+                    LicenseGrant.purpose == "training",
+                    LicenseGrant.status == "confirmed",
+                )
             )
         )
-    )
     if files != allowed:
         raise CatalogError("DOWNLOAD_NOT_AUTHORIZED", 403)
 

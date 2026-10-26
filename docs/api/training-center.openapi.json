@@ -1317,6 +1317,146 @@
         }
       }
     },
+    "/api/v1/training-center/datasets/{dataset_id}/samples/{sample_id}": {
+      "get": {
+        "operationId": "design_training-center_datasets_dataset_id_samples_sample_id",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sample_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "schema": {
+              "default": "generated",
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "title": "Catalog",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Revision"
+            },
+            "required": false
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "title": "Version",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SamplesResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SamplesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/pipeline-runs/{run_id}/summary": {
       "get": {
         "operationId": "design_pipeline-runs_run_id_summary",
@@ -1901,7 +2041,7 @@
     },
     "/api/v1/training-center/datasets/{dataset_id}/export": {
       "get": {
-        "x-implementation-status": "planned",
+        "x-implementation-status": "implemented",
         "security": [
           {
             "BearerAuth": []
@@ -2000,6 +2140,23 @@
               ],
               "default": null,
               "title": "Split"
+            },
+            "required": false
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Q"
             },
             "required": false
           }
@@ -5141,6 +5298,18 @@
             ],
             "default": null,
             "title": "Split"
+          },
+          "q": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Q"
           }
         },
         "required": [

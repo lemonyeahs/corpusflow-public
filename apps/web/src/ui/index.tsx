@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Alert, Button, Dropdown, Empty, Spin } from "antd";
 import type { ExportFormat, Metric } from "../contracts/training-center";
 import styles from "./shared.module.css";
@@ -25,6 +25,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
   return <Alert type="error" showIcon message={message} description={<>{detail === message ? null : detail}{error instanceof ApiError && error.requestId && <p>请求编号：{error.requestId}</p>}</>} action={onRetry && status !== 401 && status !== 403 && <Button onClick={onRetry}>重试</Button>} />;
 }
 export function ExportMenu({ onExport, disabled = false, busy = false }: { onExport: (format: ExportFormat) => void; disabled?: boolean; busy?: boolean }) {
+  const [open, setOpen] = useState(false);
   const formats: ExportFormat[] = ["jsonl", "markdown", "csv", "txt"];
-  return <Dropdown disabled={disabled || busy} menu={{ items: formats.map(key => ({ key, label: key === "markdown" ? "Markdown" : key.toUpperCase() })), onClick: ({ key }) => onExport(key as ExportFormat) }}><Button disabled={disabled} loading={busy}>导出数据</Button></Dropdown>;
+  return <Dropdown trigger={["click"]} open={open && !disabled && !busy} onOpenChange={setOpen} disabled={disabled || busy} menu={{ items: formats.map(key => ({ key, label: key === "markdown" ? "Markdown" : key.toUpperCase() })), onClick: ({ key }) => { setOpen(false); onExport(key as ExportFormat); } }}><Button disabled={disabled} loading={busy}>导出数据</Button></Dropdown>;
 }

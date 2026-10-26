@@ -144,11 +144,13 @@ def snapshot_from_database(
         select(CandidateSample, DatasetVersionSample)
         .join(DatasetVersionSample, DatasetVersionSample.candidate_sample_id == CandidateSample.id)
         .join(DatasetVersion, DatasetVersion.id == DatasetVersionSample.dataset_version_id)
+        .join(Dataset, Dataset.id == DatasetVersion.dataset_id)
         .where(
             CandidateSample.workspace_id == workspace,
             DatasetVersion.workspace_id == workspace,
             DatasetVersion.status == "published",
-            DatasetVersion.id.in_(list(published)),
+            Dataset.workspace_id == workspace,
+            Dataset.product_type.in_(("pretrain", "sft", "dpo")),
         )
         .order_by(
             DatasetVersionSample.dataset_version_id,

@@ -30,12 +30,13 @@ ROUTES = {
     "/training-center/datasets": "DatasetsResponse",
     "/training-center/datasets/{dataset_id}/overview": "DatasetOverviewResponse",
     "/training-center/datasets/{dataset_id}/samples": "SamplesResponse",
+    "/training-center/datasets/{dataset_id}/samples/{sample_id}": "SamplesResponse",
     "/pipeline-runs/{run_id}/summary": "ProcessingSummaryResponse",
     "/pipeline-runs/{run_id}/steps/{step_id}/comparison": "ComparisonResponse",
     "/training-center/files/{file_id}/comparison": "ComparisonResponse",
     "/lineage/graph": "LineageGraph",
 }
-IMPLEMENTED_ROUTES = {"/lineage/graph"} | {
+IMPLEMENTED_ROUTES = {"/lineage/graph", "/training-center/datasets/{dataset_id}/export"} | {
     path for path in ROUTES if path.startswith("/training-center/")
 }
 
@@ -117,6 +118,8 @@ def artifacts() -> dict[Path, str]:
             "ManifestResponse": "DatasetQuery",
             "ComparisonResponse": "ComparisonQuery",
         }.get(model_name, "CatalogQuery")
+        if path.endswith("/samples/{sample_id}"):
+            query_name = "DatasetQuery"
         if path.startswith("/pipeline-runs/"):
             query_name = (
                 "ProcessingComparisonQuery"
@@ -184,7 +187,9 @@ def artifacts() -> dict[Path, str]:
         ]
         paths["/api/v1" + path] = {
             "get": {
-                "x-implementation-status": "planned",
+                "x-implementation-status": (
+                    "implemented" if path in IMPLEMENTED_ROUTES else "planned"
+                ),
                 "security": [{"BearerAuth": []}],
                 "parameters": parameters,
                 "responses": {

@@ -9,9 +9,15 @@ test("real session login, authenticated deep link, refresh and logout", async ({
   await page.getByRole("button", { name: "进入工作台" }).click();
   expect((await sessionResponse).status()).toBe(200);
   await expect(page.getByRole("heading", { name: "数据台", exact: true })).toBeVisible();
-  await expect(page).toHaveURL(/#\/data\/pdf\?catalog=workspace&q=hello&offset=20$/);
+  await expect(page).toHaveURL(url => {
+    const [path, query] = url.hash.slice(1).split("?");
+    const params = new URLSearchParams(query);
+    return path === "/data/pdf" && params.get("catalog") === "workspace" && params.get("q") === "hello" && params.get("offset") === "20" && !!params.get("revision");
+  });
+  const pinnedUrl = page.url();
   await page.reload();
   await expect(page.getByRole("heading", { name: "数据台", exact: true })).toBeVisible();
+  await expect(page).toHaveURL(pinnedUrl);
   await page.goto("/#/advanced/assets");
   await expect(page.getByText("暂无资产。", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "退出登录" }).click();

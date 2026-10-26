@@ -50,6 +50,8 @@ def main():
         "TRAINING_CENTER_DATA_DIR": str(reports / "catalog"),
         "PYTHONUTF8": "1",
         "PYTHONIOENCODING": "utf-8",
+        "MINIO_ROOT_USER": "m1-isolated",
+        "MINIO_ROOT_PASSWORD": password,
     }
     summary = {
         "status": "running",
@@ -57,8 +59,7 @@ def main():
         "checks": [],
         "not_run": [
             "Worker processing",
-            "MinIO/Redis readiness",
-            "workspace catalog and processing APIs",
+            "Redis readiness and processing APIs",
             "generated graph and Worker-produced lineage",
         ],
     }
@@ -84,6 +85,7 @@ def main():
 
     server = None
     created = False
+    storage_created = False
     try:
         run(
             "postgres-create",
@@ -122,6 +124,59 @@ def main():
             raise RuntimeError("isolated PostgreSQL did not become ready")
         env["DATABASE_URL"] = f"postgresql+psycopg://m0:{password}@127.0.0.1:{port}/m0"
         run("migrations", [sys.executable, "-m", "alembic", "upgrade", "head"])
+        if args.catalog:
+            # Use an already built local image by immutable ID; never touch shared containers.
+            storage_image = run(
+                "storage-image",
+                [
+                    "docker",
+                    "image",
+                    "inspect",
+                    "corpusflow-p0a-minio:latest",
+                    "--format",
+                    "{{.Id}}",
+                ],
+            )
+            run(
+                "storage-create",
+                [
+                    "docker",
+                    "run",
+                    "-d",
+                    "--pull=never",
+                    "--name",
+                    name + "-s3",
+                    "--label",
+                    "corpusflow.task=m1-verification",
+                    "-e",
+                    "MINIO_ROOT_USER",
+                    "-e",
+                    "MINIO_ROOT_PASSWORD",
+                    "-p",
+                    "127.0.0.1::9000",
+                    storage_image,
+                    "server",
+                    "/data",
+                ],
+            )
+            storage_created = True
+            storage_port = run("storage-port", ["docker", "port", name + "-s3", "9000/tcp"]).rsplit(
+                ":", 1
+            )[1]
+            env["OBJECT_STORE_ENDPOINT"] = f"http://127.0.0.1:{storage_port}"
+            env["OBJECT_STORE_ACCESS_KEY"] = env["MINIO_ROOT_USER"]
+            env["OBJECT_STORE_SECRET_KEY"] = password
+            for _ in range(40):
+                try:
+                    urllib.request.urlopen(
+                        env["OBJECT_STORE_ENDPOINT"] + "/minio/health/live", timeout=2
+                    ).close()
+                    break
+                except OSError:
+                    time.sleep(0.5)
+            else:
+                raise RuntimeError("isolated object store health timeout")
+            run("storage-init", [sys.executable, "scripts/init_storage.py"])
         with socket.socket() as sock:
             sock.bind(("127.0.0.1", 0))
             api_port = sock.getsockname()[1]
@@ -192,6 +247,11 @@ def main():
                 server.wait(timeout=15)
         except (OSError, subprocess.TimeoutExpired) as exc:
             cleanup_errors.append(type(exc).__name__ + ": owned API cleanup failed")
+        try:
+            if storage_created:
+                run("stop-owned-storage", ["docker", "stop", name + "-s3"])
+        except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
+            cleanup_errors.append(type(exc).__name__ + ": owned object storage cleanup failed")
         try:
             if created:
                 run("stop-owned-postgres", ["docker", "stop", name])

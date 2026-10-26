@@ -25,7 +25,7 @@ def test_default_app_openapi_matches_checked_in_routes_and_pending_gate(settings
     assert actual == stored
     assert not PENDING_PROCESSING.intersection(actual["paths"])
     catalog = [p for p in actual["paths"] if p.startswith("/api/v1/training-center/")]
-    assert len(catalog) == 9
+    assert len(catalog) == 11
     assert all("get" in actual["paths"][path] for path in catalog)
 
 

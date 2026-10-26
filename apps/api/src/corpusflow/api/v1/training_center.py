@@ -7,7 +7,6 @@ from threading import Lock
 from typing import Annotated, Literal, cast
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
-from fastapi.exceptions import RequestValidationError
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
@@ -219,34 +218,15 @@ def manifest(
 def export(
     dataset_id: str,
     read: Read,
-    request: Request,
-    query: Annotated[m.ExportQuery, Depends()],
-    q: Annotated[
-        str | None, Query(description="Same text search as samples; export every matching record")
-    ] = None,
+    query: Annotated[m.ExportQuery, Query()],
 ) -> StreamingResponse:
     from corpusflow.api.v1.business import audit
 
-    # Additive q parameter until Agent 1 updates the canonical ExportQuery.
-    # Keep strict rejection of accidental page-only export arguments.
-    unknown = set(request.query_params) - set(m.ExportQuery.model_fields) - {"q"}
-    if unknown:
-        raise RequestValidationError(
-            [
-                {
-                    "loc": ("query", name),
-                    "msg": "Extra inputs are not permitted",
-                    "type": "extra_forbidden",
-                    "input": request.query_params[name],
-                }
-                for name in sorted(unknown)
-            ]
-        )
     queries = read.query(query)
     dataset = queries._dataset(dataset_id, query.version)
     authorize_export(read.session, queries.snapshot, dataset)
     samples = queries.filtered_samples(
-        dataset_id, m.SamplesQuery(version=query.version, split=query.split, q=q)
+        dataset_id, m.SamplesQuery(version=query.version, split=query.split, q=query.q)
     )
     stream, content_type, disposition, size = prepare_export(
         samples,
@@ -268,7 +248,7 @@ def export(
                 "catalog": query.catalog,
                 "revision": queries.scope.revision,
                 "split": query.split,
-                "q": q,
+                "q": query.q,
                 "purpose": "training",
                 "export_format": query.export_format,
                 "record_count": len(samples),

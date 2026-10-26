@@ -6,6 +6,10 @@ interface CatalogContext {
   file_count: number; record_count: number; first_file: { id: string; filename: string };
   source_counts: Record<string, number>;
   graph_root_id: string; graph_revision: string;
+  workspace_catalog: {
+    scope: { revision: string };
+    datasets: { id: string; kind: string; version: string; sample_ids: string[] }[];
+  };
 }
 const contextPath = process.env.M1_CATALOG_CONTEXT;
 const catalog: CatalogContext | null = contextPath ? JSON.parse(readFileSync(contextPath, "utf-8")) : null;
@@ -69,7 +73,7 @@ test("real 4300-record catalog drives home, filtered paging, file detail and com
   expect(errors).toEqual([]);
 });
 
-test("real expired revision refreshes the whole page; workspace adapter failure stays visible", async ({ page }) => {
+test("real expired revision refreshes the whole page; workspace catalog stays isolated", async ({ page }) => {
   const ctx = await login(page, `/data/txt?catalog=generated&revision=${"a".repeat(64)}&offset=20`);
   await expect(page.getByText("数据快照已过期", { exact: true })).toBeVisible();
   await expect(page.locator("tbody tr.ant-table-row")).toHaveCount(0);
@@ -77,13 +81,14 @@ test("real expired revision refreshes the whole page; workspace adapter failure 
   await expect(page).toHaveURL(new RegExp(`revision=${ctx.revision}`));
   await expect(page).not.toHaveURL(/offset=/);
   await expect(page.locator("tbody tr.ant-table-row")).toHaveCount(20);
-  const unavailable = page.waitForResponse(response => response.url().includes("/training-center/files?") && new URL(response.url()).searchParams.get("catalog") === "workspace");
+  const workspaceFiles = page.waitForResponse(response => response.url().includes("/training-center/files?") && new URL(response.url()).searchParams.get("catalog") === "workspace");
   await page.getByRole("radiogroup", { name: "数据目录" }).getByText("工作空间", { exact: true }).click();
-  const response = await unavailable;
-  expect(response.status()).toBe(503);
-  expect((await response.json()).error.code).toBe("ADAPTER_UNAVAILABLE");
-  await expect(page.getByRole("alert")).toContainText("当前数据适配器暂不可用");
-  await expect(page.locator("tbody tr.ant-table-row")).toHaveCount(0);
+  const response = await workspaceFiles;
+  expect(response.status()).toBe(200);
+  expect((await response.json()).scope.catalog).toBe("workspace");
+  await expect(page.locator("tbody tr.ant-table-row")).toHaveCount(1);
+  await expect(page).not.toHaveURL(new RegExp(`revision=${ctx.revision}`));
+  await expect(page.getByRole("region", { name: "文件数量", exact: true })).toContainText("1");
 });
 
 test("real workspace graph preserves its database snapshot and isolates catalog switching", async ({ page }) => {
@@ -102,3 +107,37 @@ test("real workspace graph preserves its database snapshot and isolates catalog 
   await page.goto(`/#/lineage?catalog=generated&root_type=source&root_id=${ctx.graph_root_id}`);
   await expect(page.getByRole("alert")).toContainText("CATALOG_UNAVAILABLE");
 });
+
+for (const kind of ["cpt", "sft", "dpo"]) {
+  test(`real workspace ${kind} samples, manifest and filtered download`, async ({ page }) => {
+    if (!catalog) throw new Error("Missing isolated catalog context");
+    const entry = catalog.workspace_catalog.datasets.find(dataset => dataset.kind === kind)!;
+    const query = new URLSearchParams({ catalog: "workspace", revision: catalog.workspace_catalog.scope.revision, dataset_id: entry.id, version: entry.version, tab: "samples" });
+    await login(page, `/datasets/${kind}?${query}`);
+    await expect(page.locator("main article")).toHaveCount(2);
+    await page.getByRole("button", { name: /^#/ }).first().click();
+    await expect(page.getByRole("dialog")).toContainText("测试筛选");
+    const sourceLink = page.getByRole("dialog").locator('a[href*="lineage"]');
+    await expect(sourceLink).toHaveAttribute("href", /scope_reset=1/);
+    expect(await sourceLink.getAttribute("href")).not.toContain("revision=");
+    await page.getByRole("button", { name: "Close", exact: true }).click();
+    await page.getByRole("textbox", { name: "搜索样本" }).fill("测试筛选");
+    await page.getByRole("button", { name: "搜索", exact: true }).click();
+    await expect(page).toHaveURL(/q=/);
+    await expect(page.locator("main article")).toHaveCount(2);
+    await page.getByRole("button", { name: "导出数据" }).click();
+    const [file] = await Promise.all([page.waitForEvent("download"), page.getByRole("menuitem", { name: "JSONL" }).click()]);
+    expect(file.suggestedFilename()).toMatch(/\.jsonl$/);
+    const records = readFileSync((await file.path())!, "utf-8").trim().split("\n").map(line => JSON.parse(line));
+    expect(records.map(record => record.id).sort()).toEqual([...entry.sample_ids].sort());
+    await page.getByRole("button", { name: "版本清单", exact: true }).click();
+    await expect(page.locator("main pre")).toContainText("training-center.isolated-acceptance.v1");
+    await expect(page.locator("main pre")).toContainText("no Worker or publish gate executed");
+    await expect(page.getByRole("menuitem", { name: "JSONL" })).not.toBeVisible();
+    if (kind === "dpo") {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+    }
+    await page.screenshot({ path: test.info().outputPath(`real-${kind}-manifest.png`), fullPage: true });
+  });
+}

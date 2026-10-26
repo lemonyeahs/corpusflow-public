@@ -16,7 +16,7 @@ from corpusflow.modules.training_center.catalog import CatalogError
 from corpusflow.modules.training_center.generation import json_bytes, sha256
 from corpusflow.modules.training_center.query import CatalogQueries
 from corpusflow.modules.training_center.workspace import WorkspaceSnapshots
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
@@ -274,6 +274,74 @@ def test_export_rechecks_live_grants_and_published_status(database):
     database.commit()
     with pytest.raises(CatalogError, match="NOT_FOUND"):
         downloads.authorize_export(database, snapshot, dataset)
+
+
+def test_snapshot_link_query_matches_visible_published_supported_datasets(database):
+    database.get(d.Dataset, "workspace-a-pretrain").product_type = "rag"
+    database.get(d.Dataset, "workspace-a-sft").workspace_id = "workspace-b"
+    database.get(d.DatasetVersion, "workspace-a-dpo-v1").status = "draft"
+    database.commit()
+    snapshot = WorkspaceSnapshots().load("workspace-a", None, database)
+    assert snapshot.datasets == ()
+    assert snapshot.samples == ()
+    assert len(snapshot.files) == 2
+
+
+@pytest.mark.parametrize("asset_count", [1000, 1001, 2001])
+def test_export_checks_every_grant_batch_including_missing_last_asset(database, asset_count):
+    snapshot = WorkspaceSnapshots().load("workspace-a", None, database)
+    dataset = snapshot.datasets[0]
+    assets = [f"asset-{index:05d}" for index in range(asset_count)]
+    for sample in CatalogQueries(snapshot)._samples(dataset.id, dataset.version):
+        snapshot.sample_files[(dataset.id, dataset.version, sample.id)] = set(assets)
+    database.add_all(
+        d.LicenseGrant(
+            workspace_id="workspace-a", asset_id=asset, purpose="training", status="confirmed"
+        )
+        for asset in assets[:-1]
+    )
+    database.add_all(
+        [
+            d.LicenseGrant(
+                workspace_id="workspace-b",
+                asset_id=assets[-1],
+                purpose="training",
+                status="confirmed",
+            ),
+            d.LicenseGrant(
+                workspace_id="workspace-a",
+                asset_id=assets[-1],
+                purpose="evaluation",
+                status="confirmed",
+            ),
+        ]
+    )
+    database.commit()
+    parameter_counts = []
+
+    def inspect_query(connection, cursor, statement, parameters, context, executemany):
+        if statement.lstrip().startswith("SELECT") and "FROM license_grants" in statement:
+            parameter_counts.append(len(parameters))
+
+    engine = database.get_bind()
+    event.listen(engine, "before_cursor_execute", inspect_query)
+    try:
+        with pytest.raises(CatalogError, match="DOWNLOAD_NOT_AUTHORIZED"):
+            downloads.authorize_export(database, snapshot, dataset)
+        database.add(
+            d.LicenseGrant(
+                workspace_id="workspace-a",
+                asset_id=assets[-1],
+                purpose="training",
+                status="confirmed",
+            )
+        )
+        database.commit()
+        downloads.authorize_export(database, snapshot, dataset)
+    finally:
+        event.remove(engine, "before_cursor_execute", inspect_query)
+    # Three fixed scope/purpose/status parameters plus no more than 1,000 asset IDs.
+    assert parameter_counts and max(parameter_counts) <= 1003
 
 
 def test_export_is_fully_spooled_and_bounded_before_headers(database, monkeypatch):
