@@ -4,7 +4,9 @@
 
 版本：`1.0.0`，统计口径版本：`1.0.0`。集成负责人根据 Agent 2/3/4 交付和独立复核冻结 M0 接口设计；不表示下面的新业务接口已经存在。后续破坏性修改需提升契约版本并同步所有调用方。
 
-唯一类型来源是 `apps/api/src/corpusflow/contracts/training_center/models.py`。前端从 `src/contracts/training-center.ts` 导入自动生成的 wire DTO；禁止直接编辑 `.generated.ts`。统一样例为 `contracts/training-center/examples.json`。设计 OpenAPI 为 `docs/api/training-center.openapi.json`，路径均标记 planned；实际已注册路由仍以 `docs/api/openapi.json` 为准。响应严格校验字段与语义，Query DTO 允许 FastAPI 解码 HTTP 字符串参数。
+唯一类型来源是 `apps/api/src/corpusflow/contracts/training_center/models.py`。前端从 `src/contracts/training-center.ts` 导入自动生成的 wire DTO；禁止直接编辑 `.generated.ts`。统一样例为 `contracts/training-center/examples.json`。设计 OpenAPI 为 `docs/api/training-center.openapi.json`，路径按现状标记 planned/implemented；实际已注册路由仍以 `docs/api/openapi.json` 为准，implemented 不表示所有 catalog 均已实现。响应严格校验字段与语义，Query DTO 允许 FastAPI 解码 HTTP 字符串参数。
+
+M2 的 workspace 快照共用、文件关联与处理路由注册条件见 [公共接入请求](../plans/TRAINING_CENTER_M2_INTEGRATION_REQUESTS.md)。这些是对冻结语义的实现要求，未新增 wire 字段。基线 acb7ce0 的 workspace 目录尚未实现，图使用独立快照，处理 router 尚未通过注册审查；三者不能互相回显 revision 来冒充统一快照。
 
 ## 1. 全局约定
 

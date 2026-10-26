@@ -2,6 +2,8 @@
 
 训练数据中心已建立 HashRouter 工作区壳，契约冻结为 1.0.0。Agent 1 的 M1 首页、格式数据台、文件详情与对比展示已实现；真实业务接口联调属于 M2。接入、CPT/SFT/DPO、血缘由各模块入口独立挂载，现有页面保留在高级工具分组。公共入口见 [M0 接入说明第 10 节](../../docs/plans/TRAINING_CENTER_M0_INTEGRATION.md#10-m0-冻结后的接入入口取代上述草案状态)，新页面调用约定和当前限制见 [M1 接入与交付说明](../../docs/reports/TRAINING_CENTER_M1_SHELL_EXPLORER.md)。
 
+基线 acb7ce0 已接通 generated 9 个查询接口。后续公共 scope 校验、文件限定对比、处理摘要标签及尚未到位的 workspace/处理依赖见 [M2 公共接入报告](../../docs/reports/TRAINING_CENTER_M2_SHELL_INTEGRATION.md)；此报告取代 M1 中由客户端选择处理步骤的接入方式。
+
 这是 玄知大模型 的 TypeScript + React + Vite Web 工作台。核心业务页面通过 `src/api/client.ts` 调用真实 FastAPI，不使用固定业务演示数据；V3.1 HTML 原型保留在 `docs/prototype/`。
 
 ## 本地启动

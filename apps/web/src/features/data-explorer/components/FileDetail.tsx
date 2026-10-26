@@ -6,14 +6,16 @@ import { QueryError } from "../../training-home/components/Common";
 import { dateTime, objectLink, quantity, scopeLink, sourceLabels, statusLabels } from "../../training-home/components/format";
 import { useFileDetail } from "../queries";
 import { FileComparison } from "./ComparisonView";
+import { FileProcessingSummary } from "./FileProcessingSummary";
+import { ApiError } from "../../../api/client";
 import styles from "../explorer.module.css";
 
 export function FileDetail({ id, tab, recordId, datasets, onClose, onTab }: { id: string; tab: string; recordId?: string; datasets: DatasetSummary[]; onClose: () => void; onTab: (tab: string) => void }) {
   const query = useFileDetail(id);
   const detail = query.data;
   return <Drawer open onClose={onClose} title={detail?.file.filename || "文件详情"} width={850} destroyOnClose>
-    {query.isPending ? <LoadingState /> : query.error ? <QueryError error={query.error} retry={() => void query.refetch()} /> : detail && <>
-      <Tabs activeKey={tab === "comparison" ? "comparison" : "detail"} onChange={onTab} items={[
+    {query.isPending ? <LoadingState /> : query.error ? <QueryError error={query.error} retry={() => void query.refetch()} /> : detail && detail.file.id !== id ? <QueryError error={new ApiError(409, { error: { code: "RECORD_MISMATCH", message: "返回的文件与当前选择不一致。" } })} retry={() => void query.refetch()} /> : detail && <>
+      <Tabs activeKey={["comparison", "processing"].includes(tab) ? tab : "detail"} onChange={onTab} items={[
         { key: "detail", label: "文件与来源", children: <><Descriptions column={1} bordered size="small" items={[
           { key: "id", label: "文件 ID", children: detail.file.id },
           { key: "format", label: "格式 / 大小", children: `${detail.file.format.toUpperCase()} / ${quantity(detail.file.size_bytes, "byte")}` },
@@ -27,6 +29,7 @@ export function FileDetail({ id, tab, recordId, datasets, onClose, onTab }: { id
           return <li key={`${ref.catalog}:${ref.id}`}><Link to={dataset ? scopeLink(`/datasets/${dataset.kind}`, detail.scope, { dataset_id: dataset.id, version: dataset.version }) : objectLink(ref, detail.scope)}>{dataset ? `${dataset.name} · ${dataset.version}` : `数据集版本 ${ref.id}`} ↗</Link></li>;
         })}</ul>}</> },
         { key: "comparison", label: "清洗前后对比", children: <FileComparison detail={detail} recordId={recordId} /> },
+        { key: "processing", label: "处理摘要", children: <FileProcessingSummary detail={detail} /> },
       ]} />
       <div className={styles.detailActions}><Link className={styles.textLink} to={objectLink({ catalog: detail.scope.catalog, type: "file", id }, detail.scope)}>查看文件血缘 ↗</Link>{detail.scope.catalog === "workspace" && <Link className={styles.textLink} to={`/advanced/document?asset_id=${encodeURIComponent(id)}`}>打开原文对照 ↗</Link>}</div>
     </>}

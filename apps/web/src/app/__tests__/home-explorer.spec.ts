@@ -9,13 +9,13 @@ const firstFile = responses.files.body.items[0];
 // These are browser-test responses derived from the canonical contract bundle.
 // They are never loaded by production code or enabled by a failed real request.
 function scoped<T>(data: T, catalog = "generated", snapshot = revision): T {
-  return JSON.parse(JSON.stringify(data), (key, value) => key === "workspace_id" ? session.workspace_id : key === "catalog" ? catalog : key === "revision" ? snapshot : value);
+  return JSON.parse(JSON.stringify(data), (key, value) => key === "workspace_id" ? session.workspace_id : key === "catalog" ? catalog : key === "revision" ? snapshot : key === "as_of" ? responses.overview.body.scope.as_of : value);
 }
 async function login(page: Page, path = "/home") {
   await page.addInitScript(value => localStorage.setItem("corpusflow.p0h.session", JSON.stringify(value)), session);
   await page.goto(`/#${path}`);
 }
-async function backend(page: Page, options: { expired?: boolean; workspaceComparison?: boolean; mismatch?: boolean; populatedCharts?: boolean } = {}) {
+async function backend(page: Page, options: { expired?: boolean; workspaceComparison?: boolean; mismatch?: boolean; populatedCharts?: boolean; wrongAsOf?: boolean; wrongRun?: boolean; noEvidence?: boolean; denied?: boolean; empty?: boolean } = {}) {
   const requests: URL[] = [];
   await page.route("**/api/v1/**", async route => {
     const url = new URL(route.request().url());
@@ -23,11 +23,12 @@ async function backend(page: Page, options: { expired?: boolean; workspaceCompar
     const path = url.pathname.replace("/api/v1", "");
     if (path === "/auth/me") return route.fulfill({ json: { user_id: session.user_id, workspaces: [{ workspace_id: session.workspace_id, role: "admin" }] } });
     if (path === "/workspaces") return route.fulfill({ json: { items: [{ workspace_id: session.workspace_id, role: "admin" }] } });
+    if (options.denied) return route.fulfill({ status: 403, json: { request_id: "permission-check", error: { code: "PERMISSION_DENIED", message: "没有访问当前工作空间或资源的权限", retryable: false } } });
     const catalog = url.searchParams.get("catalog") || "generated";
     const snapshot = url.searchParams.get("revision") || (options.expired ? "fresh-revision" : revision);
     if (catalog === "workspace" && !options.workspaceComparison) return route.fulfill({ status: 503, json: { error: { code: "M1_SERVICE_UNAVAILABLE", message: "工作空间接口不可用", retryable: false } } });
     if (path.endsWith("/stats") && options.expired && snapshot === "expired") return route.fulfill({ status: 409, json: { error: { code: "SNAPSHOT_EXPIRED", message: "快照已过期", retryable: false } } });
-    if (path === "/training-center/overview") return route.fulfill({ json: scoped(responses.overview.body, catalog, options.mismatch ? "wrong-revision" : snapshot) });
+    if (path === "/training-center/overview") return route.fulfill({ json: scoped(options.empty ? examples.scenarios.empty.responses.overview.body : responses.overview.body, catalog, options.mismatch ? "wrong-revision" : snapshot) });
     if (path === "/training-center/datasets") return route.fulfill({ json: scoped(responses.datasets.body, catalog, snapshot) });
     if (path === "/training-center/files") {
       let items = scoped(responses.files.body.items, catalog, snapshot);
@@ -41,6 +42,7 @@ async function backend(page: Page, options: { expired?: boolean; workspaceCompar
     }
     if (path.endsWith("/stats")) {
       const data = scoped(responses.txt_stats.body, catalog, snapshot);
+      if (options.wrongAsOf) data.scope.as_of = "2026-10-27T01:00:00Z";
       if (path.includes("/pdf/")) data.metrics.file_count.value = 0;
       if (options.populatedCharts) {
         const points = Array.from({ length: 35 }, (_, index) => ({ date: new Date(Date.UTC(2026, 8, 23 + index)).toISOString().slice(0, 10), count: index % 5 }));
@@ -50,11 +52,15 @@ async function backend(page: Page, options: { expired?: boolean; workspaceCompar
     }
     if (path === `/training-center/files/${firstFile.id}`) {
       const data = scoped(responses.file_detail.body, catalog, snapshot);
-      return route.fulfill({ json: { ...data, processing_summary_ref: options.workspaceComparison ? { catalog: "workspace", type: "pipeline_run", id: "m1-run" } : null } });
+      return route.fulfill({ json: { ...data, processing_summary_ref: options.workspaceComparison && !options.noEvidence ? { catalog: "workspace", type: "pipeline_run", id: "m1-run" } : null } });
     }
-    if (path === "/pipeline-runs/m1-run/summary") return route.fulfill({ json: scoped(responses.processing_summary.body, catalog, snapshot) });
-    if (path === "/pipeline-runs/m1-run/steps/m0-example-step-1/comparison") {
+    if (path === "/pipeline-runs/m1-run/summary") {
+      const data = scoped(responses.processing_summary.body, catalog, snapshot);
+      return route.fulfill({ json: { ...data, run_id: "m1-run", steps: data.steps.map(step => ({ ...step, run_id: "m1-run" })), input_refs: [{ catalog: "workspace", type: "file", id: options.wrongRun ? "unrelated-file" : firstFile.id }] } });
+    }
+    if (path === `/training-center/files/${firstFile.id}/comparison` && catalog === "workspace" && url.searchParams.has("record_id")) {
       const comparison = scoped(responses.comparison.body, catalog, snapshot);
+      comparison.processing_run_ref.id = options.wrongRun ? "another-run" : "m1-run";
       comparison.before.text = '<img src=x onerror="window.m1Xss=true">';
       return route.fulfill({ json: comparison });
     }
@@ -143,13 +149,14 @@ test.describe("M1 real-client browser integration", () => {
     await expect(page.getByText("正在加载…", { exact: true })).toHaveCount(0);
   });
 
-  test("workspace comparison uses persisted run/step responses and escapes raw text", async ({ page }) => {
+  test("workspace comparison uses file-scoped mapping and escapes raw text", async ({ page }) => {
     const requests = await backend(page, { workspaceComparison: true });
     await login(page, `/data/txt?catalog=workspace&file_id=${firstFile.id}&detail_tab=comparison&record_id=m0-example-record`);
     await expect(page.getByRole("heading", { name: "处理前", exact: true })).toBeVisible();
     await expect(page.getByRole("dialog").locator("pre").first()).toHaveText('<img src=x onerror="window.m1Xss=true">');
     await expect(page.getByRole("dialog").locator("pre img")).toHaveCount(0);
-    expect(requests.some(url => url.pathname.includes("/steps/m0-example-step-1/comparison") && url.searchParams.get("record_id") === "m0-example-record")).toBe(true);
+    expect(requests.some(url => url.pathname.endsWith(`/files/${firstFile.id}/comparison`) && url.searchParams.get("record_id") === "m0-example-record")).toBe(true);
+    expect(requests.some(url => url.pathname.includes("/pipeline-runs/"))).toBe(false);
     await expect(page.getByRole("link", { name: "查看记录血缘" })).toHaveAttribute("href", /root_type=segment.*root_id=m0-example-record/);
   });
 
@@ -163,8 +170,71 @@ test.describe("M1 real-client browser integration", () => {
   test("a multi-file workspace run never supplies an arbitrary comparison", async ({ page }) => {
     const requests = await backend(page, { workspaceComparison: true });
     await login(page, `/data/txt?catalog=workspace&file_id=${firstFile.id}&detail_tab=comparison`);
-    await expect(page.getByRole("dialog")).toContainText("请从该文件的片段入口选择记录后查看对比");
+    await expect(page.getByRole("dialog")).toContainText("暂无清洗对比");
     expect(requests.some(url => url.pathname.includes("/pipeline-runs/"))).toBe(false);
+  });
+
+  test("same revision with different snapshot metadata cannot mix data", async ({ page }) => {
+    await backend(page, { wrongAsOf: true, workspaceComparison: true });
+    await login(page, "/data/txt?catalog=workspace");
+    await expect(page.getByText("响应范围与当前快照不一致", { exact: true })).toBeVisible();
+    await expect(page.locator("tbody tr.ant-table-row")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "刷新快照", exact: true })).toBeVisible();
+  });
+
+  test("file summary is loaded only from its explicit run and survives refresh", async ({ page }) => {
+    const requests = await backend(page, { workspaceComparison: true });
+    await login(page, `/data/txt?catalog=workspace&file_id=${firstFile.id}&detail_tab=processing`);
+    await expect(page.getByRole("dialog")).toContainText("character_normalize");
+    await expect(page.getByRole("dialog")).toContainText("运行边界统计");
+    await page.reload();
+    await expect(page.getByRole("dialog")).toContainText("character_normalize");
+    expect(requests.filter(url => url.pathname.endsWith("/summary")).every(url => url.pathname.endsWith("/m1-run/summary") && url.searchParams.get("revision") === revision)).toBe(true);
+  });
+
+  test("unrelated file/run responses are rejected for both summary and comparison", async ({ page }) => {
+    await backend(page, { workspaceComparison: true, wrongRun: true });
+    await login(page, `/data/txt?catalog=workspace&file_id=${firstFile.id}&detail_tab=processing&record_id=m0-example-record`);
+    await expect(page.getByRole("dialog")).toContainText("处理摘要与当前文件的运行引用不一致");
+    await expect(page.getByRole("dialog").getByText("character_normalize")).toHaveCount(0);
+    await page.getByRole("tab", { name: "清洗前后对比" }).click();
+    await expect(page.getByRole("dialog")).toContainText("返回的对比与当前文件的处理记录不一致");
+    await expect(page.getByRole("dialog").locator("pre")).toHaveCount(0);
+  });
+
+  test("no processing evidence stays unavailable without looking up arbitrary runs", async ({ page }) => {
+    const requests = await backend(page, { workspaceComparison: true, noEvidence: true });
+    await login(page, `/data/txt?catalog=workspace&file_id=${firstFile.id}&detail_tab=processing`);
+    await expect(page.getByRole("dialog")).toContainText("暂无可关联的处理记录");
+    await page.getByRole("tab", { name: "清洗前后对比" }).click();
+    await expect(page.getByRole("dialog")).toContainText("暂无清洗对比");
+    expect(requests.some(url => url.pathname.includes("/pipeline-runs/") || url.pathname.endsWith("/comparison"))).toBe(false);
+  });
+
+  test("workspace permission errors and empty state are distinct and never fallback", async ({ page }) => {
+    await backend(page, { denied: true });
+    await login(page, "/home?catalog=workspace");
+    await expect(page.getByText("没有访问权限", { exact: true })).toBeVisible();
+    await expect(page.getByText("请求编号：permission-check")).toBeVisible();
+    await expect(page.locator("a[data-format]")).toHaveCount(0);
+    await page.unrouteAll();
+    await backend(page, { workspaceComparison: true, empty: true });
+    await page.reload();
+    await expect(page.getByRole("region", { name: "原始文件", exact: true }).locator("strong")).toHaveText("0个文件");
+    await expect(page.getByText("暂无活动记录", { exact: true })).toBeVisible();
+  });
+
+  test("independent workspace graph tokens are not reused by catalog navigation", async ({ page }) => {
+    await backend(page, { workspaceComparison: true });
+    await login(page, "/home?catalog=workspace");
+    await expect(page).toHaveURL(new RegExp(`revision=${revision}`));
+    await expect(page.getByRole("navigation", { name: "主导航" }).getByRole("link", { name: "数据血缘", exact: true })).toHaveAttribute("href", "#/lineage?catalog=workspace&scope_reset=1");
+    await page.goto("/#/lineage?catalog=workspace&revision=graph-only&root_type=file&root_id=file-a");
+    const home = page.getByRole("navigation", { name: "主导航" }).getByRole("link", { name: "首页", exact: true });
+    await expect(home).toHaveAttribute("href", "#/home?catalog=workspace&scope_reset=1");
+    await home.click();
+    await expect(page.getByText("此页面将使用独立快照，请以本页统计时间为准。", { exact: true })).toBeVisible();
+    await expect(page).not.toHaveURL(/graph-only/);
   });
 
   test("charts use whole-response counts and the last thirty UTC days", async ({ page }) => {

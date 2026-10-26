@@ -13,7 +13,7 @@ export function useCatalogQuery<T extends { scope: Scope }>(resource: string, pa
   const client = useQueryClient();
   const query = useQuery({
     queryKey: trainingKeys.query(ctx.workspaceId, scope.catalog, scope.revision, resource, { path, ...filters }),
-    queryFn: ({ signal }) => scopedRequest<T>(`${path}?${queryString({ ...filters, catalog: scope.catalog, revision: scope.revision })}`, ctx, scope.catalog, scope.revision, signal),
+    queryFn: ({ signal }) => scopedRequest<T>(`${path}?${queryString({ ...filters, catalog: scope.catalog, revision: scope.revision })}`, ctx, scope.catalog, scope.revision, signal, { client }),
     enabled: enabled && (bootstrap || !!scope.revision),
   });
   useEffect(() => {

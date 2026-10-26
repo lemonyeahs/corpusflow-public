@@ -16,9 +16,10 @@ export function ScopeNote({ scope }: { scope: Scope }) {
   return <p className={styles.scope}>统计时间：{dateTime(scope.as_of)} UTC <span title={scope.revision}>快照：{scope.revision.slice(0, 14)}</span></p>;
 }
 export function isExpired(error: unknown) { return error instanceof ApiError && error.code === "SNAPSHOT_EXPIRED"; }
+export function needsScopeRefresh(error: unknown) { return isExpired(error) || (error instanceof ApiError && error.code === "SCOPE_MISMATCH"); }
 export function QueryError({ error, retry }: { error: unknown; retry: () => void }) {
   const { refreshSnapshot } = useCatalogScope();
-  return isExpired(error) ? <Alert type="warning" showIcon message="数据快照已过期" description="刷新后会重新加载当前目录的全部统计和列表。" action={<Button onClick={() => void refreshSnapshot()}>刷新快照</Button>} /> : <ErrorState error={error} onRetry={retry} />;
+  return needsScopeRefresh(error) ? <Alert type="warning" showIcon message={isExpired(error) ? "数据快照已过期" : "响应范围与当前快照不一致"} description="刷新后会重新加载当前目录的全部统计和列表。" action={<Button onClick={() => void refreshSnapshot()}>刷新快照</Button>} /> : <ErrorState error={error} onRetry={retry} />;
 }
 export function MetricGrid({ metrics, items }: { metrics: Record<string, Metric>; items: Array<[string, string]> }) {
   return <div className={styles.metrics}>{items.map(([key, title]) => {

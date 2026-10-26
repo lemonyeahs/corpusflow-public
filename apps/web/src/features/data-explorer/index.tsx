@@ -4,7 +4,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { PageHeader, Panel, EmptyState, LoadingState } from "../../ui";
 import { FORMATS, type DataFormat, type FileSummary, type ProcessingStatus, type SourceKind } from "../../contracts/training-center";
 import { useCatalogScope } from "../../app/catalog";
-import { CatalogControls, DataFlow, MetricGrid, QueryError, ScopeNote, isExpired } from "../training-home/components/Common";
+import { CatalogControls, DataFlow, MetricGrid, QueryError, ScopeNote, needsScopeRefresh } from "../training-home/components/Common";
 import { dateTime, formatLabels, objectLink, quantity, scopeLink, sourceLabels, statusLabels, unitLabels } from "../training-home/components/format";
 import { useDatasets, useFiles, useFormatStats } from "./queries";
 import { FileDetail } from "./components/FileDetail";
@@ -36,7 +36,7 @@ export default function DataExplorer() {
       return next;
     });
   }
-  const expired = [files.error, stats.error, datasets.error].find(isExpired);
+  const expired = [files.error, stats.error, datasets.error].find(needsScopeRefresh);
   const activeScope = files.data?.scope;
   const selectedFile = params.get("file_id");
   const refs = stats.data?.dataset_refs || [];

@@ -1,11 +1,12 @@
 import { Suspense, useState } from "react";
-import { ConfigProvider, App as AntApp, Drawer } from "antd";
+import { ConfigProvider, App as AntApp, Alert, Drawer } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { LogOut, Menu } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth, useWorkspaceContext } from "./auth";
 import { navigation, advancedNavigation } from "./navigation";
 import { LoadingState } from "../ui";
+import { scopeDestination } from "./scope-navigation";
 import styles from "./shell.module.css";
 
 export function Shell() {
@@ -17,13 +18,7 @@ export function Shell() {
   const legacy = location.pathname.startsWith("/advanced/");
   const title = [...navigation, ...advancedNavigation].find(n => n.path === location.pathname)?.label || "训练数据中心";
   function destination(path: string) {
-    if (path.startsWith("/advanced/")) return path;
-    if (path === "/ingest") return `${path}?catalog=workspace`;
-    const current = new URLSearchParams(location.search);
-    const scope = new URLSearchParams();
-    if (current.has("catalog")) scope.set("catalog", current.get("catalog") === "workspace" ? "workspace" : "generated");
-    if (current.has("revision")) scope.set("revision", current.get("revision")!);
-    return `${path}${scope.size ? `?${scope}` : ""}`;
+    return scopeDestination(path, location.pathname, new URLSearchParams(location.search));
   }
   function links(items: typeof navigation) {
     return items.filter(item => !item.roles || item.roles.includes(session.role)).map(item => {
@@ -36,5 +31,5 @@ export function Shell() {
     navigate("/home", { replace: true });
     setMobileOpen(false);
   }}>{workspaces.map(w => <option key={w.workspace_id} value={w.workspace_id}>{w.workspace_id}</option>)}</select></label><nav aria-label="主导航"><p className={styles.group}>训练数据</p>{links(navigation)}<details open={legacy || undefined}><summary className={styles.group}>高级工具</summary>{links(advancedNavigation)}</details></nav><div className={styles.user}><span>{session.user_id}</span><small>{session.role}</small><button onClick={logout}><LogOut size={16} />退出登录</button></div></>;
-  return <ConfigProvider locale={zhCN} theme={{ token: { colorPrimary: "#168f78", colorText: "#202e3b", colorBgLayout: "#f5f7f8", borderRadius: 8, fontFamily: 'Inter,"Segoe UI","Microsoft YaHei",sans-serif' } }}><AntApp><div className={`training-center-shell ${styles.shell}`}><aside className={styles.sidebar}>{nav}</aside><Drawer title="工作区导航" placement="left" open={mobileOpen} onClose={() => setMobileOpen(false)} width={260} styles={{ body: { background: "#14252c", padding: 16 } }}><div className={styles.mobileNav}>{nav}</div></Drawer><div className={styles.main}><header className={styles.topbar}><button className={styles.menuButton} aria-label="打开菜单" onClick={() => setMobileOpen(true)}><Menu size={20} /></button><span>工作区 / <strong>{title}</strong></span><small>{session.role}</small></header><main className={legacy ? "legacy-page" : styles.content}><Suspense fallback={<LoadingState />}><Outlet /></Suspense></main></div></div></AntApp></ConfigProvider>;
+  return <ConfigProvider locale={zhCN} theme={{ token: { colorPrimary: "#168f78", colorText: "#202e3b", colorBgLayout: "#f5f7f8", borderRadius: 8, fontFamily: 'Inter,"Segoe UI","Microsoft YaHei",sans-serif' } }}><AntApp><div className={`training-center-shell ${styles.shell}`}><aside className={styles.sidebar}>{nav}</aside><Drawer title="工作区导航" placement="left" open={mobileOpen} onClose={() => setMobileOpen(false)} width={260} styles={{ body: { background: "#14252c", padding: 16 } }}><div className={styles.mobileNav}>{nav}</div></Drawer><div className={styles.main}><header className={styles.topbar}><button className={styles.menuButton} aria-label="打开菜单" onClick={() => setMobileOpen(true)}><Menu size={20} /></button><span>工作区 / <strong>{title}</strong></span><small>{session.role}</small></header><main className={legacy ? "legacy-page" : styles.content}>{!legacy && new URLSearchParams(location.search).get("scope_reset") === "1" && <Alert type="info" showIcon message="此页面将使用独立快照，请以本页统计时间为准。" />}<Suspense fallback={<LoadingState />}><Outlet /></Suspense></main></div></div></AntApp></ConfigProvider>;
 }
