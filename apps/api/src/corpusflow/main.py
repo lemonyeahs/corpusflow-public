@@ -20,6 +20,7 @@ from corpusflow.api.v1.blind_review import router as blind_review_router
 from corpusflow.api.v1.business import router as business_router
 from corpusflow.api.v1.collection import router as collection_router
 from corpusflow.api.v1.lineage_graph import router as lineage_graph_router
+from corpusflow.api.v1.processing_insights import router as processing_insights_router
 from corpusflow.api.v1.rag import router as rag_router
 from corpusflow.api.v1.training_center import router as training_center_router
 from corpusflow.core.config import Settings, load_settings
@@ -151,6 +152,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "VALIDATION_FAILED": "请求参数校验失败",
                 "ADAPTER_UNAVAILABLE": "当前数据适配器暂不可用，请检查服务配置或稍后重试",
                 "CATALOG_UNAVAILABLE": "当前目录暂不支持此查询",
+                "QUALITY_GATE_FAILED": "发布质量检查未通过，请检查质量报告和来源片段复核状态",
+                "SELF_APPROVAL_FORBIDDEN": "创建者与审核者必须是不同账号",
+                "REVIEWER_SEPARATION_REQUIRED": "导入、标注和复核需要由不同账号完成",
+                "RELEASE_GATE_FAILED": "请先完成候选审核和服务端快照验证",
                 "SNAPSHOT_EXPIRED": "快照已过期，请刷新整个查询范围",
                 "COMPARISON_NOT_AVAILABLE": "暂无清洗对比",
                 "CATALOG_LIMIT_EXCEEDED": "目录超过允许的数据规模",
@@ -191,4 +196,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(router)
     app.include_router(business_router)
     app.include_router(training_center_router)
+    app.include_router(processing_insights_router)
     return app

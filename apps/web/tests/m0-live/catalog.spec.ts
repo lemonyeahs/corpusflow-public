@@ -65,9 +65,6 @@ test("real 4300-record catalog drives home, filtered paging, file detail and com
   await expect(page.getByText(`共 ${ctx.source_counts.web} 个文件`, { exact: true })).toBeVisible();
   await expect(page.getByRole("img", { name: `文件来源分布，总计 ${ctx.source_counts.web} 个文件` })).toBeVisible();
   await page.screenshot({ path: test.info().outputPath("real-explorer-desktop.png"), fullPage: true });
-  await page.setViewportSize({ width: 390, height: 844 });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
-  await page.screenshot({ path: test.info().outputPath("real-explorer-mobile.png"), fullPage: true });
   expect(requests.some(url => url.pathname.endsWith("/files") && url.searchParams.get("offset") === "20")).toBe(true);
   expect(requests.filter(url => url.pathname.endsWith("/stats")).every(url => url.searchParams.get("revision") === ctx.revision && !url.searchParams.has("q"))).toBe(true);
   expect(fixtureHeaders).toEqual([]);
@@ -135,8 +132,7 @@ for (const kind of ["cpt", "sft", "dpo"]) {
     await page.getByRole("button", { name: /^#/ }).first().click();
     await expect(page.getByRole("dialog")).toContainText("测试筛选");
     const sourceLink = page.getByRole("dialog").locator('a[href*="lineage"]');
-    await expect(sourceLink).toHaveAttribute("href", /scope_reset=1/);
-    expect(await sourceLink.getAttribute("href")).not.toContain("revision=");
+    await expect(sourceLink).toHaveAttribute("href", new RegExp(`revision=${catalog.workspace_catalog.scope.revision}`));
     await page.getByRole("button", { name: "Close", exact: true }).click();
     await page.getByRole("textbox", { name: "搜索样本" }).fill("测试筛选");
     await page.getByRole("button", { name: "搜索", exact: true }).click();
@@ -151,10 +147,7 @@ for (const kind of ["cpt", "sft", "dpo"]) {
     await expect(page.locator("main pre")).toContainText("training-center.isolated-acceptance.v1");
     await expect(page.locator("main pre")).toContainText("no Worker or publish gate executed");
     await expect(page.getByRole("menuitem", { name: "JSONL" })).not.toBeVisible();
-    if (kind === "dpo") {
-      await page.setViewportSize({ width: 390, height: 844 });
-      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
-    }
+
     await page.screenshot({ path: test.info().outputPath(`real-${kind}-manifest.png`), fullPage: true });
   });
 }

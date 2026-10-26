@@ -1,3 +1,4 @@
+import { useSearchParams, Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { Button, Card, Progress, Select, Space, Tag, Upload } from "antd";
 import { Download, FileInput, Play, RefreshCw } from "lucide-react";
@@ -29,6 +30,9 @@ function statusColor(status: UploadStatus): "default" | "processing" | "success"
 
 export default function IngestionPage() {
   const ctx = useWorkspaceContext();
+  const [params, setParams] = useSearchParams();
+  const pinnedRevision = params.get("revision");
+  const routeRunId = params.get("run_id");
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<IngestFile[]>([]);
   const [sourceId, setSourceId] = useState("");
@@ -38,11 +42,12 @@ export default function IngestionPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [summary, setSummary] = useState<ProcessingSummaryResponse | null>(null);
-  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const [activeRunId, setActiveRunId] = useState<string | null>(routeRunId);
   const [runIds, setRunIds] = useState<string[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const [summaryError, setSummaryError] = useState<unknown>(null);
   const activeStatus = files.find(item => item.runId === activeRunId)?.status;
+  useEffect(() => { setActiveRunId(routeRunId); setSummary(null); }, [routeRunId, ctx.workspaceId]);
   const [sourceItems, setSourceItems] = useState<Awaited<ReturnType<typeof api.sources>>['items']>([]);
   const [operatorItems, setOperatorItems] = useState<Awaited<ReturnType<typeof api.operators>>['items']>([]);
 
@@ -77,9 +82,15 @@ export default function IngestionPage() {
     let timer: number | undefined;
     const poll = async () => {
       try {
-        const next = await scopedRequest<ProcessingSummaryResponse>(`/pipeline-runs/${encodeURIComponent(activeRunId)}/summary?catalog=workspace`, ctx, "workspace", null);
+        const next = await scopedRequest<ProcessingSummaryResponse>(`/pipeline-runs/${encodeURIComponent(activeRunId)}/summary?catalog=workspace${pinnedRevision ? `&revision=${encodeURIComponent(pinnedRevision)}` : ""}`, ctx, "workspace", pinnedRevision);
         if (next.run_id !== activeRunId) throw new ApiError(409, { error: { code: "SCOPE_MISMATCH", message: "处理摘要与当前运行不一致" } });
-        if (!cancelled) { setSummary(next); setSummaryError(null); }
+        if (!cancelled) {
+          setSummary(next); setSummaryError(null);
+          if (!pinnedRevision && terminal.has(next.status as UploadStatus)) {
+            setParams({ catalog: "workspace", run_id: activeRunId, revision: next.scope.revision }, { replace: true });
+          }
+          if (pinnedRevision || terminal.has(next.status as UploadStatus)) return;
+        }
       } catch (nextError) {
         if (!cancelled) { setSummary(null); setSummaryError(nextError); }
       }
@@ -87,11 +98,11 @@ export default function IngestionPage() {
     };
     void poll();
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [activeRunId, activeStatus, refreshKey, ctx]);
+  }, [activeRunId, activeStatus, refreshKey, ctx, pinnedRevision, setParams]);
 
-  function refresh() { setError(null); setSummaryError(null); setRefreshKey(value => value + 1); }
+  function refresh() { setParams({ catalog: "workspace", ...(activeRunId ? { run_id: activeRunId } : {}) }); setError(null); setSummaryError(null); setRefreshKey(value => value + 1); }
 
-  function selectRun(id: string) { setSummary(null); setSummaryError(null); setActiveRunId(id); }
+  function selectRun(id: string) { setSummary(null); setSummaryError(null); setActiveRunId(id); setParams({ catalog: "workspace", run_id: id }); }
 
   function choose(next: File[]) {
     setFiles(current => [...current, ...next.filter(file => !current.some(item => item.file === file)).map(file => ({ file, status: "ready" as const, progress: 0 }))]);
@@ -133,7 +144,7 @@ export default function IngestionPage() {
         return match ? { ...item, status: "queued", runId: match.run_id } : rejected ? { ...item, status: "failed", error: rejected.reason } : item;
       }));
       setRunIds(created.accepted.map(item => item.run_id));
-      if (firstRun) setActiveRunId(firstRun.run_id);
+      if (firstRun) selectRun(firstRun.run_id);
     } catch (startError) {
       setError(startError);
     } finally {
@@ -142,10 +153,10 @@ export default function IngestionPage() {
   }
 
   async function exportRun(format: ExportFormat) {
-    if (!activeRunId) return;
+    if (!activeRunId || !summary || summary.status !== "succeeded") return;
     setError(null);
     try {
-      saveDownload(await download(`/pipeline-runs/${encodeURIComponent(activeRunId)}/export?export_format=${format}`, ctx, `pipeline-${activeRunId}.${format === "markdown" ? "md" : format}`));
+      saveDownload(await download(`/pipeline-runs/${encodeURIComponent(activeRunId)}/export?export_format=${format}&catalog=workspace&revision=${encodeURIComponent(summary.scope.revision)}`, ctx, `pipeline-${activeRunId}.${format === "markdown" ? "md" : format}`));
     } catch (exportError) { setError(exportError); }
   }
 
@@ -167,9 +178,10 @@ export default function IngestionPage() {
       <Panel title="02 / 处理状态" extra={activeRunId ? <code>{activeRunId}</code> : undefined}>
         {runIds.length > 0 && <label>当前运行<select aria-label="当前运行" value={activeRunId || ""} onChange={event => selectRun(event.target.value)}>{runIds.map(id => <option key={id} value={id}>{files.find(item => item.runId === id)?.file.name || id} · {id}</option>)}</select></label>}
         {summaryError ? <ErrorState error={summaryError} onRetry={refresh} /> : !activeRunId && !summary ? <EmptyState description="开始处理后，这里显示真实运行状态和计数。" /> : summary ? <div className={styles.steps}>{currentSteps.map(step => <Card size="small" key={step.id} className={styles.step}><div className={styles.stepHead}><strong>{step.sequence}. {step.operator_key}</strong><Tag color={statusColor(step.status as UploadStatus)}>{statusLabels[step.status as UploadStatus]}</Tag></div><div className={styles.counts}><span>输入 <b>{step.input_count ?? "—"}</b> {step.input_unit}</span><span>输出 <b>{step.output_count ?? "—"}</b> {step.output_unit}</span><span>修改 <b>{step.modified_count ?? "—"}</b></span><span>过滤 <b>{step.filtered_count ?? "—"}</b></span><span>失败 <b>{step.failed_count ?? "—"}</b></span></div></Card>)}</div> : <LoadingState label="正在读取处理状态…" />}
-        {activeRunId && <div className={styles.toolbar}><Button icon={<RefreshCw size={14} />} onClick={refresh} disabled={busy}>刷新状态</Button><ExportMenu onExport={format => void exportRun(format)} disabled={!summary || !["succeeded", "partial"].includes(summary.status)} /></div>}
+        {activeRunId && <div className={styles.toolbar}><Button icon={<RefreshCw size={14} />} onClick={refresh} disabled={busy}>刷新状态</Button><ExportMenu onExport={format => void exportRun(format)} disabled={!summary || summary.status !== "succeeded"} /></div>}
       </Panel>
     </div>
-    {summary && <Panel title="03 / 处理摘要" extra={<Tag color={summary.status === "succeeded" ? "success" : "warning"}>{summary.status}</Tag>}><div className={styles.summary}><span>文件输入 <b>{summary.totals.find(total => total.unit === "file")?.input_count ?? "—"}</b></span><span>片段输出 <b>{summary.totals.find(total => total.unit === "segment")?.output_count ?? "—"}</b></span><span>导出范围：当前运行（单文件）</span><span><Download size={14} /> 导出前后保留来源引用</span></div></Panel>}
+    {summary && <p><Link to={`/data/all?catalog=workspace&revision=${encodeURIComponent(summary.scope.revision)}&file_id=${encodeURIComponent(summary.input_refs.find(ref => ref.type === "file")?.id || "")}&detail_tab=detail`}>查看文件与清洗对比</Link></p>}
+    {summary && <Panel title="03 / 处理摘要" extra={<Tag color={summary.status === "succeeded" ? "success" : "warning"}>{summary.status}</Tag>}><div className={styles.summary}><span>文件输入 <b>{summary.totals.find(total => total.unit === "file")?.input_count ?? "—"}</b></span><span>片段输出 <b>{summary.totals.find(total => total.unit === "segment")?.output_count ?? "—"}</b></span><span>导出范围：当前运行（单文件快照）</span><span><Download size={14} /> 导出前后保留来源引用</span></div></Panel>}
   </div>;
 }

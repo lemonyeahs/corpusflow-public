@@ -10,33 +10,31 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 ROOT = Path(__file__).resolve().parents[2]
-PENDING_PROCESSING = {
+PROCESSING_ROUTES = {
     "/api/v1/pipeline-runs/{run_id}/summary",
     "/api/v1/pipeline-runs/{run_id}/steps/{step_id}/comparison",
     "/api/v1/pipeline-runs/{run_id}/export",
 }
 
 
-def test_default_app_openapi_matches_checked_in_routes_and_pending_gate(settings):
-    # Register processing only after the review requests are satisfied, then replace this gate
-    # with real storage/permission/snapshot/download acceptance for these exact endpoints.
+def test_default_app_openapi_matches_checked_in_routes_and_processing_routes(settings):
     actual = create_app(settings).openapi()
     stored = json.loads((ROOT / "docs/api/openapi.json").read_text(encoding="utf-8"))
     assert actual == stored
-    assert not PENDING_PROCESSING.intersection(actual["paths"])
+    assert PROCESSING_ROUTES.issubset(actual["paths"])
     catalog = [p for p in actual["paths"] if p.startswith("/api/v1/training-center/")]
     assert len(catalog) == 11
     assert all("get" in actual["paths"][path] for path in catalog)
 
 
-def test_pending_processing_is_unavailable_in_default_runtime(settings):
+def test_processing_requires_auth_in_default_runtime(settings):
     with TestClient(create_app(settings)) as client:
-        for path in PENDING_PROCESSING:
+        for path in PROCESSING_ROUTES:
             response = client.get(
                 path.replace("{run_id}", "review-run").replace("{step_id}", "step")
             )
-            assert response.status_code == 404
-            assert ApiErrorBody.model_validate(response.json()).error.code == "NOT_FOUND"
+            assert response.status_code == 401
+            assert ApiErrorBody.model_validate(response.json()).error.code == "UNAUTHENTICATED"
 
 
 @pytest.mark.parametrize(

@@ -1,6 +1,6 @@
 # 训练数据中心：并行开发任务书
 
-状态：M0 共享基线已冻结为契约 1.0.0；见收尾报告 `../reports/TRAINING_CENTER_M0_CLOSEOUT.md`。下文 M1–M3 仍是待交付范围，不代表业务功能已经实现。
+状态：M0 共享基线已冻结为契约 1.0.0；见收尾报告 `../reports/TRAINING_CENTER_M0_CLOSEOUT.md`。2026-10-27 的 M1 实现及跨模块真实联调见 [收尾报告](../reports/TRAINING_CENTER_M1_CLOSEOUT.md)。下文保留原任务与验收要求，当前交付范围及未运行项以该报告为准；用户已明确本轮只验收正常桌面窗口，不开展小窗口适配，M3 人工独立复核仍待执行。
 
 视觉基准：[HTML 交互原型](../previews/training-data-center.html)。
 接口基准：[共享契约 v1](../specs/TRAINING_CENTER_CONTRACT_V1.md)。

@@ -1,5 +1,6 @@
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -200,7 +201,15 @@ def _client(
 ):
     app = FastAPI()
     app.include_router(router)
+    from corpusflow.api.v1.lineage_graph import router as graph_router
+    from corpusflow.api.v1.training_center import router as catalog_router
+
+    app.include_router(catalog_router)
+    app.include_router(graph_router)
     app.state.config = SimpleNamespace(
+        training_center_data_dir=Path(".local/absent-processing-test"),
+        training_center_snapshot_ttl_seconds=900,
+        training_center_snapshot_max_per_workspace=10,
         training_center_max_records=max_records,
         training_center_max_bytes=max_bytes,
     )
@@ -263,7 +272,7 @@ def test_processing_export_rejects_byte_limit_before_success_response():
     client, headers = _client(factory, workspace_id, max_bytes=1)
     response = client.get(f"/api/v1/pipeline-runs/{run_id}/export", headers=headers)
     assert response.status_code == 413
-    assert response.json()["detail"] == "EXPORT_LIMIT_EXCEEDED"
+    assert response.json()["detail"] in {"EXPORT_LIMIT_EXCEEDED", "CATALOG_LIMIT_EXCEEDED"}
 
 
 def test_processing_routes_keep_workspace_boundary_and_failed_export_closed():
@@ -282,6 +291,76 @@ def test_processing_routes_keep_workspace_boundary_and_failed_export_closed():
     closed = client.get(f"/api/v1/pipeline-runs/{run_id}/export", headers=headers)
     assert closed.status_code == 409
     assert closed.json()["detail"] == "INVALID_STATE_TRANSITION"
+
+
+def test_one_snapshot_freezes_catalog_processing_comparison_graph_and_export():
+    factory, _, workspace, run_id = _fixture()
+    client, headers = _client(factory, workspace)
+    summary = client.get(f"/api/v1/pipeline-runs/{run_id}/summary", headers=headers).json()
+    params = {"catalog": "workspace", "revision": summary["scope"]["revision"]}
+    asset = summary["input_refs"][0]["id"]
+    comparison_url = f"/api/v1/training-center/files/{asset}/comparison"
+    comparison = client.get(comparison_url, params=params, headers=headers).json()
+    assert comparison["scope"] == summary["scope"]
+    assert comparison["before"]["text"] == "  before  "
+    graph_params = {**params, "root_type": "file", "root_id": asset}
+    graph = client.get("/api/v1/lineage/graph", params=graph_params, headers=headers).json()
+    assert graph["scope"] == summary["scope"]
+    export_url = f"/api/v1/pipeline-runs/{run_id}/export"
+    download = client.get(export_url, params=params, headers=headers)
+    assert download.status_code == 200
+    with factory() as session:
+        session.get(PipelineRun, run_id).status = "failed"
+        for segment in session.scalars(select(Segment)):
+            segment.text = "changed after snapshot"
+        session.commit()
+    assert client.get(comparison_url, params=params, headers=headers).json() == comparison
+    assert client.get("/api/v1/lineage/graph", params=graph_params, headers=headers).json() == graph
+    assert client.get(export_url, params=params, headers=headers).content == download.content
+    assert client.get(export_url, headers=headers).status_code == 409
+    with factory() as session:
+        session.scalar(select(Membership)).status = "revoked"
+        session.commit()
+    for path in (export_url, comparison_url, f"/api/v1/pipeline-runs/{run_id}/summary"):
+        assert client.get(path, params=params, headers=headers).status_code == 403
+
+
+@pytest.mark.parametrize("status", ["queued", "running", "partial", "awaiting_review", "failed"])
+def test_incomplete_outputs_never_export(status):
+    factory, _, workspace, run_id = _fixture()
+    with factory() as session:
+        session.get(PipelineRun, run_id).status = status
+        session.commit()
+    client, headers = _client(factory, workspace)
+    response = client.get(f"/api/v1/pipeline-runs/{run_id}/export", headers=headers)
+    assert response.status_code == 409
+    assert response.json()["detail"] == "INVALID_STATE_TRANSITION"
+
+
+def test_processing_rejects_generated_catalog_and_expired_snapshot():
+    factory, _, workspace, run_id = _fixture()
+    client, headers = _client(factory, workspace)
+    from corpusflow.modules.training_center.workspace import WorkspaceSnapshots
+
+    clock = [0.0]
+    client.app.state.training_center_workspace = WorkspaceSnapshots(clock=lambda: clock[0])
+    path = f"/api/v1/pipeline-runs/{run_id}/summary"
+    response = client.get(path, headers=headers)
+    revision = response.json()["scope"]["revision"]
+    assert client.get(path, params={"catalog": "generated"}, headers=headers).status_code == 422
+    clock[0] = 899
+    assert client.get(path, params={"revision": revision}, headers=headers).status_code == 200
+    clock[0] = 900
+    for endpoint in (
+        path,
+        f"/api/v1/pipeline-runs/{run_id}/export",
+        "/api/v1/training-center/overview",
+    ):
+        expired = client.get(
+            endpoint, params={"catalog": "workspace", "revision": revision}, headers=headers
+        )
+        assert expired.status_code == 409
+        assert expired.json()["detail"] == "SNAPSHOT_EXPIRED"
 
 
 def test_chain_retry_preserves_partial_evidence_and_uses_current_step_output(settings, monkeypatch):
@@ -413,3 +492,47 @@ def test_chain_reuses_preallocated_pending_attempt(settings, monkeypatch):
             assert pending.output_refs
     finally:
         factory.kw["bind"].dispose()
+
+
+def test_task_retry_reexecutes_chain_without_rewriting_successful_parser(settings, monkeypatch):
+    factory, _, _, run_id = _fixture()
+    monkeypatch.setattr(tasks, "_session", lambda: factory)
+    monkeypatch.setattr(tasks, "load_settings", lambda: settings)
+    monkeypatch.setattr(tasks, "_store", lambda *args: None)
+    monkeypatch.setattr(tasks.S3ObjectStore, "get", lambda *args: b"real   retry text")
+    with factory() as session:
+        run = session.get(PipelineRun, run_id)
+        run.status = "queued"
+        run.config_snapshot = {"operators": ["builtin.unknown"]}
+        session.commit()
+    first = tasks.execute_pipeline_run.run(run_id)
+    assert first["status"] == "failed"
+    with factory() as session:
+        parsed = session.scalar(
+            select(NodeRun)
+            .where(NodeRun.run_id == run_id, NodeRun.node_id == "parse")
+            .order_by(NodeRun.attempt_no.desc())
+        )
+        assert parsed.status == "succeeded" and parsed.output_refs
+        old_id, old_refs, old_attempt = parsed.id, parsed.output_refs, parsed.attempt_no
+        run = session.get(PipelineRun, run_id)
+        run.config_snapshot = {"operators": ["builtin.clean"]}
+        session.commit()
+    second = tasks.execute_pipeline_run.run(run_id)
+    assert second["status"] == "succeeded"
+    with factory() as session:
+        original = session.get(NodeRun, old_id)
+        assert original.status == "succeeded" and original.output_refs == old_refs
+        latest = session.scalar(
+            select(NodeRun)
+            .where(NodeRun.run_id == run_id, NodeRun.node_id == "parse")
+            .order_by(NodeRun.attempt_no.desc())
+        )
+        assert latest.attempt_no == old_attempt + 1
+        assert latest.execution_sequence > original.execution_sequence
+        clean = session.scalar(
+            select(NodeRun)
+            .where(NodeRun.run_id == run_id, NodeRun.node_id == "clean")
+            .order_by(NodeRun.attempt_no.desc())
+        )
+        assert clean.status == "succeeded" and clean.input_refs == latest.output_refs

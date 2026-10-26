@@ -18,7 +18,7 @@ export const advancedNavigation = [
   { path: "/advanced/assets", label: "资产中心", icon: Boxes },
   { path: "/advanced/document", label: "文档对照", icon: Boxes },
   { path: "/advanced/processing", label: "处理中心", icon: Activity, roles: ENGINEERS },
-  { path: "/advanced/datasets", label: "数据集构建", icon: Database, roles: ENGINEERS },
+  { path: "/advanced/datasets", label: "数据集构建与审核", icon: Database, roles: REVIEWERS },
   { path: "/advanced/dpo", label: "DPO 审核与构建", icon: Database, roles: REVIEWERS },
   { path: "/advanced/lineage", label: "旧版血缘", icon: GitBranch },
   { path: "/advanced/admin", label: "系统管理", icon: Settings2, roles: ["admin"] as Role[] },

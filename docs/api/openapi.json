@@ -1452,6 +1452,11 @@
         ],
         "summary": "Graph",
         "operationId": "graph_api_v1_lineage_graph_get",
+        "security": [
+          {
+            "TrainingCenterBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "catalog",
@@ -1548,6 +1553,24 @@
               "default": 200,
               "title": "Max Nodes"
             }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Authorized workspace. If omitted, retain the existing first active membership policy.",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authorized workspace. If omitted, retain the existing first active membership policy."
           }
         ],
         "responses": {
@@ -8849,6 +8872,501 @@
           }
         }
       }
+    },
+    "/api/v1/pipeline-runs/{run_id}/summary": {
+      "get": {
+        "tags": [
+          "processing-insights"
+        ],
+        "summary": "Pipeline Run Summary",
+        "operationId": "pipeline_run_summary_api_v1_pipeline_runs__run_id__summary_get",
+        "security": [
+          {
+            "TrainingCenterBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "const": "workspace",
+              "type": "string",
+              "default": "workspace",
+              "title": "Catalog"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Authorized workspace. If omitted, retain the existing first active membership policy.",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authorized workspace. If omitted, retain the existing first active membership policy."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessingSummaryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          }
+        }
+      }
+    },
+    "/api/v1/pipeline-runs/{run_id}/export": {
+      "get": {
+        "tags": [
+          "processing-insights"
+        ],
+        "summary": "Pipeline Run Export",
+        "operationId": "pipeline_run_export_api_v1_pipeline_runs__run_id__export_get",
+        "security": [
+          {
+            "TrainingCenterBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "const": "workspace",
+              "type": "string",
+              "default": "workspace",
+              "title": "Catalog"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          },
+          {
+            "name": "export_format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "jsonl",
+                "markdown",
+                "csv",
+                "txt"
+              ],
+              "type": "string",
+              "default": "jsonl",
+              "title": "Export Format"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Authorized workspace. If omitted, retain the existing first active membership policy.",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authorized workspace. If omitted, retain the existing first active membership policy."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          }
+        }
+      }
+    },
+    "/api/v1/pipeline-runs/{run_id}/steps/{step_id}/comparison": {
+      "get": {
+        "tags": [
+          "processing-insights"
+        ],
+        "summary": "Pipeline Step Comparison",
+        "operationId": "pipeline_step_comparison_api_v1_pipeline_runs__run_id__steps__step_id__comparison_get",
+        "security": [
+          {
+            "TrainingCenterBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "step_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Step Id"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "const": "workspace",
+              "type": "string",
+              "default": "workspace",
+              "title": "Catalog"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          },
+          {
+            "name": "record_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Record Id"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Authorized workspace. If omitted, retain the existing first active membership policy.",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authorized workspace. If omitted, retain the existing first active membership policy."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9752,6 +10270,11 @@
       },
       "DpoReviewIn": {
         "properties": {
+          "evidence_reviewed": {
+            "type": "boolean",
+            "title": "Evidence Reviewed",
+            "default": false
+          },
           "decision": {
             "type": "string",
             "pattern": "^(approved|rejected)$",
@@ -11211,6 +11734,301 @@
         ],
         "title": "ProcessingRunRef"
       },
+      "ProcessingStepSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Id"
+          },
+          "run_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Run Id"
+          },
+          "attempt": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Attempt"
+          },
+          "operator_key": {
+            "type": "string",
+            "title": "Operator Key"
+          },
+          "operator_version": {
+            "type": "string",
+            "title": "Operator Version"
+          },
+          "config_hash": {
+            "type": "string",
+            "title": "Config Hash"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Sequence"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "partial",
+              "failed"
+            ],
+            "title": "Status"
+          },
+          "input_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Count"
+          },
+          "output_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Count"
+          },
+          "input_unit": {
+            "type": "string",
+            "enum": [
+              "file",
+              "record",
+              "segment"
+            ],
+            "title": "Input Unit"
+          },
+          "output_unit": {
+            "type": "string",
+            "enum": [
+              "file",
+              "record",
+              "segment"
+            ],
+            "title": "Output Unit"
+          },
+          "modified_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modified Count"
+          },
+          "filtered_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filtered Count"
+          },
+          "failed_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed Count"
+          },
+          "input_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "type": "array",
+            "title": "Input Refs"
+          },
+          "output_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "type": "array",
+            "title": "Output Refs"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "run_id",
+          "attempt",
+          "operator_key",
+          "operator_version",
+          "config_hash",
+          "sequence",
+          "status",
+          "input_count",
+          "output_count",
+          "input_unit",
+          "output_unit",
+          "modified_count",
+          "filtered_count",
+          "failed_count",
+          "input_refs",
+          "output_refs",
+          "started_at",
+          "completed_at"
+        ],
+        "title": "ProcessingStepSummary"
+      },
+      "ProcessingSummaryResponse": {
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "run_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Run Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "partial",
+              "failed"
+            ],
+            "title": "Status"
+          },
+          "input_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "type": "array",
+            "title": "Input Refs"
+          },
+          "output_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "type": "array",
+            "title": "Output Refs"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ProcessingStepSummary"
+            },
+            "type": "array",
+            "title": "Steps"
+          },
+          "totals": {
+            "items": {
+              "$ref": "#/components/schemas/ProcessingTotal"
+            },
+            "type": "array",
+            "title": "Totals"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope",
+          "run_id",
+          "status",
+          "input_refs",
+          "output_refs",
+          "steps",
+          "totals"
+        ],
+        "title": "ProcessingSummaryResponse"
+      },
+      "ProcessingTotal": {
+        "properties": {
+          "unit": {
+            "type": "string",
+            "enum": [
+              "file",
+              "record",
+              "segment"
+            ],
+            "title": "Unit"
+          },
+          "input_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Count"
+          },
+          "output_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Count"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "unit",
+          "input_count",
+          "output_count"
+        ],
+        "title": "ProcessingTotal"
+      },
       "PublishIn": {
         "properties": {
           "build_id": {
@@ -11402,6 +12220,11 @@
       },
       "SampleReviewIn": {
         "properties": {
+          "evidence_reviewed": {
+            "type": "boolean",
+            "title": "Evidence Reviewed",
+            "default": false
+          },
           "decision": {
             "type": "string",
             "pattern": "^(approved|rejected)$",

@@ -224,16 +224,16 @@ test.describe("M1 real-client browser integration", () => {
     await expect(page.getByText("暂无活动记录", { exact: true })).toBeVisible();
   });
 
-  test("independent workspace graph tokens are not reused by catalog navigation", async ({ page }) => {
+  test("workspace graph and catalog navigation retain the shared snapshot", async ({ page }) => {
     await backend(page, { workspaceComparison: true });
     await login(page, "/home?catalog=workspace");
     await expect(page).toHaveURL(new RegExp(`revision=${revision}`));
-    await expect(page.getByRole("navigation", { name: "主导航" }).getByRole("link", { name: "数据血缘", exact: true })).toHaveAttribute("href", "#/lineage?catalog=workspace&scope_reset=1");
-    await page.goto("/#/lineage?catalog=workspace&revision=graph-only&root_type=file&root_id=file-a");
+    await expect(page.getByRole("navigation", { name: "主导航" }).getByRole("link", { name: "数据血缘", exact: true })).toHaveAttribute("href", `#/lineage?catalog=workspace&revision=${revision}`);
+    await page.goto(`/#/lineage?catalog=workspace&revision=${revision}&root_type=file&root_id=file-a`);
     const home = page.getByRole("navigation", { name: "主导航" }).getByRole("link", { name: "首页", exact: true });
-    await expect(home).toHaveAttribute("href", "#/home?catalog=workspace&scope_reset=1");
+    await expect(home).toHaveAttribute("href", `#/home?catalog=workspace&revision=${revision}`);
     await home.click();
-    await expect(page.getByText("此页面将使用独立快照，请以本页统计时间为准。", { exact: true })).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`revision=${revision}`));
     await expect(page).not.toHaveURL(/graph-only/);
   });
 

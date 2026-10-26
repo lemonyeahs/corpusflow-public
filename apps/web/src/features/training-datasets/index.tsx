@@ -60,7 +60,7 @@ export default function TrainingDatasets() {
   useEffect(() => () => downloadController.current?.abort(), [ctx.workspaceId, scope.catalog, scope.revision]);
   const rawOffset = Number(params.get("offset") || 0);
   const offset = Number.isSafeInteger(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
-  const canBuild = ["admin", "engineer"].includes(ctx.session.role);
+  const canBuild = ["admin", "engineer", "reviewer"].includes(ctx.session.role);
   const baseParams = { catalog: scope.catalog, ...(scope.revision ? { revision: scope.revision } : {}) };
   function update(values: Record<string, string | null>) {
     setParams(previous => { const next = new URLSearchParams(previous); Object.entries(values).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key)); return next; });
@@ -106,7 +106,7 @@ export default function TrainingDatasets() {
     <PageHeader title="训练数据集" description={`${kind.toUpperCase()} · ${labels[kind]}，查看版本、来源与训练样本。`} actions={<div className={styles.toolbar}><Button onClick={refresh}>刷新快照</Button>{canBuild && <Button type="primary" onClick={build}>构建 {kind.toUpperCase()}</Button>}</div>} />
     <div className={styles.toolbar}><label>数据目录 <select aria-label="数据目录" value={scope.catalog} onChange={e => { scope.changeCatalog(e.target.value as "generated" | "workspace"); setExportError(null); }}><option value="generated">生成目录</option><option value="workspace">工作空间</option></select></label><span className={styles.muted}>{listing.data && `快照时间 ${new Date(listing.data.scope.as_of).toLocaleString()}`}</span></div>
     <nav className={styles.tabs} aria-label="数据集视图">{[["overview", "概览"], ["samples", "样本浏览"], ["manifest", "版本清单"], ...(canBuild ? [["build", "构建与发布"]] : [])].map(([key, label]) => <button key={key} aria-current={tab === key ? "page" : undefined} onClick={() => key === "build" ? build() : update({ tab: key })}>{label}</button>)}</nav>
-    {tab === "build" ? (canBuild && scope.catalog === "workspace" ? <div className="legacy-page" key={`${ctx.workspaceId}:${kind}`}>{kind === "dpo" ? <DpoPage ctx={ctx} onPublished={() => { void scope.refreshSnapshot(); }} /> : <DatasetPage ctx={ctx} initialProductType={kind === "cpt" ? "pretrain" : "sft"} onPublished={() => { void scope.refreshSnapshot(); }} />}</div> : <EmptyState description="构建需要工作空间目录以及管理员或工程师权限。" />) : <>
+    {tab === "build" ? (canBuild && scope.catalog === "workspace" ? <div className="legacy-page" key={`${ctx.workspaceId}:${kind}`}>{kind === "dpo" ? <DpoPage ctx={ctx} onPublished={() => { void scope.refreshSnapshot(); }} /> : <DatasetPage ctx={ctx} initialProductType={kind === "cpt" ? "pretrain" : "sft"} onPublished={() => { void scope.refreshSnapshot(); }} />}</div> : <EmptyState description="构建与审核需要工作空间目录及相应角色权限。" />) : <>
       {listing.isPending && <LoadingState />}
       {(scopeError || error) && <ErrorState error={scopeError || error} onRetry={() => { if (scopeError) refresh(); else { void listing.refetch(); if (tab === "overview") void overview.refetch(); if (tab === "samples") { void samples.refetch(); if (sampleId) void detail.refetch(); } if (tab === "manifest") void manifest.refetch(); } }} />}
       {listing.data && !scopeError && <Panel title="数据集版本" extra={<span>{listing.data.items.length} 个版本</span>}>

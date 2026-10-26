@@ -65,7 +65,7 @@ workspace 每次下载重新检查版本仍已发布，以及完整版本所有�
 
 入口 `apps/web/src/features/training-datasets/index.tsx`；无需修改 App.tsx。支持 CPT/SFT/DPO 的目录/版本选择、概览分布、split和文本过滤分页、原始顺序SFT消息、DPO并排回答、manifest及四格式下载。URL和查询键绑定workspace/catalog/revision；快照过期可整体刷新，错误不会换成开发样例。
 
-样本详情使用版本限定接口，URL 中的 sample_id 即使不在当前列表页也能恢复抽屉。版本指标明确标注为版本总量，列表总数对应当前过滤范围。切换空间/目录/快照或卸载页面时中止下载。workspace 血缘跳转暂不传目录 revision，由图接口建立自己的快照；跨模块统一快照尚未接通。
+样本详情使用版本限定接口，URL 中的 sample_id 即使不在当前列表页也能恢复抽屉。版本指标明确标注为版本总量，列表总数对应当前过滤范围。切换空间/目录/快照或卸载页面时中止下载。workspace 目录、处理和血缘共用统一快照，跨页跳转保留 revision；实际联调见 docs/reports/TRAINING_CENTER_M1_CLOSEOUT.md。
 
 管理员/工程师可以进入工作空间构建页，复用原 DatasetPage/DpoPage 的审核/校验/发布流程。DatasetPage 仅增加可选 initialProductType；CPT 使用 pretrain，优先选同类型真实workspace数据集。生成目录ID不会传入构建请求。原高级入口保持默认行为。
 

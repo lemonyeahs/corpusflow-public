@@ -30,7 +30,7 @@ export function FileComparison({ detail, recordId }: { detail: FileDetailRespons
       const path = `/training-center/files/${encodeURIComponent(file.id)}/comparison`;
       const comparison = await scopedRequest<ComparisonResponse>(`${path}?${queryString({ catalog: scope.catalog, revision: scope.revision, record_id: recordId })}`, ctx, scope.catalog, scope.revision, signal, { expectedScope: scope, client });
       if (comparison.before.record_id !== comparison.after.record_id || (recordId && comparison.before.record_id !== recordId)
-        || comparison.record_ref.id !== comparison.before.record_id
+        || comparison.record_ref.catalog !== scope.catalog
         || (scope.catalog === "workspace" && comparison.processing_run_ref.id !== detail.processing_summary_ref?.id)) {
         throw new ApiError(409, { error: { code: "RECORD_MISMATCH", message: "返回的对比与当前文件的处理记录不一致。" } });
       }

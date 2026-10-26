@@ -2898,7 +2898,47 @@ def annotate_dpo_preference(
     return {"preference_sample_id": row.id, "status": row.status}
 
 
+def _review_source_evidence(
+    session: Session,
+    request: Request,
+    workspace: str,
+    user: str,
+    evidence_ids: list[str],
+    note: str,
+) -> None:
+    """Explicit independent review of exact immutable evidence; never an automatic quality pass."""
+    if not evidence_ids or len(note.strip()) < 8:
+        raise HTTPException(422, "VALIDATION_FAILED")
+    unique = sorted(set(evidence_ids))
+    rows = []
+    for offset in range(0, len(unique), 500):
+        rows.extend(
+            session.scalars(
+                select(Segment)
+                .where(
+                    Segment.workspace_id == workspace, Segment.id.in_(unique[offset : offset + 500])
+                )
+                .with_for_update()
+            ).all()
+        )
+    if {row.id for row in rows} != set(unique):
+        raise HTTPException(404, "NOT_FOUND")
+    for row in rows:
+        row.quality_state = "reviewed"
+        audit(
+            session,
+            request,
+            workspace,
+            user,
+            "quality.segment.review",
+            "segment",
+            row.id,
+            {"decision": "reviewed", "content_hash": row.content_hash, "note": note},
+        )
+
+
 class DpoReviewIn(BaseModel):
+    evidence_reviewed: bool = False
     decision: str = Field(pattern="^(approved|rejected)$")
     note: str = Field(min_length=8, max_length=2000)
     choice: str | None = Field(default=None, pattern="^(a|b)$")
@@ -2941,6 +2981,10 @@ def review_dpo_preference(
         row.status != "annotated" or not row.chosen_response or not row.rejected_response
     ):
         raise HTTPException(409, "PREFERENCE_NOT_RESOLVED")
+    if body.evidence_reviewed:
+        if body.decision != "approved":
+            raise HTTPException(422, "VALIDATION_FAILED")
+        _review_source_evidence(session, request, wid, user, list(row.evidence_ids), body.note)
     row.status = body.decision
     row.reviewed_by = user
     row.review_note = body.note
@@ -3241,6 +3285,7 @@ def create_build(body: BuildIn, request: Request, session: Session = Depends(db)
 
 
 class SampleReviewIn(BaseModel):
+    evidence_reviewed: bool = False
     decision: str = Field(pattern="^(approved|rejected)$")
     note: str = ""
 
@@ -3268,6 +3313,17 @@ def review_sample(
         select(DatasetVersionSample.id).where(DatasetVersionSample.candidate_sample_id == sample.id)
     ):
         raise HTTPException(409, "VERSION_CONFLICT")
+    if body.evidence_reviewed:
+        if body.decision != "approved":
+            raise HTTPException(422, "VALIDATION_FAILED")
+        evidence_ids = list(
+            session.scalars(
+                select(SampleEvidence.segment_id).where(
+                    SampleEvidence.candidate_sample_id == sample.id
+                )
+            )
+        )
+        _review_source_evidence(session, request, wid, user, evidence_ids, body.note)
     sample.status = body.decision
     session.add(
         SampleReview(
@@ -3345,6 +3401,13 @@ def build_candidates(build_id: str, request: Request, session: Session = Depends
         "items": [
             {
                 "sample_id": row.id,
+                "evidence_ids": list(
+                    session.scalars(
+                        select(SampleEvidence.segment_id)
+                        .where(SampleEvidence.candidate_sample_id == row.id)
+                        .order_by(SampleEvidence.segment_id)
+                    )
+                ),
                 "sample_key": row.sample_key,
                 "status": row.status,
                 "payload_hash": row.payload_hash,
@@ -3370,6 +3433,7 @@ def build_quality_report(build_id: str, request: Request, session: Session = Dep
     ).all()
     return {
         "build_id": build.id,
+        "dataset_id": build.dataset_id,
         "product_type": build.config_json.get("product_type", "sft"),
         "status": build.status,
         "config_hash": build.config_hash,

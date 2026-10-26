@@ -224,6 +224,15 @@ def _run_processing_chain(
             session.add(node)
             session.flush()
         before_records = segment_records(session, current.id)
+        node.execution_sequence = (
+            int(
+                session.scalar(
+                    select(func.max(NodeRun.execution_sequence)).where(NodeRun.run_id == run.id)
+                )
+                or 0
+            )
+            + 1
+        )
         node.status = "running"
         node.operator_key = key
         node.config_snapshot = operator_config
@@ -369,7 +378,7 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
             node = NodeRun(run_id=run.id, node_id="parse", status="pending")
             session.add(node)
             session.flush()
-        elif node.status == "failed":
+        elif node.status != "pending":
             node = NodeRun(
                 run_id=run.id,
                 node_id="parse",
@@ -378,10 +387,15 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
             )
             session.add(node)
             session.flush()
-        if node.status == "succeeded":
-            run.status = "succeeded"
-            session.commit()
-            return {"run_id": run.id, "status": run.status}
+        node.execution_sequence = (
+            int(
+                session.scalar(
+                    select(func.max(NodeRun.execution_sequence)).where(NodeRun.run_id == run.id)
+                )
+                or 0
+            )
+            + 1
+        )
         node.status = "running"
         run.status = "running"
         run.started_at = run.started_at or datetime.now(UTC)
@@ -657,9 +671,10 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
                         ).hexdigest(),
                     )
                 )
-            _run_processing_chain(session, settings, run, dv)
             node.status = "succeeded"
             node.completed_at = datetime.now(UTC)
+            session.commit()
+            _run_processing_chain(session, settings, run, dv)
             session.flush()
             run.status = "succeeded" if resolve_reworked_issues(session, run) else "awaiting_review"
             run.finished_at = datetime.now(UTC)
@@ -674,17 +689,21 @@ def execute_pipeline_run(self: Any, run_id: str) -> dict[str, str]:
             session.commit()
             return {"run_id": run.id, "status": run.status, "parser": result.parser}
         except (ParserError, ProcessingError) as exc:
-            node.failure_code = exc.code
-            node.status = "failed"
-            node.output_count = None
-            node.filtered_count = None
-            node.modified_count = None
-            node.failed_count = None
-            node.completed_at = datetime.now(UTC)
+            # A downstream operator failure must not rewrite the successful parser evidence.
+            if node.status != "succeeded":
+                node.failure_code = exc.code
+                node.status = "failed"
+                node.output_count = None
+                node.filtered_count = None
+                node.modified_count = None
+                node.failed_count = None
+                node.completed_at = datetime.now(UTC)
             run.status = "failed"
             run.error_code = exc.code
             run.finished_at = datetime.now(UTC)
-            _write_log(session, run, f"parser failure {exc.code}", level="ERROR", attempt=attempt)
+            _write_log(
+                session, run, f"processing failure {exc.code}", level="ERROR", attempt=attempt
+            )
             session.commit()
             return {"run_id": run.id, "status": run.status, "error_code": exc.code}
         except Exception as exc:

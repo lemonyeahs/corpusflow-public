@@ -18,6 +18,8 @@ def db(request: Request) -> Iterator[Session]:
 def actor_id(request: Request, session: Session) -> str:
     token = request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
     token = token or request.headers.get("X-User-ID", "")
+    if not token:
+        raise HTTPException(401, "UNAUTHENTICATED")
     user = session.scalar(select(User).where(User.oidc_sub == token, User.disabled.is_(False)))
     if not user:
         raise HTTPException(401, "UNAUTHENTICATED")

@@ -232,6 +232,7 @@ export interface Dataset {
 }
 
 export interface CandidateSample {
+  evidence_ids?: string[];
   sample_id: string;
   sample_key: string;
   status: string;

@@ -1,3 +1,5 @@
+> 当前状态（2026-10-27）：本轮由集成负责人完成剩余实现，见 [M1 收尾报告](../../../../../../docs/reports/TRAINING_CENTER_M1_CLOSEOUT.md)。下文协作身份仅保留历史归属。
+
 # Agent 2 → Agent 1/3/4 接入说明
 
 开发基线 `acb7ce0fa31befaa203bf1213ad3eebbc4afaa06`，Agent 2 分支 `feat/tc-catalog-datasets`。2026-10-27 集成更新：已合并 Agent 1 的 `c2ee815` 与 Agent 2 的 `711eb5b`，共享契约、默认路由和验收现状见 [集成报告](../../../../../../docs/reports/TRAINING_CENTER_M1_FOLLOWUP_INTEGRATION.md)。本文是模块边界说明，不是新共享协议。
@@ -18,9 +20,9 @@ def load(
 ) -> CatalogSnapshot: ...
 ```
 
-依据 Agent 1 的 `docs/plans/TRAINING_CENTER_M2_INTEGRATION_REQUESTS.md`，**Agent 2 负责唯一 workspace 快照发行方、存储及冻结投影**，Agent 3/4 消费；Agent 1 负责公共协议、导航及应用注入。Agent 2 的统一 provider 可通过 `app.state.training_center_workspace` 注入，或通过 FastAPI dependency override 替换 `api.v1.training_center.workspace_store`。调用方仍先授权；provider 返回同一 scope 下的不可变内容副本，约束最大记录数/字节数、过期和空间隔离。已有契约测试验证 dependency override 可替换实现且不改变 wire scope；该测试**不代表统一快照服务已接通**。
+依据 Agent 1 的 `docs/plans/TRAINING_CENTER_M2_INTEGRATION_REQUESTS.md`，**Agent 2 负责唯一 workspace 快照发行方、存储及冻结投影**，Agent 3/4 消费；Agent 1 负责公共协议、导航及应用注入。Agent 2 的统一 provider 可通过 `app.state.training_center_workspace` 注入，或通过 FastAPI dependency override 替换 `api.v1.training_center.workspace_store`。调用方仍先授权；provider 返回同一 scope 下的不可变内容副本，约束最大记录数/字节数、过期和空间隔离。已有契约测试验证 dependency override 可替换实现且不改变 wire scope；统一 provider 现已接通目录、处理摘要/对比/导出及图；详见最新收尾报告。
 
-目前默认仍是 `WorkspaceSnapshots`（固定900秒、每空间10份、不续期），与图模块内部 `GraphSnapshots` 不互认。Agent 2 应继续交付统一 provider 的调用签名与实现；Agent 3/4 提供可在同一数据库一致性边界内捕获的处理证据/图投影，再由 Agent 1 集成应用入口。多进程共享缓存和跨模块同 revision 读取尚未验收。当前页面的 workspace 血缘链接省略目录 revision，并携带 scope_reset 提示，使图建立独立快照；此时不能保证目录与图代表同一时点。
+当前默认 `WorkspaceSnapshots` 在一个 REPEATABLE READ 事务捕获目录、真实处理记录和图投影，三模块共用同一 scope、900秒有效期及十份容量，读取不续期。页面跨模块跳转保留 revision；旧的 GraphSnapshots 已删除。每次请求仍验证当前成员权限。缓存仍为单进程；多进程需要共享存储或一致路由，本轮未部署多实例。
 
 本轮增量：
 
@@ -31,7 +33,7 @@ def load(
 
 集成已将可空字符串 q 纳入 Python/TypeScript ExportQuery 和设计 OpenAPI；导出使用模型整体 Query 绑定，未知参数仍拒绝。详情复用已有 SamplesResponse。
 
-历史差异保存在 [openapi_followup_delta.json](contract_examples/openapi_followup_delta.json)，仅作原交付评审材料，不会被生产服务加载。集成已重新生成 `docs/api/openapi.json` 和设计契约，默认应用注册 11 个目录 GET，OpenAPI 快照检查已通过；处理 router 仍未注册。
+历史差异保存在 [openapi_followup_delta.json](contract_examples/openapi_followup_delta.json)，仅作原交付评审材料，不会被生产服务加载。集成已重新生成 `docs/api/openapi.json` 和设计契约，默认应用注册 11 个目录 GET，OpenAPI 快照检查已通过；处理 router 已注册并完成隔离真实流程联调。
 
 统计口径待确认：workspace 片段数按每份 Document 最新 DocumentVersion 的实际 Segment；样本证据允许引用历史片段。文件按 Asset，训练记录按已发布版本中关联的 CandidateSample（DPO每对一项）；同一候选被多个版本使用时每个版本分别计数。Tokens 无确定分词器时为 null。列表与文件统计使用相同文件过滤范围；数据集概览是版本总体，样本 total_count 是 q/split 后总体，页面明确标注版本总量。
 

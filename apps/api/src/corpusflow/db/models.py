@@ -274,6 +274,7 @@ class NodeRun(Timestamped):
     run_id: Mapped[str] = mapped_column(ForeignKey("pipeline_runs.id"), index=True)
     node_id: Mapped[str] = mapped_column(String(100))
     attempt_no: Mapped[int] = mapped_column(Integer, default=1)
+    execution_sequence: Mapped[int | None] = mapped_column(Integer, nullable=True)
     status: Mapped[str] = mapped_column(String(30), default="pending")
     log_ref: Mapped[str | None] = mapped_column(Text, nullable=True)
     operator_key: Mapped[str | None] = mapped_column(String(120), nullable=True)

@@ -22,7 +22,14 @@ POSTGRES = (
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--catalog", action="store_true", help="Also verify M1 catalog HTTP and UI")
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Run the isolated Worker and real upload/build/publish acceptance",
+    )
     args = parser.parse_args()
+    if args.full:
+        args.catalog = True
     context = json.loads(
         subprocess.check_output(["docker", "context", "inspect"], encoding="utf-8", timeout=15)
     )[0]
@@ -49,6 +56,9 @@ def main():
         "LLM_WORKSPACES": "[]",
         "TRAINING_CENTER_DATA_DIR": str(reports / "catalog"),
         "PYTHONUTF8": "1",
+        "PYTHONFAULTHANDLER": "1",
+        "CF_TASK_QUEUE": name,
+        "CF_BROKER_PREFIX": name + ":",
         "PYTHONIOENCODING": "utf-8",
         "MINIO_ROOT_USER": "m1-isolated",
         "MINIO_ROOT_PASSWORD": password,
@@ -86,6 +96,8 @@ def main():
     server = None
     created = False
     storage_created = False
+    redis_created = False
+    owned_processes = []
     try:
         run(
             "postgres-create",
@@ -177,6 +189,57 @@ def main():
             else:
                 raise RuntimeError("isolated object store health timeout")
             run("storage-init", [sys.executable, "scripts/init_storage.py"])
+        if args.full:
+            redis_image = run(
+                "redis-image", ["docker", "image", "inspect", "redis:7", "--format", "{{.Id}}"]
+            )
+            run(
+                "redis-create",
+                [
+                    "docker",
+                    "run",
+                    "-d",
+                    "--pull=never",
+                    "--name",
+                    name + "-redis",
+                    "--label",
+                    "corpusflow.task=m1-verification",
+                    "-p",
+                    "127.0.0.1::6379",
+                    redis_image,
+                ],
+            )
+            redis_created = True
+            redis_port = run("redis-port", ["docker", "port", name + "-redis", "6379/tcp"]).rsplit(
+                ":", 1
+            )[1]
+            env["REDIS_URL"] = f"redis://127.0.0.1:{redis_port}/0"
+            for label, command in (
+                (
+                    "worker",
+                    [
+                        sys.executable,
+                        "-m",
+                        "celery",
+                        "-A",
+                        "corpusflow.worker.celery_app:celery_app",
+                        "worker",
+                        "--pool=solo",
+                        "--loglevel=WARNING",
+                        "--without-gossip",
+                        "--without-mingle",
+                        "-Q",
+                        name,
+                    ],
+                ),
+                ("dispatcher", [sys.executable, "scripts/dispatch_outbox.py"]),
+            ):
+                with (reports / (label + ".log")).open("wb") as process_log:
+                    owned_processes.append(
+                        subprocess.Popen(
+                            command, cwd=ROOT, env=env, stdout=process_log, stderr=subprocess.STDOUT
+                        )
+                    )
         with socket.socket() as sock:
             sock.bind(("127.0.0.1", 0))
             api_port = sock.getsockname()[1]
@@ -220,6 +283,17 @@ def main():
                     [sys.executable, "scripts/check_training_center_http.py"],
                     timeout=300,
                 )
+            if args.full:
+                env["TC_FULL_CONTEXT"] = str(reports / "full-context.json")
+                run(
+                    "full-pipeline-api",
+                    [sys.executable, "scripts/check_training_center_full.py"],
+                    timeout=300,
+                )
+                summary["not_run"] = [
+                    "External LLM generation (disabled)",
+                    "Human independent review",
+                ]
             npm = shutil.which("npm.cmd" if os.name == "nt" else "npm")
             if not npm:
                 raise RuntimeError("npm is required")
@@ -241,6 +315,19 @@ def main():
         summary["status"] = "passed"
     finally:
         cleanup_errors = []
+        if server is not None:
+            summary["api_exit_before_cleanup"] = server.poll()
+        for process in reversed(owned_processes):
+            try:
+                process.terminate()
+                process.wait(timeout=15)
+            except (OSError, subprocess.TimeoutExpired):
+                cleanup_errors.append("owned Worker/dispatcher cleanup failed")
+        if redis_created:
+            try:
+                run("stop-owned-redis", ["docker", "stop", name + "-redis"])
+            except (OSError, RuntimeError, subprocess.TimeoutExpired):
+                cleanup_errors.append("owned Redis cleanup failed")
         try:
             if server is not None:
                 server.terminate()

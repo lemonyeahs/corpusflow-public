@@ -35,7 +35,7 @@ const RELATION_LABELS: Record<string, string> = {
 const NODE_LINK_LABELS: Record<ObjectType, string> = {
   source: "来源",
   file: "文件",
-  operator_run: "处理工具",
+  operator_run: "处理运行",
   segment: "片段",
   sample: "样本",
   dataset_version: "数据集版本",
@@ -52,8 +52,7 @@ function nodeLink(node: LineageGraph["nodes"][number], scope: LineageGraph["scop
   if (node.ref.type === "dataset_version" && typeof detail.dataset_kind === "string" && typeof detail.dataset_id === "string" && typeof detail.dataset_version === "string") {
     return destination(`/datasets/${detail.dataset_kind}`, { dataset_id: detail.dataset_id, version: detail.dataset_version });
   }
-  // The legacy tool does not consume run_id, so offer its general entry only.
-  if (node.ref.type === "operator_run") return "/advanced/processing";
+  if (node.ref.type === "operator_run" && typeof detail.run_id === "string") return destination("/ingest", { run_id: detail.run_id });
   return destination("/lineage", { root_type: node.ref.type, root_id: node.ref.id });
 }
 

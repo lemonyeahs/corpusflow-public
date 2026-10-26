@@ -6,7 +6,7 @@
 
 唯一类型来源是 `apps/api/src/corpusflow/contracts/training_center/models.py`。前端从 `src/contracts/training-center.ts` 导入自动生成的 wire DTO；禁止直接编辑 `.generated.ts`。统一样例为 `contracts/training-center/examples.json`。设计 OpenAPI 为 `docs/api/training-center.openapi.json`，路径按现状标记 planned/implemented；实际已注册路由仍以 `docs/api/openapi.json` 为准，implemented 不表示所有 catalog 均已实现。响应严格校验字段与语义，Query DTO 允许 FastAPI 解码 HTTP 字符串参数。
 
-M2 的 workspace 快照共用、文件关联与处理路由注册条件见 [公共接入请求](../plans/TRAINING_CENTER_M2_INTEGRATION_REQUESTS.md)。基线 acb7ce0 的 workspace 目录尚未实现；后续集成已接入目录适配器、样本详情和数据集导出，兼容新增 ExportQuery.q，见 [集成报告](../reports/TRAINING_CENTER_M1_FOLLOWUP_INTEGRATION.md)。图仍使用独立快照，处理 router 尚未通过注册审查；三者不能互相回显 revision 来冒充统一快照。
+2026-10-27 收尾已统一 workspace 目录、处理和图快照，注册处理路由并同步实际 OpenAPI。实现与真实隔离验收见 [收尾报告](../reports/TRAINING_CENTER_M1_CLOSEOUT.md)。历史协作请求保留作审查记录，不代表当前仍缺少这些模块。
 
 ## 1. 全局约定
 
@@ -112,7 +112,7 @@ type SourceKind = 'web' | 'book' | 'paper' | 'other';
 
 上传和创建处理任务继续使用现有 `/uploads/*`、`/ingest-batches`、`/pipeline-runs/batches`。不改变旧接口返回语义。
 
-新增：
+新增接口均接受 `catalog=workspace`、可选 `revision`，包括处理下载；省略 revision 创建统一快照，指定 revision 只读取该快照。generated 在处理接口返回422。
 
 | 方法与路径 | 响应/用途 |
 |---|---|
@@ -150,7 +150,9 @@ interface ProcessingStepSummary {
 - `modified_count` 是 output_count 的子集，不能再加到总数；未结束步骤未知计数为 null。
 - 解析允许文件变成多个片段，输入/输出不同单位，不套用上述记录守恒公式。
 - D 的 operator_run 节点以某次实际 step execution 为 ID；重试 attempt 必须可区分，默认图选择实际产出该 artifact 的一次执行，不累加所有失败尝试的输出。
-- 对比结果只提供请求者可见内容；无对应原始记录就显示不可用，不按索引硬配。
+- 对比结果只提供请求者可见内容；无对应原始记录就显示不可用，不按索引硬配。`before/after.record_id` 是持久化逻辑记录键；`record_ref.id` 是处理后 Segment 实体 ID，二者不要求相等。
+- 文件对比使用该快照文件的最新运行。未给 record_id 时，从有效持久化映射中优先选取有文本变化的记录，再按步骤倒序和逻辑记录 ID 升序确定；给定 record_id 先限定记录。applied_steps 只列该次 before→after 有证据的执行，不拼接其他尝试。
+- 新 Worker 在实际启动步骤时持久化 execution_sequence；重试保留先前解析/处理证据。旧历史没有该字段时仅保留实际记录时间的稳定展示顺序，不补写虚构执行序号。
 
 ### 通用序列化器（C 编写，B 调用）
 
@@ -275,10 +277,16 @@ interface LineageGraph {
 ### 快照、配置和接入责任
 
 - generated revision 不可变，至少保留当前与前一版本；显式退役后 409 SNAPSHOT_EXPIRED。发布者先验证 manifest 完成标记、workspace_id、所有哈希，再原子切换活动指针。没有读取器驱动的自动删除。
-- workspace 快照有效期固定 900 秒，按 workspace/catalog 绑定；每个工作空间最多 10 份，容量不足时淘汰最旧快照，所有过期/淘汰请求统一 409。请求期间使用同一冻结数据，清理责任归快照存储服务；读取不续期。M1 实现可先用进程缓存，重启即过期，部署多进程前必须换共享存储或保证快照路由一致。
+- workspace 快照有效期固定 900 秒，按 workspace/catalog 绑定；每个工作空间最多 10 份，容量不足时淘汰最旧快照，所有过期/淘汰请求统一 409。请求期间使用同一冻结数据，清理责任归快照存储服务；读取不续期。本轮采用统一进程缓存，目录/处理/图共用上述十份容量，在同一 PostgreSQL REPEATABLE READ 事务捕获全部投影。每次命中仍重新校验成员权限。重启即过期；本轮验收为单 API 进程，部署多进程前必须换共享存储或保证快照路由一致。
 - Settings 已提供 TRAINING_CENTER_DATA_DIR（默认 `.local/training-center`）、TTL、容量和数据上限。API 可按 `infra/compose.training-center.yaml` 显式挂载只读目录；该可选配置不会自动挂载或重启共享服务。
 - Agent 2 实现路径安全与授权：只能解析已授权 workspace/revision，拒绝绝对路径、父目录逃逸和符号链接逃逸；自定义生成输出不自动注册为公开目录。配置存在不等于 HTTP 读取器/快照缓存已经实现。
 - 新路由复用 `corpusflow.api.dependencies` 的 db/actor_id/workspace_id/role_required，保留现有策略。main 已支持 SNAPSHOT_EXPIRED、COMPARISON_NOT_AVAILABLE 和超限错误；不添加返回样例的后端占位路由。Agent 2/3/4 提交真实路由后由集成人员注册并更新实际 OpenAPI。
+
+### 收尾：显式来源复核
+
+- 候选审核与 DPO 偏好复核兼容增加 `evidence_reviewed=false`。仅在独立审核者明确确认且 decision=approved 时，将该样本实际关联的当前空间片段标为 reviewed；逐条审计用户、内容哈希及说明。未传此字段不改变来源质量。
+- 创建者不能审核自己的候选；DPO 仍保持导入、标注和复核分离。已有授权、质量、不可变版本和发布门禁保持生效，未复核的清洗片段仍阻止发布。
+- 桌面构建页面支持按 Build ID 加载已有构建，读取完整来源片段后显式勾选确认；审核角色可进入审核页面，写入权限仍由服务端检查。
 
 ### 统一样例与检查
 

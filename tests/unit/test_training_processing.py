@@ -221,6 +221,9 @@ def test_processing_summary_uses_final_attempt_and_contract_units():
                 return FakeResult(nodes)
             return FakeResult([segment])
 
+    for index, node in enumerate(nodes):
+        node.execution_sequence = index + 1
+        node.started_at = node.created_at = datetime.now(UTC)
     summary = build_processing_summary(FakeSession(), run)
     assert summary.status == "succeeded"
     assert [step.input_unit for step in summary.steps] == ["file", "segment"]

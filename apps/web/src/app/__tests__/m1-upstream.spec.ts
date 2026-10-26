@@ -73,7 +73,7 @@ test.describe("M1 upstream integration", () => {
     await expect(page.getByRole("button", { name: "导出数据" })).toBeDisabled();
     summaryUnavailable = false;
     await page.getByRole("button", { name: "刷新状态" }).click();
-    await expect(page.getByText("导出范围：当前运行（单文件）", { exact: true })).toBeVisible();
+    await expect(page.getByText("导出范围：当前运行（单文件快照）", { exact: true })).toBeVisible();
     await page.getByLabel("当前运行", { exact: true }).selectOption("run-2");
     await expect(page.getByRole("button", { name: "导出数据" })).toBeEnabled();
     await page.getByRole("button", { name: "导出数据" }).click();
@@ -149,8 +149,8 @@ test.describe("M1 upstream integration", () => {
       await expect(link).toHaveAttribute("href", new RegExp(`${target}.*${kind === "file" ? `file_id=${id}` : kind === "sample" ? `sample_id=${id}` : "version=1.0.0"}`));
       const query = new URLSearchParams((await link.getAttribute("href"))!.split("?")[1]);
       expect(query.get("catalog")).toBe(catalog);
-      expect(query.get("revision")).toBe(catalog === "generated" ? "run-revision" : null);
-      expect(query.get("scope_reset")).toBe(catalog === "workspace" ? "1" : null);
+      expect(query.get("revision")).toBe("run-revision");
+      expect(query.get("scope_reset")).toBe(null);
       if (kind === "sample") expect(query.get("tab")).toBe("samples");
     }
     for (const [kind, id, label] of [["source", "source-1", "来源"], ["segment", "segment-1", "片段"]]) {
@@ -165,7 +165,7 @@ test.describe("M1 upstream integration", () => {
     }
     if (catalog === "workspace") {
       await page.getByText("处理记录节点", { exact: true }).click();
-      await expect(page.getByRole("link", { name: "打开处理工具" })).toHaveAttribute("href", "#/advanced/processing");
+      await expect(page.getByRole("link", { name: "打开处理运行" })).toHaveAttribute("href", "#/ingest?catalog=workspace&revision=run-revision&run_id=actual-parent-run");
       await expect(page.getByRole("link", { name: "打开处理记录" })).toHaveCount(0);
     }
   });

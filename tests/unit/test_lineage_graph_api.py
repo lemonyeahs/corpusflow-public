@@ -1,18 +1,11 @@
 from types import SimpleNamespace
 
 import pytest
-from corpusflow.api.v1.lineage_graph import (
-    WORKSPACE_MODELS,
-    FrozenEdge,
-    GraphSnapshots,
-    _generated_projection,
-    _stored_graph,
-    _training_kind,
-    router,
-)
+from corpusflow.api.v1.lineage_graph import router
 from corpusflow.contracts.training_center.models import GraphQuery, ObjectRef
 from corpusflow.db.models import (
     Asset,
+    AssetBlob,
     LineageEdge,
     Membership,
     NodeRun,
@@ -21,9 +14,16 @@ from corpusflow.db.models import (
     User,
     Workspace,
 )
+from corpusflow.db.session import Base
 from corpusflow.modules.training_center.catalog import GeneratedCatalog
 from corpusflow.modules.training_center.generation import build_catalog, write_catalog
-from fastapi import HTTPException
+from corpusflow.modules.training_center.workspace import WorkspaceSnapshots
+from corpusflow.services.training_center_graph import (
+    FrozenEdge,
+    _generated_projection,
+    _stored_graph,
+    _training_kind,
+)
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, delete, select
 from sqlalchemy.orm import Session
@@ -249,35 +249,6 @@ def test_http_generated_graph_uses_published_revision_and_explicit_refs(graph_ap
         } == {matching_version}
 
 
-def test_snapshots_expire_at_900_seconds_without_read_renewal():
-    now = [0.0]
-    store = GraphSnapshots(clock=lambda: now[0])
-    snapshot = store.put("workspace-1", (), frozenset())
-    now[0] = 899.999
-    assert store.get("workspace-1", snapshot.revision) == snapshot
-    now[0] = 900
-    with pytest.raises(HTTPException) as error:
-        store.get("workspace-1", snapshot.revision)
-    assert (error.value.status_code, error.value.detail) == (409, "SNAPSHOT_EXPIRED")
-
-
-def test_snapshots_evict_oldest_per_workspace_without_read_promoting():
-    store = GraphSnapshots()
-    first = store.put("workspace-1", (), frozenset())
-    other = store.put("workspace-2", (), frozenset())
-    for _ in range(9):
-        store.put("workspace-1", (), frozenset())
-    store.get("workspace-1", first.revision)
-    newest = store.put("workspace-1", (), frozenset())
-    with pytest.raises(HTTPException) as error:
-        store.get("workspace-1", first.revision)
-    assert error.value.status_code == 409
-    assert store.get("workspace-1", newest.revision) == newest
-    assert store.get("workspace-2", other.revision) == other
-    with pytest.raises(HTTPException):
-        store.get("workspace-2", newest.revision)
-
-
 @pytest.fixture
 def graph_api(settings):
     from corpusflow.api.dependencies import db
@@ -286,9 +257,7 @@ def graph_api(settings):
     engine = create_engine(
         "sqlite+pysqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
     )
-    models = {User, Workspace, Membership, LineageEdge, NodeRun, *WORKSPACE_MODELS.values()}
-    for model in models:
-        model.__table__.create(engine)
+    Base.metadata.create_all(engine)
     with Session(engine) as session:
         session.add_all(
             [
@@ -301,6 +270,14 @@ def graph_api(settings):
                 Source(id="source-a", workspace_id="workspace-a", name="A", kind="other"),
                 Source(id="source-a2", workspace_id="workspace-a", name="A2", kind="other"),
                 Source(id="source-b", workspace_id="workspace-b", name="B", kind="other"),
+                AssetBlob(
+                    id="blob-a",
+                    workspace_id="workspace-a",
+                    storage_key="test/a",
+                    sha256="a" * 64,
+                    byte_size=1,
+                    media_type="text/plain",
+                ),
                 Asset(
                     id="asset-a",
                     workspace_id="workspace-a",
@@ -329,6 +306,7 @@ def graph_api(settings):
                     operator_version="v1",
                     config_snapshot={"mode": "unicode"},
                     input_count=1,
+                    input_refs=[{"catalog": "workspace", "type": "file", "id": "asset-a"}],
                 ),
                 LineageEdge(
                     workspace_id="workspace-a",
@@ -386,8 +364,9 @@ def test_http_snapshot_preserves_rows_nodes_scope_and_supports_another_root(grap
     frozen = first.json()
     assert {node["ref"]["id"] for node in frozen["nodes"]} == {"source-a", "source-a2"}
     revision = frozen["scope"]["revision"]
-    store = client.app.state.lineage_snapshots
-    snapshot = store.get("workspace-a", revision)
+    store = client.app.state.training_center_workspace
+    with Session(engine) as session:
+        snapshot = store.load("workspace-a", revision, session).graph
     assert all(isinstance(row, FrozenEdge) for row in snapshot.rows)
     with Session(engine) as session:
         session.execute(delete(LineageEdge))
@@ -465,7 +444,7 @@ def test_http_snapshots_bound_to_workspace_and_auth_rechecked(graph_api):
 def test_http_expired_snapshot_and_missing_generated_catalog_errors(graph_api):
     client, _ = graph_api
     now = [0.0]
-    client.app.state.lineage_snapshots = GraphSnapshots(clock=lambda: now[0])
+    client.app.state.training_center_workspace = WorkspaceSnapshots(clock=lambda: now[0])
     revision = client.get(GRAPH_URL, params=GRAPH_PARAMS).json()["scope"]["revision"]
     now[0] = 900
     expired = client.get(GRAPH_URL, params={**GRAPH_PARAMS, "revision": revision})

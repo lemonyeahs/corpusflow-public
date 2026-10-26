@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, ApiError, type ApiContext } from "../api/client";
 import type { CandidateSample, Dataset, DatasetProductType } from "../types";
+import { EvidenceReview } from "../ui/EvidenceReview";
 import { Badge, Card, Empty, ErrorBox, Field, Page } from "../components";
 
 const PURPOSES: Record<string, string> = { sft: "training", pretrain: "training", rag: "rag", evaluation: "evaluation" };
 
 export function DatasetPage({ ctx, onPublished, initialProductType }: { ctx: ApiContext; onPublished: () => void; initialProductType?: "pretrain" | "sft" }) {
+  const [evidenceReviewed, setEvidenceReviewed] = useState<Record<string, boolean>>({});
+  const [existingBuildId, setExistingBuildId] = useState("");
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [productTypes, setProductTypes] = useState<DatasetProductType[]>([]);
   const [productType, setProductType] = useState<string>(initialProductType || "sft");
@@ -74,8 +77,18 @@ export function DatasetPage({ ctx, onPublished, initialProductType }: { ctx: Api
     } catch (err) { setError(err instanceof ApiError ? `${err.code}：${err.message}` : "构建创建失败"); }
     finally { setBusy(false); }
   }
+  async function openBuild() {
+    setBusy(true); setError(""); setEvidenceReviewed({});
+    try {
+      const report = await api.buildReviewReport(ctx, existingBuildId.trim());
+      const result = await api.candidates(ctx, report.build_id);
+      setSelectedDataset(report.dataset_id); setProductType(report.product_type);
+      setBuild(report); setCandidates(result.items);
+    } catch (err) { setError(err instanceof Error ? err.message : "构建读取失败"); }
+    finally { setBusy(false); }
+  }
   async function review(sample: CandidateSample, decision: "approved" | "rejected") {
-    try { await api.reviewSample(ctx, sample.sample_id, { decision, note: "Web 审核" }); if (build) setCandidates((await api.candidates(ctx, build.build_id)).items); }
+    try { await api.reviewSample(ctx, sample.sample_id, { decision, evidence_reviewed: decision === "approved" && !!evidenceReviewed[sample.sample_id], note: "Web 审核：已核对样本；来源质量仅在显式确认时更新。" }); if (build) setCandidates((await api.candidates(ctx, build.build_id)).items); }
     catch (err) { setError(err instanceof ApiError ? `${err.code}：${err.message}` : "候选审核失败"); }
   }
   async function validate() {
@@ -112,8 +125,9 @@ export function DatasetPage({ ctx, onPublished, initialProductType }: { ctx: Api
         {preview && <div className="notice"><strong>预览结果 · {currentProduct}</strong><span>纳入 {preview.included_count} · 排除 {preview.excluded_count}</span>{preview.excluded.map(item => <small key={item.segment_id}>{item.segment_id.slice(0, 12)}：{item.reason}</small>)}</div>}
       </Card>
       <Card title="候选审核与发布">
-        {build ? <><div className="list-row"><div><strong>Build {build.build_id.slice(0, 12)}</strong><small>{currentProduct} · config {build.config_hash.slice(0, 12)} · {build.candidate_count} 条候选</small></div><Badge value={build.status} /></div>
-          <div className="list">{candidates.map(sample => <div className="candidate" key={sample.sample_id}><div><code>{sample.sample_id}</code><small>{sample.sample_key} · {sample.payload_hash.slice(0, 12)}</small>{sample.payload && <pre>{JSON.stringify(sample.payload, null, 2).slice(0, 600)}</pre>}</div><div className="toolbar"><Badge value={sample.status} /><button className="button tiny" disabled={sample.status === "approved"} onClick={() => void review(sample, "approved")}>通过</button><button className="button tiny danger" disabled={sample.status === "rejected"} onClick={() => void review(sample, "rejected")}>驳回</button></div></div>)}</div>
+        <div className="toolbar"><Field label="已有 Build ID"><input value={existingBuildId} onChange={event => setExistingBuildId(event.target.value)} /></Field><button className="button secondary" disabled={busy || !existingBuildId.trim()} onClick={() => void openBuild()}>加载待审构建</button></div>
+        {build ? <><div className="list-row"><div><strong>Build {build.build_id}</strong><small>{currentProduct} · config {build.config_hash.slice(0, 12)} · {build.candidate_count} 条候选</small></div><Badge value={build.status} /></div>
+          <div className="list">{candidates.map(sample => <div className="candidate" key={sample.sample_id}><div><code>{sample.sample_id}</code><small>{sample.sample_key} · {sample.payload_hash.slice(0, 12)}</small>{sample.payload && <pre>{JSON.stringify(sample.payload, null, 2)}</pre>}<EvidenceReview ctx={ctx} ids={sample.evidence_ids || []} confirmed={!!evidenceReviewed[sample.sample_id]} onConfirm={value => setEvidenceReviewed(current => ({ ...current, [sample.sample_id]: value }))} /></div><div className="toolbar"><Badge value={sample.status} /><button className="button tiny" disabled={busy || (sample.status === "approved" && !evidenceReviewed[sample.sample_id])} onClick={() => void review(sample, "approved")}>通过</button><button className="button tiny danger" disabled={sample.status === "rejected"} onClick={() => void review(sample, "rejected")}>驳回</button></div></div>)}</div>
           <div className="toolbar"><button className="button secondary" disabled={busy} onClick={() => void validate()}>服务端验证快照</button><Field label="版本"><input value={version} onChange={e => setVersion(e.target.value)} pattern="\\d+\\.\\d+\\.\\d+" /></Field><button className="button primary" disabled={busy || build.status !== "validated"} onClick={() => void publish()}>发布不可变版本</button></div>{published && <div className="success-box">已发布 DatasetVersion：{published}</div>}
         </> : <Empty>创建构建后，真实 CandidateSample 会出现在这里。</Empty>}
       </Card>

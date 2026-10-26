@@ -596,7 +596,7 @@ class ExportQuery(DatasetQuery):
     q: str | None = None
 
 
-class ProcessingExportQuery(QueryModel):
+class ProcessingExportQuery(ProcessingQuery):
     export_format: Literal["jsonl", "markdown", "csv", "txt"] = "jsonl"
 
 

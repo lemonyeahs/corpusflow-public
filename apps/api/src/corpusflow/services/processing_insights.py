@@ -26,6 +26,8 @@ Unit = Literal["file", "record", "segment"]
 def _utc(value: datetime | None) -> str:
     if value is None:
         value = datetime.now(UTC)
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=UTC)
     return value.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 
@@ -61,17 +63,36 @@ def _unit(value: str | None, fallback: Unit) -> Unit:
     return cast(Unit, value if value in {"file", "record", "segment"} else fallback)
 
 
-def build_processing_summary(session: Session, run: PipelineRun) -> ProcessingSummaryResponse:
+def build_processing_summary(
+    session: Session,
+    run: PipelineRun,
+    *,
+    scope: Scope | None = None,
+    nodes: list[NodeRun] | None = None,
+) -> ProcessingSummaryResponse:
     """Map only values persisted by the Worker into the frozen response contract."""
     asset = session.get(Asset, run.asset_id)
     file_ref = _ref("file", asset.id if asset else run.asset_id)
-    nodes = list(
-        session.scalars(
-            select(NodeRun).where(NodeRun.run_id == run.id).order_by(NodeRun.created_at, NodeRun.id)
-        ).all()
+    if nodes is None:
+        nodes = list(
+            session.scalars(
+                select(NodeRun)
+                .where(NodeRun.run_id == run.id)
+                .order_by(NodeRun.created_at, NodeRun.id)
+            ).all()
+        )
+    # Historical attempts have no sequence. Preserve their recorded chronology,
+    # then use the actual Worker start order for newly recorded attempts.
+    nodes.sort(
+        key=lambda node: (
+            node.execution_sequence is not None,
+            node.execution_sequence or 0,
+            _utc(node.started_at or node.created_at),
+            _utc(node.created_at),
+            node.id,
+        )
     )
     steps: list[ProcessingStepSummary] = []
-    previous_refs = [file_ref]
     for sequence, node in enumerate(nodes, start=1):
         status = _run_status(node.status)
         input_unit = _unit(
@@ -79,7 +100,7 @@ def build_processing_summary(session: Session, run: PipelineRun) -> ProcessingSu
         )
         output_unit = _unit(getattr(node, "output_unit", None), "segment")
         raw_input_refs = getattr(node, "input_refs", None)
-        input_refs = _refs(raw_input_refs) if raw_input_refs is not None else previous_refs
+        input_refs = _refs(raw_input_refs)
         output_refs = _refs(getattr(node, "output_refs", None))
         steps.append(
             ProcessingStepSummary(
@@ -116,8 +137,6 @@ def build_processing_summary(session: Session, run: PipelineRun) -> ProcessingSu
                 else None,
             )
         )
-        if output_refs:
-            previous_refs = output_refs
 
     parse_steps = [step for step in steps if step.input_unit == "file"]
     parse = parse_steps[-1] if parse_steps else None
@@ -147,7 +166,7 @@ def build_processing_summary(session: Session, run: PipelineRun) -> ProcessingSu
         or getattr(run, "updated_at", None)
         or getattr(run, "created_at", None)
     )
-    scope = Scope(
+    scope = scope or Scope(
         workspace_id=run.workspace_id,
         catalog="workspace",
         revision=str(run.revision),

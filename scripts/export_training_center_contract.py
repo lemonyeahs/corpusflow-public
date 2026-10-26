@@ -36,8 +36,9 @@ ROUTES = {
     "/training-center/files/{file_id}/comparison": "ComparisonResponse",
     "/lineage/graph": "LineageGraph",
 }
-IMPLEMENTED_ROUTES = {"/lineage/graph", "/training-center/datasets/{dataset_id}/export"} | {
-    path for path in ROUTES if path.startswith("/training-center/")
+IMPLEMENTED_ROUTES = set(ROUTES) | {
+    "/training-center/datasets/{dataset_id}/export",
+    "/pipeline-runs/{run_id}/export",
 }
 
 

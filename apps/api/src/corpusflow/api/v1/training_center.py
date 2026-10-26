@@ -23,6 +23,7 @@ from corpusflow.modules.training_center.downloads import (
     prepare_export,
     stored_manifest,
 )
+from corpusflow.modules.training_center.processing import select_comparison
 from corpusflow.modules.training_center.query import CatalogQueries
 from corpusflow.modules.training_center.workspace import (
     WorkspaceCatalogProvider,
@@ -160,7 +161,12 @@ def file_detail(
 def comparison(
     file_id: str, read: Read, query: Annotated[m.ComparisonQuery, Query()]
 ) -> m.ComparisonResponse:
-    read.query(query).file(file_id)  # Check object visibility before reporting missing processing.
+    queries = read.query(query)
+    queries.file(file_id)
+    snapshot = queries.snapshot
+    run = snapshot.processing.get(snapshot.file_runs.get(file_id, ""))
+    if run is not None:
+        return select_comparison(run, query.record_id)
     raise HTTPException(404, "COMPARISON_NOT_AVAILABLE")
 
 

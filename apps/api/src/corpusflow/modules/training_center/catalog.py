@@ -7,7 +7,6 @@ This module never accesses the database; callers must authorize the workspace.
 from __future__ import annotations
 
 import argparse
-import copy
 import json
 import os
 import re
@@ -16,9 +15,15 @@ from collections import Counter, OrderedDict
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from threading import RLock
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import ValidationError
+
+from corpusflow.modules.training_center.snapshot_copy import copy_snapshot
+
+if TYPE_CHECKING:
+    from corpusflow.modules.training_center.processing import FrozenProcessing
+    from corpusflow.services.training_center_graph import GraphSnapshot
 
 from corpusflow.contracts.training_center import models as m
 from corpusflow.modules.training_center.generation import (
@@ -144,6 +149,8 @@ class CatalogSnapshot:
     version_metadata: dict[str, Json] = field(default_factory=dict)
     file_runs: dict[str, str] = field(default_factory=dict)
     sample_runs: dict[tuple[str, str, str], tuple[str, ...]] = field(default_factory=dict)
+    processing: dict[str, FrozenProcessing] = field(default_factory=dict)
+    graph: GraphSnapshot | None = None
 
 
 class GeneratedCatalog:
@@ -295,7 +302,7 @@ class GeneratedCatalog:
                 cached = self._cache.get(key)
                 if cached is not None:
                     self._cache.move_to_end(key)
-                    return copy.deepcopy(cached)
+                    return copy_snapshot(cached)
             rows = {
                 name: [decode_json(line) for line in value.splitlines()]
                 for name, value in raw.items()
@@ -306,7 +313,7 @@ class GeneratedCatalog:
                 self._cache.move_to_end(key)
                 while len(self._cache) > self.cache_size:
                     self._cache.popitem(last=False)
-            return copy.deepcopy(snapshot)
+            return copy_snapshot(snapshot)
         except CatalogError:
             raise
         except (OSError, ValueError, TypeError, KeyError, AttributeError):

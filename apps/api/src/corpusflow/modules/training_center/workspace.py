@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-import copy
 import time
 from collections import Counter, OrderedDict
 from collections.abc import Callable
+from dataclasses import fields, is_dataclass, replace
 from datetime import UTC, datetime
 from threading import RLock
 from typing import Any, Protocol
 from uuid import uuid4
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -36,6 +36,9 @@ from corpusflow.modules.training_center.catalog import (
     CatalogSnapshot,
 )
 from corpusflow.modules.training_center.generation import Json, json_bytes
+from corpusflow.modules.training_center.processing import capture_processing
+from corpusflow.modules.training_center.snapshot_copy import copy_snapshot
+from corpusflow.services.training_center_graph import capture_graph
 
 
 def utc(value: datetime) -> str:
@@ -53,8 +56,8 @@ def reference(kind: m.ObjectType, identifier: str) -> m.ObjectRef:
 class WorkspaceCatalogProvider(Protocol):
     """Python injection boundary, not a new wire revision protocol.
 
-    Agent 1 can substitute the shared store here when delivered. Callers must
-    authorize membership on every request before load.
+    Catalog, processing and graph reads share this store. Callers must authorize
+    membership on every request before load.
     """
 
     def load(
@@ -380,7 +383,7 @@ class WorkspaceSnapshots:
             if revision is not None:
                 if revision not in items:
                     raise CatalogError("SNAPSHOT_EXPIRED", 409)
-                return copy.deepcopy(items[revision][1])
+                return copy_snapshot(items[revision][1])
             try:
                 with Session(bind=session.get_bind()) as reader:
                     if reader.get_bind().dialect.name == "postgresql":
@@ -389,9 +392,41 @@ class WorkspaceSnapshots:
                         # SQLite's legacy driver mode does not BEGIN for a SELECT.
                         reader.connection().exec_driver_sql("BEGIN")
                     snapshot = snapshot_from_database(reader, workspace, max_records, max_bytes)
+                    processing = capture_processing(reader, snapshot.scope, max_records, max_bytes)
+                    graph = capture_graph(
+                        reader, workspace, snapshot.scope, processing, max_records
+                    )
+                    snapshot = replace(snapshot, processing=processing, graph=graph)
+                    if projection_bytes(snapshot) > max_bytes:
+                        raise CatalogError("CATALOG_LIMIT_EXCEEDED", 413)
             except (ValidationError, KeyError, TypeError):
                 raise CatalogError("INVALID_SAMPLE_FORMAT", 409) from None
             items[snapshot.scope.revision] = (self.clock() + self.ttl, snapshot)
             while len(items) > self.capacity:
                 items.popitem(last=False)
-            return copy.deepcopy(snapshot)
+            return copy_snapshot(snapshot)
+
+
+def projection_bytes(value: Any) -> int:
+    """Conservative UTF-8 budget for the entire projection, including duplicate views."""
+    if isinstance(value, BaseModel):
+        return len(value.model_dump_json().encode("utf-8")) + 2
+    if is_dataclass(value) and not isinstance(value, type):
+        return (
+            sum(
+                len(item.name) + projection_bytes(getattr(value, item.name)) + 4
+                for item in fields(value)
+            )
+            + 2
+        )
+    if isinstance(value, dict):
+        return (
+            sum(
+                len(str(key).encode("utf-8")) + projection_bytes(item) + 4
+                for key, item in value.items()
+            )
+            + 2
+        )
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return sum(projection_bytes(item) + 1 for item in value) + 2
+    return len(json_bytes(value)) + 2

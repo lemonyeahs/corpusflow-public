@@ -1460,7 +1460,7 @@
     "/api/v1/pipeline-runs/{run_id}/summary": {
       "get": {
         "operationId": "design_pipeline-runs_run_id_summary",
-        "x-implementation-status": "planned",
+        "x-implementation-status": "implemented",
         "parameters": [
           {
             "name": "run_id",
@@ -1579,7 +1579,7 @@
     "/api/v1/pipeline-runs/{run_id}/steps/{step_id}/comparison": {
       "get": {
         "operationId": "design_pipeline-runs_run_id_steps_step_id_comparison",
-        "x-implementation-status": "planned",
+        "x-implementation-status": "implemented",
         "parameters": [
           {
             "name": "run_id",
@@ -2264,7 +2264,7 @@
     },
     "/api/v1/pipeline-runs/{run_id}/export": {
       "get": {
-        "x-implementation-status": "planned",
+        "x-implementation-status": "implemented",
         "security": [
           {
             "BearerAuth": []
@@ -2286,6 +2286,34 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "schema": {
+              "const": "workspace",
+              "default": "workspace",
+              "title": "Catalog",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Revision"
+            },
+            "required": false
           },
           {
             "name": "export_format",
@@ -5321,6 +5349,24 @@
       "ProcessingExportQuery": {
         "additionalProperties": false,
         "properties": {
+          "catalog": {
+            "const": "workspace",
+            "default": "workspace",
+            "title": "Catalog",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revision"
+          },
           "export_format": {
             "default": "jsonl",
             "enum": [
