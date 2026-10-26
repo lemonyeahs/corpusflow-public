@@ -16,7 +16,8 @@ export function fixtureResponse(path: string, headers: Headers, init: RequestIni
     && query.get("fixture") === "contract-v1";
   if (!processing && query.get("catalog") === "workspace") return;
   const datasetMatch = url.pathname.match(/^\/training-center\/datasets\/([^/]+)\/(overview|samples)$/);
-  const supported = processing || datasetMatch || ["/training-center/overview", "/training-center/files", "/training-center/datasets", "/training-center/formats/txt/stats", "/lineage/graph"].includes(url.pathname);
+  const fileMatch = url.pathname.match(/^\/training-center\/files\/([^/]+)(\/comparison)?$/);
+  const supported = processing || datasetMatch || fileMatch || ["/training-center/overview", "/training-center/files", "/training-center/datasets", "/training-center/formats/txt/stats", "/lineage/graph"].includes(url.pathname);
   if (!supported) return;
   const mode = import.meta.env.VITE_TC_FIXTURE_SCENARIO || "success";
   if (!["success", "empty", "error"].includes(mode)) throw new Error("VITE_TC_FIXTURE_SCENARIO 必须是 success、empty 或 error");
@@ -31,6 +32,7 @@ export function fixtureResponse(path: string, headers: Headers, init: RequestIni
   const allowed = new Set(["catalog", "revision"]);
   const allow = (...keys: string[]) => keys.forEach(key => allowed.add(key));
   if (processing) allow("fixture", "record_id");
+  else if (fileMatch?.[2]) allow("record_id");
   else if (url.pathname === "/training-center/files") allow("format", "q", "source_kind", "language", "status", "offset", "limit");
   else if (datasetMatch) allow("version", ...(datasetMatch[2] === "samples" ? ["q", "split", "offset", "limit"] : []));
   else if (url.pathname === "/training-center/datasets") allow("kind");
@@ -45,6 +47,16 @@ export function fixtureResponse(path: string, headers: Headers, init: RequestIni
     return json(example.body, example.status_code);
   }
   if (url.pathname === "/training-center/overview") return json(overview(scenario));
+  if (fileMatch) {
+    let id: string;
+    try { id = decodeURIComponent(fileMatch[1]); } catch { return fail("invalid_query"); }
+    // Only the canonical file_detail example has source metadata. Never invent it for other files.
+    const example = cases(scenario) as Record<string, { status_code: number; body: unknown }>;
+    const detail = example.file_detail?.body as { file?: { id: string } } | undefined;
+    if (!detail?.file || detail.file.id !== id) return fail("not_found");
+    if (fileMatch[2]) return fail("comparison_unavailable");
+    return json(example.file_detail.body, example.file_detail.status_code);
+  }
   if (url.pathname.endsWith("/stats")) return query.has("timezone") && query.get("timezone") !== "UTC" ? fail("invalid_query") : json(stats(scenario));
   if (url.pathname === "/training-center/datasets") {
     const value = datasets(scenario);
