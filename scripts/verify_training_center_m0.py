@@ -1,5 +1,6 @@
 """Real M0 browser authentication against a new local PostgreSQL and API, never shared services."""
 
+import argparse
 import json
 import os
 import secrets
@@ -19,13 +20,16 @@ POSTGRES = (
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--catalog", action="store_true", help="Also verify M1 catalog HTTP and UI")
+    args = parser.parse_args()
     context = json.loads(
         subprocess.check_output(["docker", "context", "inspect"], encoding="utf-8", timeout=15)
     )[0]
     endpoint = os.environ.get("DOCKER_HOST") or context["Endpoints"]["docker"]["Host"]
     if not endpoint.startswith(("npipe://", "unix://")):
         raise SystemExit("Only a local Docker daemon is supported")
-    name = "cf-m0-" + uuid.uuid4().hex[:12]
+    name = ("cf-m1-" if args.catalog else "cf-m0-") + uuid.uuid4().hex[:12]
     reports = ROOT / ".local" / name
     reports.mkdir(parents=True, exist_ok=False)
     password = secrets.token_hex(16)
@@ -43,12 +47,19 @@ def main():
         "LLM_PROVIDER": "disabled",
         "LLM_API_KEY": "",
         "LLM_WORKSPACES": "[]",
+        "TRAINING_CENTER_DATA_DIR": str(reports / "catalog"),
+        "PYTHONUTF8": "1",
+        "PYTHONIOENCODING": "utf-8",
     }
     summary = {
         "status": "running",
         "container": name,
         "checks": [],
-        "not_run": ["Worker processing", "MinIO/Redis readiness", "M1/M2 business APIs"],
+        "not_run": [
+            "Worker processing",
+            "MinIO/Redis readiness",
+            "workspace/processing/graph APIs",
+        ],
     }
 
     def run(label, command, timeout=120):
@@ -82,7 +93,7 @@ def main():
                 "--name",
                 name,
                 "--label",
-                "corpusflow.task=m0-verification",
+                "corpusflow.task=" + ("m1-verification" if args.catalog else "m0-verification"),
                 "-e",
                 "POSTGRES_PASSWORD",
                 "-e",
@@ -146,6 +157,13 @@ def main():
                     time.sleep(0.5)
             else:
                 raise RuntimeError("isolated API health timeout")
+            if args.catalog:
+                env["M1_CATALOG_CONTEXT"] = str(reports / "browser-context.json")
+                run(
+                    "live-catalog-api",
+                    [sys.executable, "scripts/check_training_center_http.py"],
+                    timeout=300,
+                )
             npm = shutil.which("npm.cmd" if os.name == "nt" else "npm")
             if not npm:
                 raise RuntimeError("npm is required")
@@ -184,7 +202,9 @@ def main():
             summary["status"] = "cleanup_failed"
             summary["cleanup_errors"] = cleanup_errors
         (reports / "result.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
-        print(f"M0 real authentication: {summary['status']}; report: {reports / 'result.json'}")
+        print(
+            f"Training Center verification: {summary['status']}; report: {reports / 'result.json'}"
+        )
         if cleanup_errors:
             raise RuntimeError("; ".join(cleanup_errors))
 

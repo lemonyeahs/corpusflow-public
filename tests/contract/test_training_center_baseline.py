@@ -73,9 +73,25 @@ def test_artifacts_replay_and_openapi_references_resolve():
 
     refs(spec)
     live = json.loads((ROOT / "docs/api/openapi.json").read_text(encoding="utf-8"))
-    assert not set(spec["paths"]) & set(live["paths"]), (
-        "design routes must not imply implementation"
-    )
+    implemented = {
+        path
+        for path in spec["paths"]
+        if path.startswith("/api/v1/training-center/") and not path.endswith("/export")
+    }
+    assert set(spec["paths"]) & set(live["paths"]) == implemented
+    assert len(implemented) == 9
+    for path in implemented:
+        operation = live["paths"][path]["get"]
+        assert operation["security"] == [{"TrainingCenterBearer": []}]
+        assert {"401", "403", "404", "409", "413", "422", "503"} <= set(operation["responses"])
+        assert any(p["name"] == "X-Workspace-ID" for p in operation["parameters"])
+        schema = operation["responses"]["200"]["content"]["application/json"]["schema"]
+        assert (
+            schema["$ref"]
+            == spec["paths"][path]["get"]["responses"]["200"]["content"]["application/json"][
+                "schema"
+            ]["$ref"]
+        )
     for path, verbs in spec["paths"].items():
         operation = verbs["get"]
         assert operation["security"] == [{"BearerAuth": []}]

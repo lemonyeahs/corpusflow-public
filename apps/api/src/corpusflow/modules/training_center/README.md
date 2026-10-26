@@ -2,7 +2,7 @@
 
 基线：`58fe070955b3a8c66806dc8f2d8ed2f152d5036d`，共享契约/统计口径 `1.0.0`。
 
-本批提供生产代码形式的目录读取器、查询服务和独立 FastAPI router。响应来自实际生成文件，不导入 `contract_examples` 或统一开发样例。**router 尚未注册到默认 create_app**；共享入口及实际 OpenAPI 由 Agent 1 集成。本批测试在 create_app 上显式挂载真实 router，再通过现有认证函数查询隔离 SQLite；不是生产部署或 PostgreSQL 集成验收。
+本批提供目录读取器、查询服务和 FastAPI router。响应来自实际生成文件，不导入 `contract_examples` 或统一开发样例。集成负责人已将 9 个 GET 路由注册到默认 `create_app`，并重新导出实际 OpenAPI；契约测试直接使用默认应用。真实 PostgreSQL、独立 API 进程及关闭样例模式的前端验收见 [M1 集成报告](../../../../../../docs/reports/TRAINING_CENTER_M1_INTEGRATION.md)。
 
 ## 文件与接口
 
@@ -73,16 +73,16 @@ publish 全量校验候选版本后，通过同目录临时文件、flush/fsync 
 
 目录发布者必须独占管理目录、按不可变版本追加，不得在读取期间修改内容或置换路径；读取方进程只读。文件系统所有者的并发恶意路径置换不属于 HTTP 身份边界，部署者仍须正确设置目录权限。
 
-## Agent 1 集成请求
+## 应用集成（已完成）
 
-本批未改 App.tsx、main.py、business.py、共享 DTO、配置或锁文件。请 Agent 1 在自己的范围内：
+Agent 2 原交付未改共享入口；以下接入已由集成负责人完成。后续部署仍需指向对应环境的真实授权工作空间和已发布目录：
 
-1. 从 `corpusflow.api.v1.training_center` 导入 router，并在 create_app 注册一次。
-2. 运行实际 OpenAPI 导出及回归，更新 `docs/api/openapi.json`；设计 OpenAPI/DTO 本轮无字段变化。
+1. `create_app` 已注册 `corpusflow.api.v1.training_center.router` 一次，不应重复注册。
+2. `docs/api/openapi.json` 已更新，含 Bearer 认证、X-Workspace-ID、成功与错误响应；设计 OpenAPI/DTO 本轮无字段变化。
 3. 将 TRAINING_CENTER_DATA_DIR 指向已发布的规范目录；只读挂载使用已有可选 Compose 文件，不需新依赖。
 4. 使用真实授权 workspace 的 ID 生成/发布目录，关闭开发样例开关后联调首页/数据台；样例的 fixture workspace 不自动拥有授权。
 
-最小注册代码：
+入口中现有注册代码：
 
 ```python
 from corpusflow.api.v1.training_center import router as training_center_router

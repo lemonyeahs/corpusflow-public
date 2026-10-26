@@ -1,6 +1,6 @@
 """Real router + on-disk catalogs + existing authorization using disposable SQLite.
 
-The router is mounted only in this test application; production registration is A's task.
+The production create_app registers the router; only the database dependency is isolated here.
 """
 
 from __future__ import annotations
@@ -19,7 +19,6 @@ from sqlalchemy.pool import StaticPool
 @pytest.fixture
 def api(tmp_path, settings):
     from corpusflow.api.dependencies import db
-    from corpusflow.api.v1.training_center import router
     from corpusflow.main import create_app
 
     store = GeneratedCatalog(tmp_path)
@@ -54,7 +53,6 @@ def api(tmp_path, settings):
             yield session
 
     app = create_app(settings.model_copy(update={"training_center_data_dir": tmp_path}))
-    app.include_router(router)
     app.dependency_overrides[db] = database
     try:
         with TestClient(app) as client:

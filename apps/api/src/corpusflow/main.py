@@ -20,6 +20,7 @@ from corpusflow.api.v1.blind_review import router as blind_review_router
 from corpusflow.api.v1.business import router as business_router
 from corpusflow.api.v1.collection import router as collection_router
 from corpusflow.api.v1.rag import router as rag_router
+from corpusflow.api.v1.training_center import router as training_center_router
 from corpusflow.core.config import Settings, load_settings
 from corpusflow.core.errors import ErrorResponse, error_response
 from corpusflow.core.logging import configure_logging
@@ -140,6 +141,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             exc.status_code,
             detail if detail in known else codes.get(exc.status_code, "HTTP_ERROR"),
             {
+                "ADAPTER_UNAVAILABLE": "当前数据适配器暂不可用，请检查服务配置或稍后重试",
                 "SNAPSHOT_EXPIRED": "快照已过期，请刷新整个查询范围",
                 "COMPARISON_NOT_AVAILABLE": "暂无清洗对比",
                 "CATALOG_LIMIT_EXCEEDED": "目录超过允许的数据规模",
@@ -178,4 +180,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(blind_review_router)
     app.include_router(router)
     app.include_router(business_router)
+    app.include_router(training_center_router)
     return app

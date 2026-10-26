@@ -90,7 +90,17 @@ def bounded_read(path: Path, maximum: int) -> bytes:
     if path.stat().st_size > maximum:
         raise CatalogError("CATALOG_LIMIT_EXCEEDED", 413)
     with path.open("rb") as stream:
-        value = stream.read(maximum + 1)
+        # A catalog contains hundreds of tiny files. Avoid allocating the entire
+        # catalog byte limit for each read, while still detecting growth after stat.
+        chunks = []
+        remaining = maximum + 1
+        while remaining:
+            chunk = stream.read(min(64 * 1024, remaining))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        value = b"".join(chunks)
     if len(value) > maximum:
         raise CatalogError("CATALOG_LIMIT_EXCEEDED", 413)
     return value
@@ -320,6 +330,10 @@ class GeneratedCatalog:
             for row in rows["files.jsonl"]
         )
         datasets = tuple(m.DatasetSummary.model_validate(row) for row in rows["datasets.jsonl"])
+        # generated.v1 has exactly one version entity per kind, including empty datasets.
+        # Otherwise the manifest's kind-keyed counts could silently hide extra datasets.
+        if len(datasets) != len(KINDS) or {dataset.kind for dataset in datasets} != set(KINDS):
+            raise invalid()
         samples = tuple(
             SAMPLE_MODELS[kind].model_validate(row)
             for kind in KINDS
@@ -437,12 +451,15 @@ class GeneratedCatalog:
         return CatalogSnapshot(scope, manifest, content_hash, sources, files, datasets, samples)
 
     def _write_registry(self, workspace: str, registry: Json) -> None:
+        value = json_bytes(registry)
+        if len(value) > min(self.max_bytes, 1024 * 1024):
+            raise CatalogError("CATALOG_LIMIT_EXCEEDED", 413)
         directory = self._workspace(workspace)
         destination = safe_child(directory, "catalog.json")
         descriptor, name = tempfile.mkstemp(prefix=".catalog-", suffix=".tmp", dir=directory)
         try:
             with os.fdopen(descriptor, "wb") as stream:
-                stream.write(json_bytes(registry))
+                stream.write(value)
                 stream.flush()
                 os.fsync(stream.fileno())
             os.replace(name, destination)

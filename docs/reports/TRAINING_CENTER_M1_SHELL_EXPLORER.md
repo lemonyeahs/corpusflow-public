@@ -1,5 +1,7 @@
 # Agent 1 M1：首页与格式数据台
 
+> 本文记录 `15efe96` 的前端独立交付。后续已接入 Agent 2 的 generated 只读 API 并开展真实服务验收，最新结果见 [M1 集成报告](TRAINING_CENTER_M1_INTEGRATION.md)。原交付时未运行项保留，不代表当前集成状态。
+
 基线：`58fe070955b3a8c66806dc8f2d8ed2f152d5036d`，分支 `feat/tc-shell-explorer`。契约仍为 `1.0.0`，未修改 wire DTO、后端路由、数据库、Worker 或其他 agent 的页面。
 
 本次是 Agent 1 的 M1 前端交付，不表示四条开发线全部完成，也不计作真实业务 API 验收。

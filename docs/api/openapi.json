@@ -6429,10 +6429,1899 @@
           }
         }
       }
+    },
+    "/api/v1/training-center/overview": {
+      "get": {
+        "tags": [
+          "training-center"
+        ],
+        "summary": "Overview",
+        "operationId": "overview_api_v1_training_center_overview_get",
+        "security": [
+          {
+            "TrainingCenterBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "catalog",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "type": "string",
+              "default": "generated",
+              "title": "Catalog"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Authorized workspace. If omitted, retain the existing first active membership policy.",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authorized workspace. If omitted, retain the existing first active membership policy."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverviewResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/formats/{format}/stats": {
+      "get": {
+        "tags": [
+          "training-center"
+        ],
+        "summary": "Stats",
+        "operationId": "stats_api_v1_training_center_formats__format__stats_get",
+        "security": [
+          {
+            "TrainingCenterBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "format",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pdf",
+                    "html",
+                    "md",
+                    "txt",
+                    "docx",
+                    "csv",
+                    "json",
+                    "jsonl",
+                    "other"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "const": "all",
+                  "type": "string"
+                }
+              ],
+              "title": "Format"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "type": "string",
+              "default": "generated",
+              "title": "Catalog"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "name": "timezone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "UTC",
+              "title": "Timezone"
+            }
+          },
+          {
+            "name": "source_kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "web",
+                    "book",
+                    "paper",
+                    "other"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Kind"
+            }
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Language"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "unprocessed",
+                    "queued",
+                    "running",
+                    "succeeded",
+                    "partial",
+                    "failed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Authorized workspace. If omitted, retain the existing first active membership policy.",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authorized workspace. If omitted, retain the existing first active membership policy."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormatStatsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/files": {
+      "get": {
+        "tags": [
+          "training-center"
+        ],
+        "summary": "Files",
+        "operationId": "files_api_v1_training_center_files_get",
+        "security": [
+          {
+            "TrainingCenterBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "catalog",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "type": "string",
+              "default": "generated",
+              "title": "Catalog"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pdf",
+                    "html",
+                    "md",
+                    "txt",
+                    "docx",
+                    "csv",
+                    "json",
+                    "jsonl",
+                    "other"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "const": "all",
+                  "type": "string"
+                }
+              ],
+              "default": "all",
+              "title": "Format"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "source_kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "web",
+                    "book",
+                    "paper",
+                    "other"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Kind"
+            }
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Language"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "unprocessed",
+                    "queued",
+                    "running",
+                    "succeeded",
+                    "partial",
+                    "failed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Authorized workspace. If omitted, retain the existing first active membership policy.",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authorized workspace. If omitted, retain the existing first active membership policy."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FilesResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/files/{file_id}": {
+      "get": {
+        "tags": [
+          "training-center"
+        ],
+        "summary": "File Detail",
+        "operationId": "file_detail_api_v1_training_center_files__file_id__get",
+        "security": [
+          {
+            "TrainingCenterBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "File Id"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "type": "string",
+              "default": "generated",
+              "title": "Catalog"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Authorized workspace. If omitted, retain the existing first active membership policy.",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authorized workspace. If omitted, retain the existing first active membership policy."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/files/{file_id}/comparison": {
+      "get": {
+        "tags": [
+          "training-center"
+        ],
+        "summary": "Comparison",
+        "operationId": "comparison_api_v1_training_center_files__file_id__comparison_get",
+        "security": [
+          {
+            "TrainingCenterBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "File Id"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "type": "string",
+              "default": "generated",
+              "title": "Catalog"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          },
+          {
+            "name": "record_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Record Id"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Authorized workspace. If omitted, retain the existing first active membership policy.",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authorized workspace. If omitted, retain the existing first active membership policy."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/datasets": {
+      "get": {
+        "tags": [
+          "training-center"
+        ],
+        "summary": "Datasets",
+        "operationId": "datasets_api_v1_training_center_datasets_get",
+        "security": [
+          {
+            "TrainingCenterBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "catalog",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "type": "string",
+              "default": "generated",
+              "title": "Catalog"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "cpt",
+                    "sft",
+                    "dpo"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Authorized workspace. If omitted, retain the existing first active membership policy.",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authorized workspace. If omitted, retain the existing first active membership policy."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/datasets/{dataset_id}/overview": {
+      "get": {
+        "tags": [
+          "training-center"
+        ],
+        "summary": "Dataset Overview",
+        "operationId": "dataset_overview_api_v1_training_center_datasets__dataset_id__overview_get",
+        "security": [
+          {
+            "TrainingCenterBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dataset Id"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "type": "string",
+              "default": "generated",
+              "title": "Catalog"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Version"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Authorized workspace. If omitted, retain the existing first active membership policy.",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authorized workspace. If omitted, retain the existing first active membership policy."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetOverviewResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/datasets/{dataset_id}/samples": {
+      "get": {
+        "tags": [
+          "training-center"
+        ],
+        "summary": "Samples",
+        "operationId": "samples_api_v1_training_center_datasets__dataset_id__samples_get",
+        "security": [
+          {
+            "TrainingCenterBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dataset Id"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "type": "string",
+              "default": "generated",
+              "title": "Catalog"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Version"
+            }
+          },
+          {
+            "name": "split",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "train",
+                    "validation",
+                    "test"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Split"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Authorized workspace. If omitted, retain the existing first active membership policy.",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authorized workspace. If omitted, retain the existing first active membership policy."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SamplesResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/datasets/{dataset_id}/manifest": {
+      "get": {
+        "tags": [
+          "training-center"
+        ],
+        "summary": "Manifest",
+        "operationId": "manifest_api_v1_training_center_datasets__dataset_id__manifest_get",
+        "security": [
+          {
+            "TrainingCenterBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dataset Id"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "type": "string",
+              "default": "generated",
+              "title": "Catalog"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Version"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Authorized workspace. If omitted, retain the existing first active membership policy.",
+              "title": "X-Workspace-Id"
+            },
+            "description": "Authorized workspace. If omitted, retain the existing first active membership policy."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManifestResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "Activity": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Id"
+          },
+          "occurred_at": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$",
+            "title": "Occurred At"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "ref": {
+            "$ref": "#/components/schemas/ObjectRef"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "occurred_at",
+          "label",
+          "ref"
+        ],
+        "title": "Activity"
+      },
+      "Availability": {
+        "properties": {
+          "ingestion_trend": {
+            "type": "string",
+            "enum": [
+              "available",
+              "ingested_at_missing",
+              "no_files"
+            ],
+            "title": "Ingestion Trend"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ingestion_trend"
+        ],
+        "title": "Availability"
+      },
       "BatchIn": {
         "properties": {
           "upload_ids": {
@@ -6454,6 +8343,45 @@
           "source_id"
         ],
         "title": "BatchIn"
+      },
+      "Bucket": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Count"
+          },
+          "ratio": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "count",
+          "ratio"
+        ],
+        "title": "Bucket"
       },
       "BuildIn": {
         "properties": {
@@ -6531,6 +8459,72 @@
         ],
         "title": "CaseIn"
       },
+      "ComparisonPeriod": {
+        "properties": {
+          "from": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$",
+            "title": "From"
+          },
+          "to": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$",
+            "title": "To"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "from",
+          "to"
+        ],
+        "title": "ComparisonPeriod"
+      },
+      "ComparisonResponse": {
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "before": {
+            "$ref": "#/components/schemas/RecordContent"
+          },
+          "after": {
+            "$ref": "#/components/schemas/RecordContent"
+          },
+          "applied_steps": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "type": "array",
+            "title": "Applied Steps"
+          },
+          "record_ref": {
+            "$ref": "#/components/schemas/ObjectRef"
+          },
+          "processing_run_ref": {
+            "$ref": "#/components/schemas/ProcessingRunRef"
+          },
+          "changes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Changes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope",
+          "before",
+          "after",
+          "applied_steps",
+          "record_ref",
+          "processing_run_ref",
+          "changes"
+        ],
+        "title": "ComparisonResponse"
+      },
       "CompleteIn": {
         "properties": {
           "checksum": {
@@ -6549,6 +8543,142 @@
         },
         "type": "object",
         "title": "CompleteIn"
+      },
+      "CptSample": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Id"
+          },
+          "workspace_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Workspace Id"
+          },
+          "dataset_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Dataset Id"
+          },
+          "dataset_version": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Dataset Version"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Sequence"
+          },
+          "split": {
+            "type": "string",
+            "enum": [
+              "train",
+              "validation",
+              "test"
+            ],
+            "title": "Split"
+          },
+          "source_group_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source Group Id"
+          },
+          "source_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "type": "array",
+            "title": "Source Refs"
+          },
+          "segment_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "type": "array",
+            "title": "Segment Refs"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "char_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Char Count"
+          },
+          "token_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count"
+          },
+          "token_count_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count Method"
+          },
+          "kind": {
+            "type": "string",
+            "const": "cpt",
+            "title": "Kind"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "dataset_id",
+          "dataset_version",
+          "sequence",
+          "split",
+          "source_group_id",
+          "source_refs",
+          "segment_refs",
+          "language",
+          "char_count",
+          "token_count",
+          "token_count_method",
+          "kind",
+          "text"
+        ],
+        "title": "CptSample"
       },
       "DOIIn": {
         "properties": {
@@ -6584,6 +8714,188 @@
         "type": "object",
         "title": "DatasetIn"
       },
+      "DatasetOverviewResponse": {
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "dataset": {
+            "$ref": "#/components/schemas/DatasetSummary"
+          },
+          "split_counts": {
+            "$ref": "#/components/schemas/SplitCounts"
+          },
+          "source_distribution": {
+            "$ref": "#/components/schemas/Distribution"
+          },
+          "destination_counts": {
+            "items": {
+              "$ref": "#/components/schemas/DestinationCount"
+            },
+            "type": "array",
+            "title": "Destination Counts"
+          },
+          "length_distribution": {
+            "$ref": "#/components/schemas/Distribution"
+          },
+          "language_distribution": {
+            "$ref": "#/components/schemas/Distribution"
+          },
+          "lineage_root_ref": {
+            "$ref": "#/components/schemas/ObjectRef"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope",
+          "dataset",
+          "split_counts",
+          "source_distribution",
+          "destination_counts",
+          "length_distribution",
+          "language_distribution",
+          "lineage_root_ref"
+        ],
+        "title": "DatasetOverviewResponse"
+      },
+      "DatasetSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Id"
+          },
+          "workspace_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Workspace Id"
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Version"
+          },
+          "version_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Version Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "cpt",
+              "sft",
+              "dpo"
+            ],
+            "title": "Kind"
+          },
+          "product_type": {
+            "type": "string",
+            "enum": [
+              "pretrain",
+              "sft",
+              "dpo"
+            ],
+            "title": "Product Type"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "record_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Record Count"
+          },
+          "record_unit": {
+            "type": "string",
+            "enum": [
+              "article",
+              "record",
+              "pair"
+            ],
+            "title": "Record Unit"
+          },
+          "split_counts": {
+            "$ref": "#/components/schemas/SplitCounts"
+          },
+          "token_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count"
+          },
+          "token_count_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count Method"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "source_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "type": "array",
+            "title": "Source Refs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "version",
+          "version_id",
+          "kind",
+          "product_type",
+          "name",
+          "record_count",
+          "record_unit",
+          "split_counts",
+          "token_count",
+          "token_count_method",
+          "status",
+          "source_refs"
+        ],
+        "title": "DatasetSummary"
+      },
+      "DatasetsResponse": {
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DatasetSummary"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope",
+          "items"
+        ],
+        "title": "DatasetsResponse"
+      },
       "DecisionIn": {
         "properties": {
           "asset_ids": {
@@ -6610,6 +8922,84 @@
           "purpose"
         ],
         "title": "DecisionIn"
+      },
+      "DestinationCount": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "train",
+              "validation",
+              "test"
+            ],
+            "title": "Key"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Count"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "article",
+              "record",
+              "pair"
+            ],
+            "title": "Unit"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "count",
+          "unit"
+        ],
+        "title": "DestinationCount"
+      },
+      "Distribution": {
+        "properties": {
+          "measure": {
+            "type": "string",
+            "title": "Measure"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "file",
+              "segment",
+              "record",
+              "article",
+              "pair",
+              "byte",
+              "token",
+              "ratio"
+            ],
+            "title": "Unit"
+          },
+          "total_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Count"
+          },
+          "buckets": {
+            "items": {
+              "$ref": "#/components/schemas/Bucket"
+            },
+            "type": "array",
+            "title": "Buckets"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "measure",
+          "unit",
+          "total_count",
+          "buckets"
+        ],
+        "title": "Distribution"
       },
       "DpoAnnotationIn": {
         "properties": {
@@ -6813,6 +9203,152 @@
         ],
         "title": "DpoReviewIn"
       },
+      "DpoSample": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Id"
+          },
+          "workspace_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Workspace Id"
+          },
+          "dataset_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Dataset Id"
+          },
+          "dataset_version": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Dataset Version"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Sequence"
+          },
+          "split": {
+            "type": "string",
+            "enum": [
+              "train",
+              "validation",
+              "test"
+            ],
+            "title": "Split"
+          },
+          "source_group_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source Group Id"
+          },
+          "source_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "type": "array",
+            "title": "Source Refs"
+          },
+          "segment_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "type": "array",
+            "title": "Segment Refs"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "char_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Char Count"
+          },
+          "token_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count"
+          },
+          "token_count_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count Method"
+          },
+          "kind": {
+            "type": "string",
+            "const": "dpo",
+            "title": "Kind"
+          },
+          "prompt": {
+            "type": "string",
+            "title": "Prompt"
+          },
+          "chosen": {
+            "type": "string",
+            "title": "Chosen"
+          },
+          "rejected": {
+            "type": "string",
+            "title": "Rejected"
+          },
+          "preference_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preference Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "dataset_id",
+          "dataset_version",
+          "sequence",
+          "split",
+          "source_group_id",
+          "source_refs",
+          "segment_refs",
+          "language",
+          "char_count",
+          "token_count",
+          "token_count_method",
+          "kind",
+          "prompt",
+          "chosen",
+          "rejected"
+        ],
+        "title": "DpoSample"
+      },
       "ErrorDetail": {
         "properties": {
           "code": {
@@ -6984,6 +9520,425 @@
         ],
         "title": "FeedbackIn"
       },
+      "FileDetailResponse": {
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "file": {
+            "$ref": "#/components/schemas/FileSummary"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceSummary"
+          },
+          "processing_summary_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProcessingRunRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dataset_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "type": "array",
+            "title": "Dataset Refs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope",
+          "file",
+          "source",
+          "processing_summary_ref",
+          "dataset_refs"
+        ],
+        "title": "FileDetailResponse"
+      },
+      "FileSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Id"
+          },
+          "workspace_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Workspace Id"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "pdf",
+              "html",
+              "md",
+              "txt",
+              "docx",
+              "csv",
+              "json",
+              "jsonl",
+              "other"
+            ],
+            "title": "Format"
+          },
+          "media_type": {
+            "type": "string",
+            "title": "Media Type"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Size Bytes"
+          },
+          "source_ref": {
+            "$ref": "#/components/schemas/ObjectRef"
+          },
+          "source_kind": {
+            "type": "string",
+            "enum": [
+              "web",
+              "book",
+              "paper",
+              "other"
+            ],
+            "title": "Source Kind"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "ingested_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ingested At"
+          },
+          "processing_status": {
+            "type": "string",
+            "enum": [
+              "unprocessed",
+              "queued",
+              "running",
+              "succeeded",
+              "partial",
+              "failed"
+            ],
+            "title": "Processing Status"
+          },
+          "segment_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segment Count"
+          },
+          "dataset_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "type": "array",
+            "title": "Dataset Refs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "filename",
+          "format",
+          "media_type",
+          "size_bytes",
+          "source_ref",
+          "source_kind",
+          "language",
+          "ingested_at",
+          "processing_status",
+          "segment_count",
+          "dataset_refs"
+        ],
+        "title": "FileSummary"
+      },
+      "FilesResponse": {
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FileSummary"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Count"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Offset"
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Limit"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope",
+          "items",
+          "total_count",
+          "offset",
+          "limit"
+        ],
+        "title": "FilesResponse"
+      },
+      "Flow": {
+        "properties": {
+          "scope_label": {
+            "type": "string",
+            "title": "Scope Label"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/FlowStage"
+            },
+            "type": "array",
+            "title": "Stages"
+          },
+          "transitions": {
+            "items": {
+              "$ref": "#/components/schemas/FlowTransition"
+            },
+            "type": "array",
+            "title": "Transitions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope_label",
+          "stages",
+          "transitions"
+        ],
+        "title": "Flow"
+      },
+      "FlowStage": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Count"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "file",
+              "segment",
+              "record",
+              "article",
+              "pair",
+              "byte",
+              "token",
+              "ratio"
+            ],
+            "title": "Unit"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "count",
+          "unit"
+        ],
+        "title": "FlowStage"
+      },
+      "FlowTransition": {
+        "properties": {
+          "from": {
+            "type": "string",
+            "title": "From"
+          },
+          "to": {
+            "type": "string",
+            "title": "To"
+          },
+          "relation": {
+            "type": "string",
+            "title": "Relation"
+          },
+          "retention_ratio": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retention Ratio"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "from",
+          "to",
+          "relation",
+          "retention_ratio"
+        ],
+        "title": "FlowTransition"
+      },
+      "FormatCount": {
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "pdf",
+              "html",
+              "md",
+              "txt",
+              "docx",
+              "csv",
+              "json",
+              "jsonl",
+              "other"
+            ],
+            "title": "Format"
+          },
+          "file_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "File Count"
+          },
+          "unit": {
+            "type": "string",
+            "const": "file",
+            "title": "Unit"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "format",
+          "file_count",
+          "unit"
+        ],
+        "title": "FormatCount"
+      },
+      "FormatStatsResponse": {
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Metric"
+            },
+            "type": "object",
+            "title": "Metrics"
+          },
+          "flow": {
+            "$ref": "#/components/schemas/Flow"
+          },
+          "ingestion_trend": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TimeSeries"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "availability": {
+            "$ref": "#/components/schemas/Availability"
+          },
+          "length_distribution": {
+            "$ref": "#/components/schemas/Distribution"
+          },
+          "language_distribution": {
+            "$ref": "#/components/schemas/Distribution"
+          },
+          "source_distribution": {
+            "$ref": "#/components/schemas/Distribution"
+          },
+          "dataset_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "type": "array",
+            "title": "Dataset Refs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope",
+          "metrics",
+          "flow",
+          "ingestion_trend",
+          "availability",
+          "length_distribution",
+          "language_distribution",
+          "source_distribution",
+          "dataset_refs"
+        ],
+        "title": "FormatStatsResponse"
+      },
       "GenerateIn": {
         "properties": {
           "trace_id": {
@@ -7146,6 +10101,43 @@
         ],
         "title": "IssueReviewIn"
       },
+      "ManifestResponse": {
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "dataset_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Dataset Id"
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Version"
+          },
+          "manifest": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Manifest"
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Content Hash"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope",
+          "dataset_id",
+          "version",
+          "manifest",
+          "content_hash"
+        ],
+        "title": "ManifestResponse"
+      },
       "MemberIn": {
         "properties": {
           "user_id": {
@@ -7165,6 +10157,30 @@
         ],
         "title": "MemberIn"
       },
+      "Message": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "system",
+              "user",
+              "assistant"
+            ],
+            "title": "Role"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "Message"
+      },
       "MetadataProposalUpdate": {
         "properties": {
           "fields": {
@@ -7178,6 +10194,171 @@
           "fields"
         ],
         "title": "MetadataProposalUpdate"
+      },
+      "Metric": {
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "file",
+              "segment",
+              "record",
+              "article",
+              "pair",
+              "byte",
+              "token",
+              "ratio"
+            ],
+            "title": "Unit"
+          },
+          "numerator": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numerator"
+          },
+          "denominator": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Denominator"
+          },
+          "delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta"
+          },
+          "comparison_period": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ComparisonPeriod"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "value",
+          "unit"
+        ],
+        "title": "Metric"
+      },
+      "ObjectRef": {
+        "properties": {
+          "catalog": {
+            "type": "string",
+            "enum": [
+              "generated",
+              "workspace"
+            ],
+            "title": "Catalog"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "source",
+              "file",
+              "operator_run",
+              "segment",
+              "sample",
+              "dataset_version"
+            ],
+            "title": "Type"
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "catalog",
+          "type",
+          "id"
+        ],
+        "title": "ObjectRef"
+      },
+      "OverviewResponse": {
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Metric"
+            },
+            "type": "object",
+            "title": "Metrics"
+          },
+          "formats": {
+            "items": {
+              "$ref": "#/components/schemas/FormatCount"
+            },
+            "type": "array",
+            "title": "Formats"
+          },
+          "datasets": {
+            "items": {
+              "$ref": "#/components/schemas/DatasetSummary"
+            },
+            "type": "array",
+            "title": "Datasets"
+          },
+          "flow": {
+            "$ref": "#/components/schemas/Flow"
+          },
+          "recent_activities": {
+            "items": {
+              "$ref": "#/components/schemas/Activity"
+            },
+            "type": "array",
+            "title": "Recent Activities"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope",
+          "metrics",
+          "formats",
+          "datasets",
+          "flow",
+          "recent_activities"
+        ],
+        "title": "OverviewResponse"
       },
       "PipelineIn": {
         "properties": {
@@ -7254,6 +10435,33 @@
         },
         "type": "object",
         "title": "PreviewIn"
+      },
+      "ProcessingRunRef": {
+        "properties": {
+          "catalog": {
+            "type": "string",
+            "const": "workspace",
+            "title": "Catalog"
+          },
+          "type": {
+            "type": "string",
+            "const": "pipeline_run",
+            "title": "Type"
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "catalog",
+          "type",
+          "id"
+        ],
+        "title": "ProcessingRunRef"
       },
       "PublishIn": {
         "properties": {
@@ -7424,6 +10632,26 @@
         ],
         "title": "QueryIn"
       },
+      "RecordContent": {
+        "properties": {
+          "record_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Record Id"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "record_id",
+          "text"
+        ],
+        "title": "RecordContent"
+      },
       "SampleReviewIn": {
         "properties": {
           "decision": {
@@ -7442,6 +10670,106 @@
           "decision"
         ],
         "title": "SampleReviewIn"
+      },
+      "SamplesResponse": {
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "items": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/CptSample"
+                },
+                {
+                  "$ref": "#/components/schemas/SftSample"
+                },
+                {
+                  "$ref": "#/components/schemas/DpoSample"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "kind",
+                "mapping": {
+                  "cpt": "#/components/schemas/CptSample",
+                  "dpo": "#/components/schemas/DpoSample",
+                  "sft": "#/components/schemas/SftSample"
+                }
+              }
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Count"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Offset"
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Limit"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope",
+          "items",
+          "total_count",
+          "offset",
+          "limit"
+        ],
+        "title": "SamplesResponse"
+      },
+      "Scope": {
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Workspace Id"
+          },
+          "catalog": {
+            "type": "string",
+            "enum": [
+              "generated",
+              "workspace"
+            ],
+            "title": "Catalog"
+          },
+          "revision": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Revision"
+          },
+          "as_of": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$",
+            "title": "As Of"
+          },
+          "metric_definition_version": {
+            "type": "string",
+            "const": "1.0.0",
+            "title": "Metric Definition Version"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "workspace_id",
+          "catalog",
+          "revision",
+          "as_of",
+          "metric_definition_version"
+        ],
+        "title": "Scope"
       },
       "ScoreIn": {
         "properties": {
@@ -7554,6 +10882,134 @@
         ],
         "title": "SessionIn"
       },
+      "SftSample": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Id"
+          },
+          "workspace_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Workspace Id"
+          },
+          "dataset_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Dataset Id"
+          },
+          "dataset_version": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Dataset Version"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Sequence"
+          },
+          "split": {
+            "type": "string",
+            "enum": [
+              "train",
+              "validation",
+              "test"
+            ],
+            "title": "Split"
+          },
+          "source_group_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source Group Id"
+          },
+          "source_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "type": "array",
+            "title": "Source Refs"
+          },
+          "segment_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "type": "array",
+            "title": "Segment Refs"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "char_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Char Count"
+          },
+          "token_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count"
+          },
+          "token_count_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count Method"
+          },
+          "kind": {
+            "type": "string",
+            "const": "sft",
+            "title": "Kind"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            },
+            "type": "array",
+            "title": "Messages"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "dataset_id",
+          "dataset_version",
+          "sequence",
+          "split",
+          "source_group_id",
+          "source_refs",
+          "segment_refs",
+          "language",
+          "char_count",
+          "token_count",
+          "token_count_method",
+          "kind",
+          "messages"
+        ],
+        "title": "SftSample"
+      },
       "SourceIn": {
         "properties": {
           "name": {
@@ -7575,6 +11031,100 @@
           "name"
         ],
         "title": "SourceIn"
+      },
+      "SourceSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "web",
+              "book",
+              "paper",
+              "other"
+            ],
+            "title": "Kind"
+          },
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "license": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "License"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "author",
+          "url",
+          "license"
+        ],
+        "title": "SourceSummary"
+      },
+      "SplitCounts": {
+        "properties": {
+          "train": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Train"
+          },
+          "validation": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Validation"
+          },
+          "test": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Test"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "train",
+          "validation",
+          "test"
+        ],
+        "title": "SplitCounts"
       },
       "SuiteIn": {
         "properties": {
@@ -7646,6 +11196,73 @@
           "reviewer_ids"
         ],
         "title": "TaskIn"
+      },
+      "TimePoint": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Count"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "count"
+        ],
+        "title": "TimePoint"
+      },
+      "TimeSeries": {
+        "properties": {
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "from": {
+            "type": "string",
+            "title": "From"
+          },
+          "to": {
+            "type": "string",
+            "title": "To"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "file",
+              "segment",
+              "record",
+              "article",
+              "pair",
+              "byte",
+              "token",
+              "ratio"
+            ],
+            "title": "Unit"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/TimePoint"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "timezone",
+          "from",
+          "to",
+          "unit",
+          "points"
+        ],
+        "title": "TimeSeries"
       },
       "UploadIn": {
         "properties": {
@@ -7798,6 +11415,12 @@
           "note"
         ],
         "title": "ReviewIn"
+      }
+    },
+    "securitySchemes": {
+      "TrainingCenterBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }
