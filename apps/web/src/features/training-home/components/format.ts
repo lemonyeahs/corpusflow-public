@@ -21,6 +21,6 @@ export function scopeLink(path: string, scope: Pick<Scope, "catalog" | "revision
   return `${path}?${queryString({ catalog: scope.catalog, revision: scope.revision, ...extra })}`;
 }
 export function objectLink(ref: ObjectRef, scope: Scope) {
-  // Snapshot revisions belong to a catalog, so never copy one across catalogs.
-  return `/lineage?${queryString({ catalog: ref.catalog, revision: ref.catalog === scope.catalog ? scope.revision : undefined, root_type: ref.type, root_id: ref.id })}`;
+  // Workspace graph snapshots are still independent at acb7ce0; do not pass a catalog token to them.
+  return `/lineage?${queryString({ catalog: ref.catalog, revision: ref.catalog === "generated" && ref.catalog === scope.catalog ? scope.revision : undefined, scope_reset: ref.catalog === "workspace" ? "1" : undefined, root_type: ref.type, root_id: ref.id })}`;
 }

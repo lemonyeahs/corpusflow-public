@@ -137,12 +137,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "CATALOG_LIMIT_EXCEEDED",
             "EXPORT_LIMIT_EXCEEDED",
             "CATALOG_UNAVAILABLE",
+            "VALIDATION_FAILED",
         }
         return error_response(
             request,
             exc.status_code,
             detail if detail in known else codes.get(exc.status_code, "HTTP_ERROR"),
             {
+                "UNAUTHENTICATED": "登录已失效，请重新登录",
+                "PERMISSION_DENIED": "没有访问当前工作空间或资源的权限",
+                "NOT_FOUND": "请求的资源不存在或不可见",
+                "INVALID_STATE_TRANSITION": "当前处理状态不允许此操作，请检查运行结果",
+                "VALIDATION_FAILED": "请求参数校验失败",
                 "ADAPTER_UNAVAILABLE": "当前数据适配器暂不可用，请检查服务配置或稍后重试",
                 "CATALOG_UNAVAILABLE": "当前目录暂不支持此查询",
                 "SNAPSHOT_EXPIRED": "快照已过期，请刷新整个查询范围",
