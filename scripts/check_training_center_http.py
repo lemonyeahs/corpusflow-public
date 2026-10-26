@@ -269,6 +269,26 @@ def main():
             assert {node["ref"]["id"] for node in graph["nodes"]} == set(source_ids[:2])
             assert {edge["relation"] for edge in graph["edges"]} == {"provides"}
             graph_revision = graph["scope"]["revision"]
+            for invalid_graph_params in (
+                {"max_depth": 13},
+                {"max_nodes": 501},
+                {"direction": "sideways"},
+            ):
+                call(
+                    graph_path,
+                    422,
+                    headers=auth,
+                    params={**graph_params, **invalid_graph_params},
+                    code="VALIDATION_FAILED",
+                )
+            limited_graph = call(
+                graph_path,
+                headers=auth,
+                params={**graph_params, "max_nodes": 1},
+                model=m.LineageGraph,
+            )
+            assert limited_graph["truncated"] is True
+            assert limited_graph["truncation_reason"] == "max_nodes"
             with Session(engine) as session:
                 session.add(
                     LineageEdge(

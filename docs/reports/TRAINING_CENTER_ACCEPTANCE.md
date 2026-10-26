@@ -52,7 +52,7 @@ Contract 文本本身有一处重复的 `description` 字段示例；属于 A �
 | C | 2、3、6 跳查询 | 节点按深度增加，达到边界 `truncated=true` | 精确集合比对 | D 深度参数 | NOT RUN |
 | D | 清洗/解析执行追踪 | run、node/operator、输入输出引用可关联 | run_id、attempt、input_refs/output_refs 一致 | C summary adapter、真实 Worker | PASS（隔离 SQLite summary adapter）；真实 Worker input/output refs NOT RUN |
 | E | 悬空边、错误节点、重复路径和环路 | 悬空边不出现在响应；节点/边去重；环路终止 | fixture 单元测试 | 图适配层 | PASS（fixture） |
-| F | 前后端一致性 | 页面节点/边与真实 API 完全一致 | UI 图、目录切换和节点深链 | 认证 workspace、浏览器回归 | PASS（真实浏览器图/目录切换/节点深链）；完整 API 节点边集合比对 NOT RUN |
+| F | 前后端一致性 | 页面节点/边与真实 API 完全一致 | UI 图、目录切换和节点深链 | 认证 workspace、浏览器回归 | PASS（真实浏览器图/目录切换）；节点深链目标由 mock 浏览器契约覆盖；完整 API 节点边集合比对 NOT RUN |
 | G | 分叉与汇合 | 两个 Segment 汇合到同一 DatasetVersion 只保留一个节点 | 节点 ID 集合与五元组边集合 | D 图接口 | PASS（fixture） |
 | H | 参数/规模边界 | 非法 direction/depth/nodes 返回 422；规模截断有原因 | 单元测试 + HTTP 合约测试 | D 路由 | PASS（服务层/HTTP） |
 
@@ -66,15 +66,23 @@ PYTHONPATH=apps/api/src uv run python scripts/export_training_center_contract.py
 PYTHONPATH=apps/api/src uv run python scripts/verify_training_center_m0.py --catalog
 ```
 
-本轮 workspace/generated API 适配器、处理节点详情和页面代码已完成定向验证；真实隔离 PostgreSQL/API 验收通过 63 项，
-真实浏览器验收 7 项全部通过，覆盖目录读取、授权、快照、workspace/generated 图、目录切换和节点深链。完整跨页面数据一致性和真实 Worker
+本轮 workspace/generated API 适配器、处理节点详情和页面代码已完成定向验证；真实隔离 PostgreSQL/API 验收通过 67 项，
+真实浏览器验收 7 项全部通过，覆盖目录读取、授权、快照、workspace/generated 图和目录切换；节点深链由独立 mock 浏览器契约另行覆盖。完整跨页面数据一致性和真实 Worker
 产生的多跳边仍为 `NOT RUN`，因为本轮没有启动 Worker/Redis/MinIO。
 
-结果：后端 `358 passed, 15 deselected`，图路由单测及发布目录 HTTP 测试 `13 passed`，隔离真实 HTTP `63 checks`、真实浏览器 `7 passed`，Ruff、mypy、契约导出检查均通过；
+结果：后端 `361 passed, 15 deselected`，图路由单测及发布目录 HTTP 测试 `16 passed`，隔离真实 HTTP `67 checks`、真实浏览器 `7 passed`，Ruff、mypy、契约导出检查均通过；
 前端 `typecheck`、`lint`、`build` 均通过。构建仅报告已有的大 chunk warning。
+
+最新隔离报告：`.local/cf-m1-04647a337779/result.json`，其中 `catalog-http.json` 为 67 项请求检查，
+`live-browser.log` 为 7 项真实浏览器检查。
 
 部署限制：workspace 冻结快照当前保存在单进程内存，900 秒过期且读取不续期，每个 workspace 最多保留 10 份；
 重启或多进程访问需要共享不可变快照存储或粘性路由。本轮未声称已有共享快照存储，也未进行多进程验证。
+
+跳转边界：文件节点可跳转到带 `catalog/revision/file_id` 的数据页；样本和数据集版本链接会保留
+`dataset_id/version/sample_id`，但当前 `/datasets/{kind}` 仍由占位页承接；处理记录链接带 `run_id`，
+处理中心是否按该参数定位具体记录仍待 Agent 3/页面线补齐。因此本轮只验收链接范围和作用域参数，
+不把目标业务页渲染或处理记录定位计为已完成。
 
 ## 跨 Agent 变更请求
 

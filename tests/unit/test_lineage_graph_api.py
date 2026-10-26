@@ -7,6 +7,7 @@ from corpusflow.api.v1.lineage_graph import (
     GraphSnapshots,
     _generated_projection,
     _stored_graph,
+    _training_kind,
     router,
 )
 from corpusflow.contracts.training_center.models import GraphQuery, ObjectRef
@@ -162,6 +163,14 @@ def test_generated_projection_uses_explicit_refs_without_operator_history() -> N
     assert FrozenEdge(
         "CandidateSample", "sample-1", "DatasetVersion", "dataset-v1", "included_in"
     ) in rows
+
+
+@pytest.mark.parametrize(
+    ("product_type", "route_kind"),
+    [("pretrain", "cpt"), ("sft", "sft"), ("dpo", "dpo")],
+)
+def test_workspace_dataset_product_type_maps_to_training_route(product_type, route_kind):
+    assert _training_kind(product_type) == route_kind
 
 
 def test_http_generated_graph_uses_published_revision_and_explicit_refs(graph_api, tmp_path):

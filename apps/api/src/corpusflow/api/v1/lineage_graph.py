@@ -14,6 +14,7 @@ from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from corpusflow.api.dependencies import actor_id, db, workspace_id
@@ -34,11 +35,15 @@ from corpusflow.db.models import (
     Asset,
     CandidateSample,
     DatasetVersion,
+    DatasetVersionSample,
     DocumentVersion,
     PipelineRun,
     PreferenceSample,
     Segment,
     Source,
+)
+from corpusflow.db.models import (
+    Dataset as DatasetDefinition,
 )
 from corpusflow.db.models import (
     LineageEdge as StoredLineageEdge,
@@ -407,6 +412,11 @@ def _generated_node_details(
     return details
 
 
+def _training_kind(product_type: str) -> str:
+    """Map persisted product types to the training-center route kind."""
+    return "cpt" if product_type == "pretrain" else product_type
+
+
 @router.get("/lineage/graph", response_model=LineageGraph)
 def graph(
     request: Request,
@@ -528,6 +538,42 @@ def _capture_snapshot(session: Session, workspace: str, store: GraphSnapshots) -
                     frozen_rows.append(
                         FrozenEdge("NodeRun", step.id, storage_type, ref.id, "produced")
                     )
+    try:
+        dataset_rows = session.execute(
+            select(DatasetVersion, DatasetDefinition)
+            .join(DatasetDefinition, DatasetDefinition.id == DatasetVersion.dataset_id)
+            .where(DatasetVersion.workspace_id == workspace)
+        )
+        dataset_details = {}
+        for version, dataset in dataset_rows:
+            dataset_details[version.id] = {
+                "dataset_id": dataset.id,
+                "dataset_version": version.version,
+                "dataset_kind": _training_kind(dataset.product_type),
+                "label": f"{dataset.name} · {version.version}",
+            }
+            node_details[("DatasetVersion", version.id)] = dataset_details[version.id]
+        sample_rows = session.execute(
+            select(CandidateSample, DatasetVersion, DatasetDefinition)
+            .join(
+                DatasetVersionSample,
+                DatasetVersionSample.candidate_sample_id == CandidateSample.id,
+            )
+            .join(DatasetVersion, DatasetVersion.id == DatasetVersionSample.dataset_version_id)
+            .join(DatasetDefinition, DatasetDefinition.id == DatasetVersion.dataset_id)
+            .where(CandidateSample.workspace_id == workspace)
+        )
+        for sample, version, dataset in sample_rows:
+            node_details[("CandidateSample", sample.id)] = {
+                "dataset_id": dataset.id,
+                "dataset_version": version.version,
+                "dataset_kind": _training_kind(dataset.product_type),
+                "label": f"{dataset.name} 样本 {sample.id[:12]}",
+            }
+    except SQLAlchemyError:
+        # Optional deep-link metadata must not make a graph unavailable when a
+        # legacy workspace lacks dataset publication tables.
+        pass
     return store.put(
         workspace,
         tuple(
