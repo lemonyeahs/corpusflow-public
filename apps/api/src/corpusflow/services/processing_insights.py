@@ -71,12 +71,16 @@ def build_processing_summary(session: Session, run: PipelineRun) -> ProcessingSu
         ).all()
     )
     steps: list[ProcessingStepSummary] = []
+    previous_refs = [file_ref]
     for sequence, node in enumerate(nodes, start=1):
         status = _run_status(node.status)
         input_unit = _unit(
             getattr(node, "input_unit", None), "file" if node.node_id == "parse" else "segment"
         )
         output_unit = _unit(getattr(node, "output_unit", None), "segment")
+        raw_input_refs = getattr(node, "input_refs", None)
+        input_refs = _refs(raw_input_refs) if raw_input_refs is not None else previous_refs
+        output_refs = _refs(getattr(node, "output_refs", None))
         steps.append(
             ProcessingStepSummary(
                 id=node.id,
@@ -102,8 +106,8 @@ def build_processing_summary(session: Session, run: PipelineRun) -> ProcessingSu
                 failed_count=getattr(node, "failed_count", None)
                 if node.status not in {"pending", "running"}
                 else None,
-                input_refs=_refs(getattr(node, "input_refs", None)),
-                output_refs=_refs(getattr(node, "output_refs", None)),
+                input_refs=input_refs,
+                output_refs=output_refs,
                 started_at=_utc(getattr(node, "started_at", None))
                 if getattr(node, "started_at", None)
                 else None,
@@ -112,6 +116,8 @@ def build_processing_summary(session: Session, run: PipelineRun) -> ProcessingSu
                 else None,
             )
         )
+        if output_refs:
+            previous_refs = output_refs
 
     parse_steps = [step for step in steps if step.input_unit == "file"]
     parse = parse_steps[-1] if parse_steps else None

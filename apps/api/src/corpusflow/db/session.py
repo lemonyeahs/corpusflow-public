@@ -5,7 +5,7 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from corpusflow.core.config import Settings
 
-SCHEMA_REVISION = "0021_metadata_proposals"
+SCHEMA_REVISION = "0023_processing_evidence"
 
 
 class Base(DeclarativeBase):
