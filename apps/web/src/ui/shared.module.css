@@ -1,0 +1,13 @@
+.header { display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:28px; }
+.header h1 { font-size:26px; margin:6px 0 10px; font-weight:650; }
+.header p { color:var(--tc-muted); line-height:1.7; margin:0; }
+.header .eyebrow { color:var(--tc-primary); font-size:10px; letter-spacing:2px; font-weight:700; }
+.panel { background:var(--tc-surface); border:1px solid var(--tc-border); border-radius:10px; padding:24px; }
+.panelHead { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
+.panelHead h2 { margin:0; font-size:15px; }
+.panelHead small { color:var(--tc-muted); }
+.metric { font-size:30px; font-variant-numeric:tabular-nums; }
+.metric small { font-size:12px; color:var(--tc-muted); }
+.chart { min-height:200px; min-width:0; }
+.state { padding:48px 20px; text-align:center; }
+@media(max-width:600px) { .header { align-items:flex-start; flex-wrap:wrap; }.panel { padding:18px; } }
