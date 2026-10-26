@@ -35,6 +35,7 @@ ROUTES = {
     "/training-center/files/{file_id}/comparison": "ComparisonResponse",
     "/lineage/graph": "LineageGraph",
 }
+IMPLEMENTED_ROUTES = {"/lineage/graph"}
 
 
 def typescript(schema: dict[str, Any]) -> str:
@@ -141,7 +142,9 @@ def artifacts() -> dict[Path, str]:
             "get": {
                 "operationId": "design_"
                 + path.strip("/").replace("/", "_").replace("{", "").replace("}", ""),
-                "x-implementation-status": "planned",
+                "x-implementation-status": (
+                    "implemented" if path in IMPLEMENTED_ROUTES else "planned"
+                ),
                 "parameters": parameters,
                 "security": [{"BearerAuth": []}],
                 "responses": {

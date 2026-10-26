@@ -1,7 +1,7 @@
 # Training Center Agent 4 验收清单（首轮）
 
-状态基线：`263821e`（`public/main`），worktree：`feat/tc-lineage-validation`。
-本轮只验证可独立执行的图遍历语义和现状契约；没有把静态 fixture 当作真实数据库血缘验收。
+状态基线：`58fe070`（`public/main`），worktree：`feat/tc-lineage-validation`。
+M1 已接入 workspace 图查询适配器和独立血缘页面；本报告仍不把静态 fixture 当作真实数据库血缘验收。
 
 ## 血缘现状
 
@@ -18,20 +18,21 @@
   `Segment -> DatasetVersion`、`Source -> DatasetVersion`。
 
 已有 `GET /api/v1/lineage/{object_type}/{object_id}` 只返回同一对象的一跳相邻边；
-`GET /api/v1/assets/{asset_id}/lineage-view` 返回资产的解析版本和存储产物摘要。当前没有 V1
-要求的 `/api/v1/lineage/graph` 多跳接口，也没有统一的节点详情、方向、深度或节点规模边界。
+`GET /api/v1/assets/{asset_id}/lineage-view` 返回资产的解析版本和存储产物摘要。M1 新增
+`GET /api/v1/lineage/graph`，workspace 目录读取 `lineage_edges`，支持方向、深度、节点规模限制、
+稳定节点/边 ID、悬空端点过滤和截断原因；generated 目录仍等待 Agent 2 的目录适配器。
 
 ## Contract V1 对照与建议
 
 | 项目 | V1 已明确 | 当前实现 | 首轮结论 |
 |---|---|---|---|
-| 起点 | `catalog/root_type/root_id` | 旧接口只有 `object_type/object_id` | 新图接口需采用 V1 参数 |
+| 起点 | `catalog/root_type/root_id` | 新接口已采用 V1 参数；旧接口保持不变 | workspace 已落地，generated 待 B 适配器 |
 | 方向 | `both/upstream/downstream` | 旧接口固定一跳双向 | 适配层保持存储边方向，查询方向只控制遍历 |
 | 深度/规模 | 默认 6；上限 12/500 | 无参数 | 图服务已实现校验和截断语义 |
-| 节点 | `id/ref/kind/label/description/status/metrics/detail` | 旧接口没有节点 | A/D 需共同落地 DTO；本轮 fixture 保留 kind/id/label/status/detail |
-| 边 | `id/source/target/relation` | `LineageEdge` 无 id/唯一约束 | 适配层按五元组去重；API 需生成稳定边 id |
-| 关系 | 英文代码，前端中文映射 | 实际有 `parsed_to/contains/processed_by/produced` 等 | 需要 D 维护规范化映射表，不在前端猜方向 |
-| 缺失/悬空 | 不泄露、所有返回边端点必须在 nodes | 旧查询直接返回行 | 新接口应过滤不可见端点并区分 404/空图 |
+| 节点 | `id/ref/kind/label/description/status/metrics/detail` | workspace 适配器已生成完整 DTO | 节点详情中的执行字段待 C 提供真实引用 |
+| 边 | `id/source/target/relation` | API 按五元组生成稳定 id | 适配层按五元组去重 |
+| 关系 | 英文代码，前端中文映射 | API 规范化关系代码；页面显示中文关系 | 未知关系统一为 `derived_from/关联` |
+| 缺失/悬空 | 不泄露、所有返回边端点必须在 nodes | 新接口过滤悬空端点，根节点缺失返回 404 | 旧查询保留历史行为 |
 | 多路径/环路 | 未重复节点，明确截断 | 无多跳能力 | fixture 覆盖去重、汇合和环路保护 |
 | 产物关联 | 依赖 C 的真实执行记录 | `Artifact.run_id` 与 `DocumentVersion.run_id/artifact_id` 已有 | NodeRun 目前无输入/输出引用，需 C 补字段或适配 JSON |
 
@@ -44,12 +45,12 @@ Contract 文本本身有一处重复的 `description` 字段示例；属于 A �
 
 | 编号 | 验收目标与操作 | 预期节点/关系 | 验证方法 | 前置依赖 | 状态 |
 |---|---|---|---|---|---|
-| A | 从 `Asset` 查询下游，追到解析版本和处理产物 | Asset → PipelineRun → DocumentVersion；关系 `processed_by/produced` | 图响应节点、边集合 | D 路由、C 真实 run | NOT RUN |
+| A | 从 `Asset` 查询下游，追到解析版本和处理产物 | Asset → PipelineRun → DocumentVersion；关系 `processed_by/produced` | 图响应节点、边集合 | C 真实 run、认证 workspace | NOT RUN |
 | B | 从 `DatasetVersion` 查询上游来源 | DatasetVersion ← CandidateSample/Segment ← DocumentVersion ← PipelineRun ← Asset/Source | 反向遍历但边仍 source→target | B 数据集来源、C 产物 | NOT RUN |
 | C | 2、3、6 跳查询 | 节点按深度增加，达到边界 `truncated=true` | 精确集合比对 | D 深度参数 | NOT RUN |
 | D | 清洗/解析执行追踪 | run、node/operator、输入输出 artifact 可关联 | run_id、attempt、artifact 引用一致 | C 提供 NodeRun 输入输出 refs | BLOCKED：当前 NodeRun 没有引用字段 |
 | E | 悬空边、错误节点、重复路径和环路 | 悬空边不出现在响应；节点/边去重；环路终止 | fixture 单元测试 | 图适配层 | PASS（fixture） |
-| F | 前后端一致性 | 页面节点/边与真实 API 完全一致 | UI 响应快照与 API 集合比对 | A 注册路由、D 页面 | NOT RUN |
+| F | 前后端一致性 | 页面节点/边与真实 API 完全一致 | UI 响应快照与 API 集合比对 | 认证 workspace、浏览器回归 | NOT RUN |
 | G | 分叉与汇合 | 两个 Segment 汇合到同一 DatasetVersion 只保留一个节点 | 节点 ID 集合与五元组边集合 | D 图接口 | PASS（fixture） |
 | H | 参数/规模边界 | 非法 direction/depth/nodes 返回 422；规模截断有原因 | 单元测试 + HTTP 合约测试 | D 路由 | PASS（服务层）；NOT RUN（HTTP） |
 
@@ -61,18 +62,18 @@ uv run pytest tests/unit/test_lineage_graph.py
 uv run ruff check apps/api/src/corpusflow/modules/lineage_graph tests/unit/test_lineage_graph.py scripts/verify_training_center.py
 ```
 
-本轮真实 API、浏览器截图和跨页面数据一致性均为 `NOT RUN`，因为共享图路由尚未注册，且没有
-可复用的认证工作空间 fixture。fixture 只证明遍历算法的输入/输出集合和边方向。
+本轮 workspace API 适配器和页面代码已完成静态验证；真实 API、浏览器截图和跨页面数据一致性仍为
+`NOT RUN`，因为没有可复用的认证工作空间 fixture。fixture 只证明遍历算法和适配器输入/输出集合。
 
 ## 跨 Agent 变更请求
 
 ### Agent 1（中阻塞）
 
 - 背景：V1 图响应需要统一 DTO、`/api/v1/lineage/graph` 注册和 Hash 路由接入。
-- 缺口：当前没有 `LineageGraph` 的 Pydantic/TypeScript 共享类型，旧路由不支持 catalog、方向、深度。
-- 建议：按 V1 响应新增独立 router，由 A 在主路由注册；边始终 source→target；把 `catalog` 纳入对象引用和授权检查。
-- 负责：Agent 1 负责公共契约/注册，Agent 4 提供服务层和 fixture。
-- 阻塞：没有该接口无法执行 HTTP/前端验收。
+- 当前：共享 DTO、主路由注册和页面入口已由 M0/M1 合并；本轮只保留生成目录联调请求。
+- 需求：保留 generated catalog 的来源边和稳定 revision，未执行处理链不得生成 operator 节点。
+- 负责：Agent 2 提供目录适配器，Agent 4 接入图查询。
+- 阻塞：没有 generated 目录适配器时 generated 查询返回 `CATALOG_UNAVAILABLE`。
 
 ### Agent 2（中阻塞）
 

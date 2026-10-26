@@ -73,13 +73,18 @@ def test_artifacts_replay_and_openapi_references_resolve():
 
     refs(spec)
     live = json.loads((ROOT / "docs/api/openapi.json").read_text(encoding="utf-8"))
-    assert not set(spec["paths"]) & set(live["paths"]), (
-        "design routes must not imply implementation"
+    implemented = {
+        path
+        for path, verbs in spec["paths"].items()
+        if verbs["get"].get("x-implementation-status") == "implemented"
+    }
+    assert not (set(spec["paths"]) - implemented) & set(live["paths"]), (
+        "planned design routes must not imply implementation"
     )
     for path, verbs in spec["paths"].items():
         operation = verbs["get"]
         assert operation["security"] == [{"BearerAuth": []}]
-        assert operation["x-implementation-status"] == "planned"
+        assert operation["x-implementation-status"] in {"planned", "implemented"}
         path_params = {p["name"] for p in operation["parameters"] if p["in"] == "path"}
         assert path_params == {part[1:-1] for part in path.split("/") if part.startswith("{")}
 
