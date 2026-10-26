@@ -9,7 +9,7 @@
     "/api/v1/training-center/overview": {
       "get": {
         "operationId": "design_training-center_overview",
-        "x-implementation-status": "planned",
+        "x-implementation-status": "implemented",
         "parameters": [
           {
             "name": "X-Workspace-ID",
@@ -123,7 +123,7 @@
     "/api/v1/training-center/formats/{format}/stats": {
       "get": {
         "operationId": "design_training-center_formats_format_stats",
-        "x-implementation-status": "planned",
+        "x-implementation-status": "implemented",
         "parameters": [
           {
             "name": "format",
@@ -356,7 +356,7 @@
     "/api/v1/training-center/files": {
       "get": {
         "operationId": "design_training-center_files",
-        "x-implementation-status": "planned",
+        "x-implementation-status": "implemented",
         "parameters": [
           {
             "name": "X-Workspace-ID",
@@ -604,7 +604,7 @@
     "/api/v1/training-center/files/{file_id}": {
       "get": {
         "operationId": "design_training-center_files_file_id",
-        "x-implementation-status": "planned",
+        "x-implementation-status": "implemented",
         "parameters": [
           {
             "name": "file_id",
@@ -726,7 +726,7 @@
     "/api/v1/training-center/datasets/{dataset_id}/manifest": {
       "get": {
         "operationId": "design_training-center_datasets_dataset_id_manifest",
-        "x-implementation-status": "planned",
+        "x-implementation-status": "implemented",
         "parameters": [
           {
             "name": "dataset_id",
@@ -858,7 +858,7 @@
     "/api/v1/training-center/datasets": {
       "get": {
         "operationId": "design_training-center_datasets",
-        "x-implementation-status": "planned",
+        "x-implementation-status": "implemented",
         "parameters": [
           {
             "name": "X-Workspace-ID",
@@ -994,7 +994,7 @@
     "/api/v1/training-center/datasets/{dataset_id}/overview": {
       "get": {
         "operationId": "design_training-center_datasets_dataset_id_overview",
-        "x-implementation-status": "planned",
+        "x-implementation-status": "implemented",
         "parameters": [
           {
             "name": "dataset_id",
@@ -1126,7 +1126,7 @@
     "/api/v1/training-center/datasets/{dataset_id}/samples": {
       "get": {
         "operationId": "design_training-center_datasets_dataset_id_samples",
-        "x-implementation-status": "planned",
+        "x-implementation-status": "implemented",
         "parameters": [
           {
             "name": "dataset_id",
@@ -1583,7 +1583,7 @@
     "/api/v1/training-center/files/{file_id}/comparison": {
       "get": {
         "operationId": "design_training-center_files_file_id_comparison",
-        "x-implementation-status": "planned",
+        "x-implementation-status": "implemented",
         "parameters": [
           {
             "name": "file_id",
@@ -1722,7 +1722,7 @@
     "/api/v1/lineage/graph": {
       "get": {
         "operationId": "design_lineage_graph",
-        "x-implementation-status": "planned",
+        "x-implementation-status": "implemented",
         "parameters": [
           {
             "name": "X-Workspace-ID",

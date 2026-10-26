@@ -75,12 +75,13 @@ def test_artifacts_replay_and_openapi_references_resolve():
     live = json.loads((ROOT / "docs/api/openapi.json").read_text(encoding="utf-8"))
     implemented = {
         path
-        for path in spec["paths"]
-        if path.startswith("/api/v1/training-center/") and not path.endswith("/export")
+        for path, verbs in spec["paths"].items()
+        if verbs["get"].get("x-implementation-status") == "implemented"
     }
     assert set(spec["paths"]) & set(live["paths"]) == implemented
-    assert len(implemented) == 9
-    for path in implemented:
+    catalog_paths = {path for path in implemented if path.startswith("/api/v1/training-center/")}
+    assert len(catalog_paths) == 9
+    for path in catalog_paths:
         operation = live["paths"][path]["get"]
         assert operation["security"] == [{"TrainingCenterBearer": []}]
         assert {"401", "403", "404", "409", "413", "422", "503"} <= set(operation["responses"])
@@ -95,7 +96,7 @@ def test_artifacts_replay_and_openapi_references_resolve():
     for path, verbs in spec["paths"].items():
         operation = verbs["get"]
         assert operation["security"] == [{"BearerAuth": []}]
-        assert operation["x-implementation-status"] == "planned"
+        assert operation["x-implementation-status"] in {"planned", "implemented"}
         path_params = {p["name"] for p in operation["parameters"] if p["in"] == "path"}
         assert path_params == {part[1:-1] for part in path.split("/") if part.startswith("{")}
 

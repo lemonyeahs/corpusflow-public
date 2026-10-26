@@ -1445,6 +1445,155 @@
         }
       }
     },
+    "/api/v1/lineage/graph": {
+      "get": {
+        "tags": [
+          "training-center-lineage"
+        ],
+        "summary": "Graph",
+        "operationId": "graph_api_v1_lineage_graph_get",
+        "parameters": [
+          {
+            "name": "catalog",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "type": "string",
+              "default": "generated",
+              "title": "Catalog"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          },
+          {
+            "name": "root_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": [
+                "source",
+                "file",
+                "operator_run",
+                "segment",
+                "sample",
+                "dataset_version"
+              ],
+              "type": "string",
+              "title": "Root Type"
+            }
+          },
+          {
+            "name": "root_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Root Id"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "both",
+                "upstream",
+                "downstream"
+              ],
+              "type": "string",
+              "default": "both",
+              "title": "Direction"
+            }
+          },
+          {
+            "name": "max_depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 12,
+              "minimum": 1,
+              "default": 6,
+              "title": "Max Depth"
+            }
+          },
+          {
+            "name": "max_nodes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 200,
+              "title": "Max Nodes"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineageGraph"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/api/v1/review-tasks": {
       "get": {
         "tags": [
@@ -10100,6 +10249,174 @@
           "decision"
         ],
         "title": "IssueReviewIn"
+      },
+      "LineageEdge": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Id"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "relation": {
+            "type": "string",
+            "enum": [
+              "provides",
+              "parsed_by",
+              "processed_by",
+              "produced",
+              "derived_from",
+              "included_in",
+              "split_into"
+            ],
+            "title": "Relation"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "source",
+          "target",
+          "relation"
+        ],
+        "title": "LineageEdge"
+      },
+      "LineageGraph": {
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "root": {
+            "$ref": "#/components/schemas/ObjectRef"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/LineageNode"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/LineageEdge"
+            },
+            "type": "array",
+            "title": "Edges"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
+          },
+          "truncation_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "max_depth",
+                  "max_nodes"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Truncation Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope",
+          "root",
+          "nodes",
+          "edges",
+          "truncated",
+          "truncation_reason"
+        ],
+        "title": "LineageGraph"
+      },
+      "LineageNode": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Id"
+          },
+          "ref": {
+            "$ref": "#/components/schemas/ObjectRef"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "source",
+              "file",
+              "operator_run",
+              "segment",
+              "sample",
+              "dataset_version"
+            ],
+            "title": "Kind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Metrics"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Detail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "ref",
+          "kind",
+          "label",
+          "description",
+          "status",
+          "metrics",
+          "detail"
+        ],
+        "title": "LineageNode"
       },
       "ManifestResponse": {
         "properties": {

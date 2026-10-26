@@ -2,8 +2,8 @@
 
 The fixture checks are deterministic graph semantics. They are useful before the
 shared router exists, but they do not count as real workspace lineage acceptance.
-Pass ``--base-url`` only after the D router and a disposable authenticated
-workspace are available; live checks remain explicitly reported as NOT RUN here
+Pass ``--base-url`` only after a disposable authenticated workspace and stable
+root IDs are available; live checks remain explicitly reported as NOT RUN here
 until those credentials and IDs are supplied.
 """
 
@@ -101,8 +101,8 @@ def main() -> int:
     result["live_api"] = {
         "status": "NOT RUN",
         "reason": (
-            "lineage graph router, authenticated workspace fixture, and stable root IDs "
-            "are not available in this baseline"
+            "authenticated workspace fixture and stable root IDs are not supplied; "
+            "the /api/v1/lineage/graph router is implemented"
         ),
         "base_url": args.base_url,
     }
