@@ -1,5 +1,5 @@
 import type {
-  Asset, AssetDetail, CandidateSample, Dataset, DatasetProductType, DatasetVersion, LineageEdge, Manifest,
+  Asset, AssetDetail, CandidateSample, DashboardOverview, Dataset, DatasetProductType, DatasetVersion, DemoCase, LineageEdge, LineageView, Manifest,
   OperatorDefinition, PipelineRun, ProcessingArtifact, QualityIssue, QualityEvaluation, QualityRules, QualityRuleConfig, QualityReportData, QualityCoverage, QualityComparison, Session, Source, Workspace,
 } from "../types";
 
@@ -46,8 +46,11 @@ export const api = {
   sources: (ctx: ApiContext) => request<{ items: Source[] }>("/sources", ctx),
   createSource: (ctx: ApiContext, body: { name: string; kind: string }) => request<Source>("/sources", ctx, json(body)),
   stats: (ctx: ApiContext) => request<{ total_assets: number; as_of: string; metric_definition_version: string }>("/assets/stats", ctx),
+  dashboardOverview: (ctx: ApiContext, params = "") => request<DashboardOverview>(`/dashboard/overview${params ? `?${params}` : ""}`, ctx),
+  demoCases: (ctx: ApiContext) => request<{ items: DemoCase[]; scope: { workspace_id: string }; as_of: string }>("/demo/cases", ctx),
   assets: (ctx: ApiContext, offset = 0, limit = 20) => request<{ items: Asset[]; total_count: number }>(`/assets?offset=${offset}&limit=${limit}`, ctx),
   asset: (ctx: ApiContext, id: string) => request<AssetDetail>(`/assets/${id}`, ctx),
+  assetLineageView: (ctx: ApiContext, id: string, versionId?: string) => request<LineageView>(`/assets/${id}/lineage-view${versionId ? `?document_version_id=${encodeURIComponent(versionId)}` : ""}`, ctx),
   initUpload: (ctx: ApiContext, body: { filename: string; size: number; content_type: string }) => request<{ upload_id: string; status: string; object_key: string }>("/uploads/init", ctx, json(body)),
   uploadContent: (ctx: ApiContext, id: string, file: Blob, onProgress?: (value: number) => void) => new Promise<{ upload_id: string; status: string; bytes: number; sha256: string }>((resolve, reject) => {
     const xhr = new XMLHttpRequest();

@@ -37,6 +37,50 @@ export interface AssetDetail extends Asset {
   versions: DocumentVersion[];
 }
 
+export interface DashboardOverview {
+  as_of: string;
+  metric_definition_version: string;
+  scope: { workspace_id: string; source_id?: string | null; file_format?: string | null; asset_status?: string | null };
+  raw: { source_count: number; asset_count: number; physical_file_count: number; unique_content_count: number; total_bytes: number; authorization: Record<string, number> };
+  formats: Record<string, number>;
+  business_types: Record<string, number>;
+  parsing: { document_count: number; document_version_count: number; segment_count: number; parse_status: Record<string, number>; run_status: Record<string, number>; failure_reasons: Record<string, number> };
+  quality: { issue_status: Record<string, number>; issue_count: number; candidate_status: Record<string, number>; candidate_count: number };
+  products: Record<string, { versions: number; samples: number; published: number }>;
+  recent_versions: Array<{ dataset_version_id: string; dataset_id: string; name: string; product_type: string; version: string; status: string; sample_count: number; published_at?: string | null }>;
+  funnel: Array<{ stage: string; count: number; unit: string }>;
+}
+
+export interface LineageView {
+  asset: { asset_id: string; filename: string; format: string; source_id: string; source_name?: string | null; sha256?: string | null; byte_size?: number | null; media_type?: string | null; metadata?: Record<string, unknown> };
+  original: { status: string; url?: string | null; expires_in: number };
+  document?: { document_id: string; title: string; parse_status: string } | null;
+  selected_version_id?: string | null;
+  versions: Array<{
+    document_version_id: string;
+    version_no: number;
+    parser_name: string;
+    parser_version: string;
+    config_hash: string;
+    run_id?: string | null;
+    status: string;
+    markdown: { status: string; content?: string | null; sha256?: string; artifact_id?: string; content_type?: string };
+    structured: { status: string; content?: string | null; data: unknown; sha256?: string; artifact_id?: string; content_type?: string };
+    segments: Array<{ segment_id: string; title?: string | null; text: string; location?: Record<string, unknown>; token_count: number; quality_state: string; content_hash: string }>;
+  }>;
+}
+
+export interface DemoCase {
+  case_id: string;
+  title: string;
+  status: string;
+  description: string;
+  objects: Record<string, string | null>;
+  presence?: Record<string, boolean>;
+  metrics?: Record<string, unknown>;
+  limitations: string[];
+}
+
 export interface DocumentVersion {
   document_version_id: string;
   version_no: number;
@@ -61,6 +105,7 @@ export interface PipelineRun {
   status: string;
   snapshot_hash: string;
   revision: number;
+  dag?: { nodes?: Array<Record<string, unknown>>; edges?: Array<[string, string]> } | null;
   error_code?: string | null;
   nodes?: NodeRun[];
 }

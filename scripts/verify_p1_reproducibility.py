@@ -5,6 +5,10 @@ from pathlib import Path
 
 
 def verify(baseline: dict, actual: dict) -> dict:
+    def strategy_name(value):
+        # P1-D baseline stored the request object while newer reports persist it.
+        return value.get("strategy") if isinstance(value, dict) else value
+
     old = baseline["experiments"]
     new = actual["benchmarks"]
     assert len(old) == len(new) == 6
@@ -12,7 +16,7 @@ def verify(baseline: dict, actual: dict) -> dict:
     for expected, measured in zip(old, new, strict=True):
         report = measured["report"]
         assert report["case_count"] == 31
-        assert report["strategy"] == expected["strategy"]
+        assert strategy_name(report["strategy"]) == strategy_name(expected["strategy"])
         for metric in ("recall", "precision", "mrr", "ndcg", "hit", "no_answer_correct"):
             a, b = expected["metrics"][metric], report["metrics"][metric]
             assert a["denominator"] == b["denominator"]

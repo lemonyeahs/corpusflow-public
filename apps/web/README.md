@@ -1,6 +1,6 @@
-# CorpusFlow Web（P0-H）
+# 玄知大模型 Web（P0-H）
 
-这是 CorpusFlow 的 TypeScript + React + Vite Web 工作台。核心业务页面通过 `src/api/client.ts` 调用真实 FastAPI，不使用固定业务演示数据；V3.1 HTML 原型保留在 `docs/prototype/`。
+这是 玄知大模型 的 TypeScript + React + Vite Web 工作台。核心业务页面通过 `src/api/client.ts` 调用真实 FastAPI，不使用固定业务演示数据；V3.1 HTML 原型保留在 `docs/prototype/`。
 
 ## 本地启动
 

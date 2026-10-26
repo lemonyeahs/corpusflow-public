@@ -719,6 +719,308 @@ def asset_stats(request: Request, session: Session = Depends(db)):
     }
 
 
+@router.get("/dashboard/overview")
+def dashboard_overview(
+    request: Request,
+    session: Session = Depends(db),
+    source_id: str | None = None,
+    file_format: str | None = None,
+    asset_status: str | None = None,
+    since: datetime | None = None,
+    until: datetime | None = None,
+):
+    """Return real, workspace-scoped lifecycle counts for the visitor dashboard.
+
+    The response keeps entity units explicit. Assets, document versions, segments,
+    candidate samples and published versions are never added together as if they
+    were one funnel.
+    """
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    asset_query = select(Asset).where(Asset.workspace_id == wid)
+    if source_id:
+        asset_query = asset_query.where(Asset.source_id == source_id)
+    if file_format:
+        asset_query = asset_query.where(Asset.format == file_format.lower())
+    if asset_status:
+        asset_query = asset_query.where(Asset.ingestion_status == asset_status)
+    if since:
+        asset_query = asset_query.where(Asset.created_at >= since)
+    if until:
+        asset_query = asset_query.where(Asset.created_at <= until)
+    assets = list(session.scalars(asset_query).all())
+    asset_ids = [row.id for row in assets]
+    source_ids = sorted({row.source_id for row in assets})
+
+    def count_rows(model: Any, *conditions: Any) -> int:
+        query = select(func.count()).select_from(model).where(*conditions)
+        return int(session.scalar(query) or 0)
+
+    physical_files = count_rows(AssetBlob, AssetBlob.workspace_id == wid, AssetBlob.id.in_([a.blob_id for a in assets])) if asset_ids else 0
+    unique_content = int(
+        session.scalar(
+            select(func.count(func.distinct(AssetBlob.sha256)))
+            .join(Asset, Asset.blob_id == AssetBlob.id)
+            .where(Asset.workspace_id == wid, Asset.id.in_(asset_ids))
+        )
+        or 0
+    ) if asset_ids else 0
+    total_bytes = int(
+        session.scalar(
+            select(func.coalesce(func.sum(AssetBlob.byte_size), 0))
+            .join(Asset, Asset.blob_id == AssetBlob.id)
+            .where(Asset.workspace_id == wid, Asset.id.in_(asset_ids))
+        )
+        or 0
+    ) if asset_ids else 0
+    format_distribution: dict[str, int] = {}
+    business_distribution: dict[str, int] = {}
+    for row in assets:
+        fmt = (row.format or "unknown").lower()
+        format_distribution[fmt] = format_distribution.get(fmt, 0) + 1
+        metadata = row.metadata_json if isinstance(row.metadata_json, dict) else {}
+        kind = str(metadata.get("document_type") or metadata.get("business_type") or "unclassified").lower()
+        if kind not in {"paper", "论文", "book", "书籍"}:
+            kind = "unclassified"
+        elif kind in {"论文", "paper"}:
+            kind = "paper"
+        else:
+            kind = "book"
+        business_distribution[kind] = business_distribution.get(kind, 0) + 1
+
+    source_query = select(Source).where(Source.workspace_id == wid)
+    if source_ids:
+        source_query = source_query.where(Source.id.in_(source_ids))
+    sources = list(session.scalars(source_query).all())
+    document_query = select(Document).where(Document.workspace_id == wid)
+    if asset_ids:
+        document_query = document_query.where(Document.asset_id.in_(asset_ids))
+    else:
+        document_query = document_query.where(text("1=0"))
+    documents = list(session.scalars(document_query).all())
+    document_ids = [row.id for row in documents]
+    version_query = select(DocumentVersion).where(DocumentVersion.workspace_id == wid)
+    if document_ids:
+        version_query = version_query.where(DocumentVersion.document_id.in_(document_ids))
+    else:
+        version_query = version_query.where(text("1=0"))
+    versions = list(session.scalars(version_query).all())
+    version_ids = [row.id for row in versions]
+    segment_count = count_rows(
+        Segment,
+        Segment.workspace_id == wid,
+        Segment.document_version_id.in_(version_ids) if version_ids else text("1=0"),
+    )
+
+    run_query = select(PipelineRun).where(PipelineRun.workspace_id == wid)
+    if asset_ids:
+        run_query = run_query.where(PipelineRun.asset_id.in_(asset_ids))
+    else:
+        run_query = run_query.where(text("1=0"))
+    runs = list(session.scalars(run_query).all())
+    run_status: dict[str, int] = {}
+    failure_reasons: dict[str, int] = {}
+    for row in runs:
+        run_status[row.status] = run_status.get(row.status, 0) + 1
+        if row.error_code:
+            failure_reasons[row.error_code] = failure_reasons.get(row.error_code, 0) + 1
+
+    issue_query = select(QualityIssue).where(QualityIssue.workspace_id == wid)
+    if asset_ids:
+        issue_query = issue_query.where(QualityIssue.asset_id.in_(asset_ids))
+    else:
+        issue_query = issue_query.where(text("1=0"))
+    issues = list(session.scalars(issue_query).all())
+    issue_status: dict[str, int] = {}
+    for row in issues:
+        issue_status[row.status] = issue_status.get(row.status, 0) + 1
+
+    grant_query = select(LicenseGrant).where(LicenseGrant.workspace_id == wid)
+    if asset_ids:
+        grant_query = grant_query.where(LicenseGrant.asset_id.in_(asset_ids))
+    else:
+        grant_query = grant_query.where(text("1=0"))
+    grant_status: dict[str, int] = {}
+    for row in session.scalars(grant_query).all():
+        key = f"{row.purpose}:{row.status}"
+        grant_status[key] = grant_status.get(key, 0) + 1
+
+    candidate_query = select(CandidateSample).where(CandidateSample.workspace_id == wid)
+    candidates = list(session.scalars(candidate_query).all())
+    candidate_status: dict[str, int] = {}
+    for row in candidates:
+        candidate_status[row.status] = candidate_status.get(row.status, 0) + 1
+
+    version_rows = session.execute(
+        select(DatasetVersion, Dataset.product_type, Dataset.name)
+        .join(Dataset, Dataset.id == DatasetVersion.dataset_id)
+        .where(DatasetVersion.workspace_id == wid)
+        .order_by(DatasetVersion.created_at.desc())
+    ).all()
+    product_summary: dict[str, dict[str, int]] = {}
+    recent_versions: list[dict[str, Any]] = []
+    for version, product_type, name in version_rows:
+        summary = product_summary.setdefault(product_type, {"versions": 0, "samples": 0, "published": 0})
+        summary["versions"] += 1
+        summary["samples"] += int(version.sample_count or 0)
+        if version.status == "published":
+            summary["published"] += 1
+        if len(recent_versions) < 12:
+            recent_versions.append(
+                {
+                    "dataset_version_id": version.id,
+                    "dataset_id": version.dataset_id,
+                    "name": name,
+                    "product_type": product_type,
+                    "version": version.version,
+                    "status": version.status,
+                    "sample_count": version.sample_count,
+                    "published_at": version.published_at.isoformat() if version.published_at else None,
+                }
+            )
+    return {
+        "as_of": datetime.now(timezone.utc).isoformat(),
+        "metric_definition_version": "visitor-demo-1",
+        "scope": {"workspace_id": wid, "source_id": source_id, "file_format": file_format, "asset_status": asset_status},
+        "raw": {
+            "source_count": len(sources),
+            "asset_count": len(assets),
+            "physical_file_count": physical_files,
+            "unique_content_count": unique_content,
+            "total_bytes": total_bytes,
+            "authorization": grant_status,
+        },
+        "formats": format_distribution,
+        "business_types": business_distribution,
+        "parsing": {
+            "document_count": len(documents),
+            "document_version_count": len(versions),
+            "segment_count": segment_count,
+            "parse_status": {key: sum(1 for row in documents if row.parse_status == key) for key in {row.parse_status for row in documents}},
+            "run_status": run_status,
+            "failure_reasons": failure_reasons,
+        },
+        "quality": {"issue_status": issue_status, "issue_count": len(issues), "candidate_status": candidate_status, "candidate_count": len(candidates)},
+        "products": product_summary,
+        "recent_versions": recent_versions,
+        "funnel": [
+            {"stage": "assets", "count": len(assets), "unit": "asset"},
+            {"stage": "parsed_documents", "count": len([row for row in documents if row.parse_status == "succeeded"]), "unit": "document"},
+            {"stage": "segments", "count": segment_count, "unit": "segment"},
+            {"stage": "approved_candidates", "count": candidate_status.get("approved", 0), "unit": "candidate_sample"},
+            {"stage": "published_versions", "count": sum(item["published"] for item in product_summary.values()), "unit": "dataset_version"},
+        ],
+    }
+
+
+@router.get("/assets/{asset_id}/lineage-view")
+def asset_lineage_view(
+    asset_id: str,
+    request: Request,
+    session: Session = Depends(db),
+    document_version_id: str | None = None,
+):
+    """Return one asset's signed source and persisted parser representations."""
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    asset = session.scalar(select(Asset).where(Asset.id == asset_id, Asset.workspace_id == wid))
+    if not asset:
+        raise HTTPException(404, "NOT_FOUND")
+    blob = session.scalar(select(AssetBlob).where(AssetBlob.id == asset.blob_id, AssetBlob.workspace_id == wid))
+    source = session.scalar(select(Source).where(Source.id == asset.source_id, Source.workspace_id == wid))
+    document = session.scalar(select(Document).where(Document.asset_id == asset.id, Document.workspace_id == wid))
+    versions = list(session.scalars(select(DocumentVersion).where(DocumentVersion.workspace_id == wid, DocumentVersion.document_id == document.id).order_by(DocumentVersion.version_no.desc())).all()) if document else []
+    selected = next((row for row in versions if row.id == document_version_id), versions[0] if versions else None)
+
+    original: dict[str, Any] = {"status": "NOT_AVAILABLE", "url": None, "expires_in": 0}
+    if blob:
+        try:
+            from corpusflow.adapters.storage import S3ObjectStore
+
+            store = S3ObjectStore(
+                request.app.state.config.object_store_endpoint,
+                request.app.state.config.object_store_bucket,
+                request.app.state.config.object_store_access_key.get_secret_value(),
+                request.app.state.config.object_store_secret_key.get_secret_value(),
+            )
+            original = {"status": "AVAILABLE", "url": store.presign_get(blob.storage_key, 300), "expires_in": 300}
+        except Exception:
+            original = {"status": "NOT_AVAILABLE", "url": None, "expires_in": 0}
+
+    def representation(version: DocumentVersion | None) -> dict[str, Any] | None:
+        if not version:
+            return None
+        segments = list(session.scalars(select(Segment).where(Segment.document_version_id == version.id, Segment.workspace_id == wid).order_by(Segment.created_at)).all())
+        artifacts = list(session.scalars(select(Artifact).where(Artifact.workspace_id == wid, Artifact.run_id == version.run_id).order_by(Artifact.created_at.desc())).all()) if version.run_id else []
+        markdown_artifact = next((row for row in artifacts if row.kind.startswith("document_markdown")), None)
+        json_artifact = next((row for row in artifacts if row.kind.startswith("document_json")), None)
+
+        def read_artifact(row: Artifact | None, content_type: str) -> dict[str, Any]:
+            if not row:
+                return {"status": "NOT_AVAILABLE", "content": None}
+            try:
+                from corpusflow.adapters.storage import S3ObjectStore
+
+                store = S3ObjectStore(
+                    request.app.state.config.object_store_endpoint,
+                    request.app.state.config.object_store_bucket,
+                    request.app.state.config.object_store_access_key.get_secret_value(),
+                    request.app.state.config.object_store_secret_key.get_secret_value(),
+                )
+                content = store.get(row.storage_key)
+                if len(content) > 2_000_000:
+                    return {"status": "TRUNCATED", "content": content[:2_000_000].decode("utf-8", "replace"), "sha256": row.content_sha256, "artifact_id": row.id, "content_type": content_type}
+                return {"status": "AVAILABLE", "content": content.decode("utf-8", "replace"), "sha256": row.content_sha256, "artifact_id": row.id, "content_type": content_type}
+            except Exception:
+                return {"status": "NOT_AVAILABLE", "content": None, "sha256": row.content_sha256, "artifact_id": row.id, "content_type": content_type}
+
+        structured = read_artifact(json_artifact, "application/json")
+        structured_data: Any = None
+        if structured.get("content"):
+            try:
+                structured_data = json.loads(structured["content"])
+            except json.JSONDecodeError:
+                structured_data = None
+        if structured_data is None:
+            structured_data = {
+                "document_version_id": version.id,
+                "version_no": version.version_no,
+                "parser": {"name": version.parser_name, "version": version.parser_version, "config_hash": version.config_hash},
+                "segments": [{"segment_id": row.id, "title": row.section_title, "text": row.text, "location": row.location_json, "token_count": row.token_count, "quality_state": row.quality_state} for row in segments],
+            }
+            structured["status"] = "DATABASE_VIEW"
+        return {
+            "document_version_id": version.id,
+            "version_no": version.version_no,
+            "parser_name": version.parser_name,
+            "parser_version": version.parser_version,
+            "config_hash": version.config_hash,
+            "run_id": version.run_id,
+            "status": version.status,
+            "markdown": read_artifact(markdown_artifact, "text/markdown"),
+            "structured": {**structured, "data": structured_data},
+            "segments": [{"segment_id": row.id, "title": row.section_title, "text": row.text, "location": row.location_json, "token_count": row.token_count, "quality_state": row.quality_state, "content_hash": row.content_hash} for row in segments],
+        }
+
+    return {
+        "asset": {
+            "asset_id": asset.id,
+            "filename": asset.filename,
+            "format": asset.format,
+            "source_id": asset.source_id,
+            "source_name": source.name if source else None,
+            "sha256": blob.sha256 if blob else None,
+            "byte_size": blob.byte_size if blob else None,
+            "media_type": blob.media_type if blob else None,
+            "metadata": asset.metadata_json,
+        },
+        "original": original,
+        "document": {"document_id": document.id, "title": document.title, "parse_status": document.parse_status} if document else None,
+        "selected_version_id": selected.id if selected else None,
+        "versions": [representation(row) for row in versions],
+    }
+
+
 @router.get("/assets/{asset_id}")
 def asset_detail(asset_id: str, request: Request, session: Session = Depends(db)):
     user = actor_id(request, session)
@@ -979,6 +1281,7 @@ def get_run(run_id: str, request: Request, session: Session = Depends(db)):
     )
     if not run:
         raise HTTPException(404, "NOT_FOUND")
+    pipeline = session.get(PipelineVersion, run.pipeline_version_id)
     return {
         "run_id": run.id,
         "asset_id": run.asset_id,
@@ -986,6 +1289,7 @@ def get_run(run_id: str, request: Request, session: Session = Depends(db)):
         "snapshot_hash": run.snapshot_hash,
         "error_code": run.error_code,
         "revision": run.revision,
+        "dag": pipeline.dag_json if pipeline else None,
         "nodes": [
             {
                 "node_id": node.node_id,
@@ -2325,6 +2629,101 @@ def lineage(object_type: str, object_id: str, request: Request, session: Session
             }
             for e in rows
         ],
+        "as_of": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@router.get("/demo/cases")
+def demo_cases(request: Request, session: Session = Depends(db)):
+    """Expose an index of real records suitable for a read-only visitor demo."""
+    user = actor_id(request, session)
+    wid = workspace_id(request, session, user)
+    latest_run = session.scalar(
+        select(PipelineRun)
+        .where(PipelineRun.workspace_id == wid, PipelineRun.status.in_(["succeeded", "awaiting_review"]))
+        .order_by(PipelineRun.finished_at.desc().nullslast(), PipelineRun.created_at.desc())
+    )
+    normal_objects: dict[str, str | None] = {"pipeline_run_id": latest_run.id if latest_run else None}
+    if latest_run:
+        asset = session.scalar(select(Asset).where(Asset.id == latest_run.asset_id, Asset.workspace_id == wid))
+        normal_objects["asset_id"] = asset.id if asset else None
+        document = session.scalar(select(Document).where(Document.asset_id == latest_run.asset_id, Document.workspace_id == wid))
+        normal_objects["document_id"] = document.id if document else None
+        if document:
+            version = session.scalar(select(DocumentVersion).where(DocumentVersion.document_id == document.id, DocumentVersion.workspace_id == wid).order_by(DocumentVersion.version_no.desc()))
+            normal_objects["document_version_id"] = version.id if version else None
+            if version:
+                dataset_version = session.scalar(
+                    select(DatasetVersion)
+                    .join(Dataset, Dataset.id == DatasetVersion.dataset_id)
+                    .where(DatasetVersion.workspace_id == wid, DatasetVersion.status == "published")
+                    .order_by(DatasetVersion.created_at.desc())
+                )
+                normal_objects["dataset_version_id"] = dataset_version.id if dataset_version else None
+
+    historical = {
+        "retrieval_trace_id": "83551145-7804-4bdd-ab42-094a799cf3d5",
+        "segment_id": "31433147-00a2-4ab2-ac98-f9b4fe74f208",
+        "feedback_id": "01d87232-5541-458e-b5e4-3c0eeb20bb5c",
+        "pipeline_run_id": "b2fb6950-30cd-49f4-b51b-030426810e5a",
+        "document_version_id": "b1a6e7df-8132-4ebd-86c2-113e38ee6aea",
+        "dataset_version_id": "612f8414-d119-4e13-91f7-f0c58e78f5b3",
+        "index_version_id": "dea6432a-df26-4811-99ae-07d10b092f44",
+        "fts_evaluation_id": "e97097a4-9786-446f-ad0c-dda4faa82a89",
+        "bm25_evaluation_id": "340b2ddf-a5ed-441a-b628-041e3915d08e",
+    }
+    from corpusflow.db.models import RagEvaluationRun, RagFeedback, RagIndexVersion, RetrievalTrace
+
+    historical_models: dict[str, Any] = {
+        "retrieval_trace_id": RetrievalTrace,
+        "segment_id": Segment,
+        "feedback_id": RagFeedback,
+        "pipeline_run_id": PipelineRun,
+        "document_version_id": DocumentVersion,
+        "dataset_version_id": DatasetVersion,
+        "index_version_id": RagIndexVersion,
+        "fts_evaluation_id": RagEvaluationRun,
+        "bm25_evaluation_id": RagEvaluationRun,
+    }
+    historical_presence = {
+        key: bool(session.scalar(select(model.id).where(model.id == value, model.workspace_id == wid)))
+        for key, value in historical.items()
+        for model in [historical_models[key]]
+    }
+    def evaluation_metrics(evaluation_id: str) -> dict[str, Any] | None:
+        evaluation = session.scalar(
+            select(RagEvaluationRun).where(
+                RagEvaluationRun.id == evaluation_id,
+                RagEvaluationRun.workspace_id == wid,
+            )
+        )
+        if not evaluation:
+            return None
+        report = evaluation.report if isinstance(evaluation.report, dict) else {}
+        metrics = report.get("metrics", {})
+        return {"recall_at_3": metrics.get("recall_at_3"), "mrr": metrics.get("mrr"), "precision_at_3": metrics.get("precision_at_3"), "source": "RagEvaluationRun.report"}
+    return {
+        "items": [
+            {
+                "case_id": "latest-processing-chain",
+                "title": "当前 workspace 最近一次真实处理链路",
+                "status": "AVAILABLE" if latest_run else "NOT_AVAILABLE",
+                "description": "从真实 Asset、PipelineRun、DocumentVersion 到最近发布版本的入口。",
+                "objects": normal_objects,
+                "limitations": ["对象入口随 workspace 数据变化；没有数据时不创建演示对象"],
+            },
+            {
+                "case_id": "kem-feedback-rework",
+                "title": "KEM encapsulation 反馈与重工",
+                "status": "AVAILABLE" if all(historical_presence.values()) else "MISSING",
+                "description": "固定历史证据只在当前 workspace 中存在时展示；缺失对象不会被伪造。",
+                "objects": historical,
+                "presence": historical_presence,
+                "metrics": {"fts": evaluation_metrics(historical["fts_evaluation_id"]), "bm25": evaluation_metrics(historical["bm25_evaluation_id"])},
+                "limitations": ["重工未改善 FTS；BM25 是同一新版本上的独立检索策略结果"],
+            },
+        ],
+        "scope": {"workspace_id": wid},
         "as_of": datetime.now(timezone.utc).isoformat(),
     }
 
