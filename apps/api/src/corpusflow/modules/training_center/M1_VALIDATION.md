@@ -1,5 +1,6 @@
 # M1 首批验证与交接
 
+> 本文保留 `7e2f227` 首批的历史结果。workspace、导出及 React 页面已在后续实现，最新状态见 [M1_WORKSPACE_VALIDATION.md](M1_WORKSPACE_VALIDATION.md)。
 > 以下保留 Agent 2 在 `7e2f227` 交付时的验证事实。后续已完成默认 router 注册、实际 OpenAPI 更新、真实 PostgreSQL/API/前端集成与独立复核；最新结果见 [M1 集成报告](../../../../../../docs/reports/TRAINING_CENTER_M1_INTEGRATION.md)，不以本历史报告中的“待集成”判断当前状态。
 
 日期：2026-10-27。Agent 2（B＋G），独立 worktree `corpusflow-datasets`，分支 `feat/tc-catalog-datasets`。共同基线 `58fe070955b3a8c66806dc8f2d8ed2f152d5036d`，开工前工作区干净。契约版本 `1.0.0`。

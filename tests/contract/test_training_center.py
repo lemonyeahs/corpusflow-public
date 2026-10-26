@@ -8,6 +8,7 @@ from __future__ import annotations
 import pytest
 from corpusflow.contracts.training_center import models as m
 from corpusflow.db.models import Membership, User, Workspace
+from corpusflow.db.session import Base
 from corpusflow.modules.training_center.catalog import GeneratedCatalog
 from corpusflow.modules.training_center.generation import build_catalog, write_catalog
 from fastapi.testclient import TestClient
@@ -29,8 +30,7 @@ def api(tmp_path, settings):
     engine = create_engine(
         "sqlite+pysqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
     )
-    for model in (User, Workspace, Membership):
-        model.__table__.create(engine)
+    Base.metadata.create_all(engine)
     with Session(engine) as session:
         session.add_all(
             [
@@ -69,6 +69,344 @@ def api(tmp_path, settings):
 
 
 PREFIX = "/api/v1/training-center"
+
+
+@pytest.mark.parametrize(
+    "invalid",
+    [
+        {"version": ""},
+        {"catalog": "other"},
+        {"split": "other"},
+        {"export_format": "other"},
+        {"limit": 1},
+    ],
+)
+def test_export_rejects_invalid_query(api, invalid):
+    client, store, _ = api
+    dataset = store.load("workspace-a").datasets[0]
+    response = client.get(
+        f"{PREFIX}/datasets/{dataset.id}/export",
+        params={"version": dataset.version, **invalid},
+    )
+    assert response.status_code == 422
+
+
+def test_filtered_exports_and_off_page_details(api):
+    import json
+
+    client, store, _ = api
+    snapshot = store.load("workspace-a")
+    for dataset in snapshot.datasets:
+        base = f"{PREFIX}/datasets/{dataset.id}"
+        params = {"revision": snapshot.scope.revision, "version": dataset.version, "q": "第"}
+        first = client.get(base + "/samples", params={**params, "limit": 2}).json()
+        assert first["total_count"] > 2
+        pages = []
+        for offset in range(0, first["total_count"], 2):
+            pages.extend(
+                client.get(
+                    base + "/samples", params={**params, "offset": offset, "limit": 2}
+                ).json()["items"]
+            )
+        response = client.get(base + "/export", params=params)
+        assert response.status_code == 200, response.text
+        assert "charset=utf-8" in response.headers["content-type"]
+        assert [json.loads(line) for line in response.content.splitlines()] == pages
+        detail = client.get(
+            base + "/samples/" + pages[-1]["id"],
+            params={"revision": snapshot.scope.revision, "version": dataset.version},
+        )
+        assert detail.status_code == 200 and detail.json()["items"] == [pages[-1]]
+        assert (
+            client.get(
+                base + "/samples/" + pages[-1]["id"], params={"version": "missing"}
+            ).status_code
+            == 404
+        )
+        assert (
+            client.get(base + "/samples/missing", params={"version": dataset.version}).status_code
+            == 404
+        )
+        assert client.get(base + "/export", params={**params, "q": "没有匹配的内容"}).content == b""
+        assert client.get(base + "/export", params={**params, "offset": 20}).status_code == 422
+
+
+def test_workspace_database_http_snapshot_filter_export_and_revocation(api):
+    import json
+
+    from corpusflow.db import models as d
+
+    client, _, engine = api
+    wid = "workspace-a"
+    with Session(engine) as session:
+        session.add(d.Source(id="ws-source", workspace_id=wid, name="Book", kind="book"))
+        session.add(
+            d.AssetBlob(
+                id="ws-blob",
+                workspace_id=wid,
+                storage_key="ws/file",
+                sha256="a" * 64,
+                byte_size=50,
+                media_type="text/plain",
+            )
+        )
+        session.add(
+            d.Asset(
+                id="ws-file",
+                workspace_id=wid,
+                source_id="ws-source",
+                blob_id="ws-blob",
+                filename="book.txt",
+                format="txt",
+                language="zh",
+            )
+        )
+        session.add(d.Document(id="ws-doc", workspace_id=wid, asset_id="ws-file", title="Book"))
+        session.add(
+            d.DocumentVersion(
+                id="ws-doc-version", workspace_id=wid, document_id="ws-doc", content_sha256="a" * 64
+            )
+        )
+        session.add(
+            d.Segment(
+                id="ws-segment",
+                workspace_id=wid,
+                document_version_id="ws-doc-version",
+                source_id="ws-source",
+                text="正文",
+                content_hash="a" * 64,
+            )
+        )
+        session.add(
+            d.Dataset(id="ws-dataset", workspace_id=wid, name="中文数据集", product_type="pretrain")
+        )
+        session.add(
+            d.DatasetBuild(
+                id="ws-build",
+                workspace_id=wid,
+                dataset_id="ws-dataset",
+                created_by="user-a",
+                config_json={},
+                config_hash="a" * 64,
+            )
+        )
+        session.add(
+            d.DatasetVersion(
+                id="ws-version",
+                workspace_id=wid,
+                dataset_id="ws-dataset",
+                build_id="ws-build",
+                version="1",
+                manifest_sha256="a" * 64,
+                content_sha256="b" * 64,
+                published_by="user-a",
+            )
+        )
+        for i in range(25):
+            session.add(
+                d.CandidateSample(
+                    id=f"ws-sample-{i}",
+                    workspace_id=wid,
+                    build_id="ws-build",
+                    sample_key=str(i),
+                    source_id="ws-source",
+                    payload={
+                        "text": f'中文,"引号"\n匹配 {i}' if i < 22 else "其他",
+                        "evidence_ids": ["ws-segment"],
+                    },
+                    payload_hash="a" * 64,
+                )
+            )
+            session.add(
+                d.DatasetVersionSample(
+                    dataset_version_id="ws-version",
+                    candidate_sample_id=f"ws-sample-{i}",
+                    split="train",
+                )
+            )
+        session.commit()
+    overview = client.get(PREFIX + "/overview", params={"catalog": "workspace"}).json()
+    params = {"catalog": "workspace", "revision": overview["scope"]["revision"]}
+    assert overview["metrics"]["training_record_count"]["value"] == 25
+    assert overview["metrics"]["segment_count"]["value"] == 1
+    files = client.get(PREFIX + "/files", params=params).json()
+    assert files["total_count"] == 1 and files["items"][0]["dataset_refs"][0]["id"] == "ws-version"
+    stats = client.get(PREFIX + "/formats/txt/stats", params=params).json()
+    assert stats["metrics"]["file_count"]["value"] == files["total_count"]
+    base = PREFIX + "/datasets/ws-dataset"
+    query = {**params, "version": "1", "split": "train", "q": "匹配"}
+    first = client.get(base + "/samples", params=query).json()
+    second = client.get(base + "/samples", params={**query, "offset": 20}).json()
+    assert first["total_count"] == 22 and len(first["items"]) == 20 and len(second["items"]) == 2
+    assert client.get(base + "/export", params=query).status_code == 403
+    with Session(engine) as session:
+        session.add(
+            d.LicenseGrant(
+                id="ws-grant",
+                workspace_id=wid,
+                asset_id="ws-file",
+                purpose="training",
+                status="confirmed",
+            )
+        )
+        session.get(d.CandidateSample, "ws-sample-0").payload = {
+            "text": "数据库已更新",
+            "evidence_ids": ["ws-segment"],
+        }
+        session.commit()
+    response = client.get(base + "/export", params=query)
+    assert response.status_code == 200, response.text
+    assert [json.loads(line) for line in response.content.splitlines()] == first["items"] + second[
+        "items"
+    ]
+    assert client.get(base + "/samples", params={**query, "revision": "expired"}).status_code == 409
+    assert (
+        client.get(
+            base + "/samples",
+            params=query,
+            headers={"Authorization": "Bearer token-b", "X-Workspace-ID": "workspace-b"},
+        ).status_code
+        == 409
+    )
+    with Session(engine) as session:
+        session.get(d.LicenseGrant, "ws-grant").status = "revoked"
+        session.commit()
+    assert client.get(base + "/export", params=query).status_code == 403
+    with Session(engine) as session:
+        member = session.scalar(select(Membership).where(Membership.user_id == "user-a"))
+        member.status = "revoked"
+        session.commit()
+    assert client.get(base + "/samples", params=query).status_code == 403
+
+
+def test_workspace_provider_is_replaceable_without_changing_wire_scope(api):
+    from corpusflow.api.v1.training_center import workspace_store
+    from corpusflow.modules.training_center.workspace import WorkspaceSnapshots
+
+    client, _, _ = api
+
+    class Provider:
+        calls = []
+        backend = WorkspaceSnapshots()
+
+        def load(self, workspace, revision, session, max_records, max_bytes):
+            self.calls.append((workspace, revision))
+            return self.backend.load(workspace, revision, session, max_records, max_bytes)
+
+    provider = Provider()
+    client.app.dependency_overrides[workspace_store] = lambda: provider
+    first = client.get(PREFIX + "/overview", params={"catalog": "workspace"})
+    revision = first.json()["scope"]["revision"]
+    second = client.get(PREFIX + "/datasets", params={"catalog": "workspace", "revision": revision})
+    assert first.json()["scope"] == second.json()["scope"]
+    assert provider.calls == [("workspace-a", None), ("workspace-a", revision)]
+
+
+def test_workspace_http_has_independent_frozen_empty_snapshot(api):
+    client, _, _ = api
+    first = client.get(PREFIX + "/overview", params={"catalog": "workspace"})
+    assert first.status_code == 200, first.text
+    parsed = m.OverviewResponse.model_validate(first.json())
+    assert parsed.metrics["training_record_count"].value == 0
+    assert parsed.scope.catalog == "workspace"
+    params = {"catalog": "workspace", "revision": parsed.scope.revision}
+    response = client.get(PREFIX + "/files", params=params)
+    assert response.status_code == 200 and response.json()["items"] == []
+    assert response.json()["scope"] == first.json()["scope"]
+    cross_workspace = client.get(
+        PREFIX + "/files",
+        params=params,
+        headers={"Authorization": "Bearer token-b", "X-Workspace-ID": "workspace-b"},
+    )
+    assert cross_workspace.status_code == 409
+    assert cross_workspace.json()["error"]["code"] == "SNAPSHOT_EXPIRED"
+    response = client.get(PREFIX + "/files", params={"catalog": "workspace", "revision": "missing"})
+    assert response.status_code == 409
+
+
+def test_export_http_uses_full_split_and_audits_only_success(api, monkeypatch):
+    from types import SimpleNamespace
+
+    from corpusflow.db.models import AuditEvent
+    from corpusflow.modules.training_center import downloads
+
+    client, store, engine = api
+    snapshot = store.load("workspace-a")
+    dataset = snapshot.datasets[0]
+    captured = []
+
+    def serializer(records, kind, export_format):
+        captured.extend(records)
+        return SimpleNamespace(
+            chunks=iter([b"complete\n"]), content_type="text/plain", extension="txt"
+        )
+
+    monkeypatch.setattr(downloads, "serializer", serializer)
+    params = {
+        "version": dataset.version,
+        "revision": snapshot.scope.revision,
+        "export_format": "txt",
+        "split": "train",
+    }
+    response = client.get(f"{PREFIX}/datasets/{dataset.id}/export", params=params)
+    assert response.status_code == 200 and response.content == b"complete\n"
+    assert int(response.headers["content-length"]) == 9
+    assert "filename*=UTF-8''" in response.headers["content-disposition"]
+    assert len(captured) == dataset.split_counts.train
+    assert all(item["split"] == "train" for item in captured)
+    with Session(engine) as session:
+        audit = session.scalar(select(AuditEvent))
+        assert audit.summary["revision"] == snapshot.scope.revision
+        assert audit.summary["record_count"] == len(captured)
+
+
+def test_export_unavailable_never_returns_success_headers(api, monkeypatch):
+    from corpusflow.modules.training_center import downloads
+    from corpusflow.modules.training_center.catalog import CatalogError
+
+    client, store, _ = api
+    dataset = store.load("workspace-a").datasets[0]
+
+    def unavailable(*args):
+        raise CatalogError("ADAPTER_UNAVAILABLE", 503)
+
+    monkeypatch.setattr(downloads, "serializer", unavailable)
+    response = client.get(
+        f"{PREFIX}/datasets/{dataset.id}/export", params={"version": dataset.version}
+    )
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "ADAPTER_UNAVAILABLE"
+    assert "content-disposition" not in response.headers
+
+
+def test_real_agent3_exports_through_http(api):
+    import json
+
+    client, store, _ = api
+    snapshot = store.load("workspace-a")
+    for dataset in snapshot.datasets:
+        for export_format, extension in (
+            ("jsonl", "jsonl"),
+            ("markdown", "md"),
+            ("csv", "csv"),
+            ("txt", "txt"),
+        ):
+            response = client.get(
+                f"{PREFIX}/datasets/{dataset.id}/export",
+                params={
+                    "version": dataset.version,
+                    "revision": snapshot.scope.revision,
+                    "export_format": export_format,
+                    "split": "train",
+                },
+            )
+            assert response.status_code == 200, response.text
+            assert f"filename=dataset.{extension}" in response.headers["content-disposition"]
+            assert int(response.headers["content-length"]) == len(response.content)
+            if export_format == "jsonl":
+                rows = [json.loads(line) for line in response.content.splitlines()]
+                assert len(rows) == dataset.split_counts.train
+                assert all(row["kind"] == dataset.kind and row["split"] == "train" for row in rows)
 
 
 def test_http_endpoints_use_verified_files_and_canonical_responses(api):
@@ -161,7 +499,6 @@ def test_workspace_scoping_and_membership_revocation_even_with_warm_cache(api):
         ("/files", {"workspace_id": "workspace-b"}, 422, "VALIDATION_FAILED"),
         ("/files", {"revision": "../escape"}, 422, "INVALID_ARGUMENT"),
         ("/files", {"revision": "a" * 64}, 409, "SNAPSHOT_EXPIRED"),
-        ("/files", {"catalog": "workspace"}, 503, "ADAPTER_UNAVAILABLE"),
         ("/formats/binary/stats", {}, 422, "VALIDATION_FAILED"),
         ("/formats/txt/stats", {"timezone": "Bad/Zone"}, 422, "INVALID_ARGUMENT"),
         ("/datasets/absent/samples", {}, 422, "VALIDATION_FAILED"),

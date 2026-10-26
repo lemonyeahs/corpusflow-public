@@ -13,7 +13,7 @@ import os
 import re
 import tempfile
 from collections import Counter, OrderedDict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from threading import RLock
 from typing import Any
@@ -123,6 +123,14 @@ def decode_json(value: bytes) -> Any:
 
 
 @dataclass(frozen=True)
+class CatalogSegment:
+    id: str
+    file_id: str
+    language: str | None
+    char_count: int
+
+
+@dataclass(frozen=True)
 class CatalogSnapshot:
     scope: m.Scope
     manifest: Json
@@ -131,6 +139,11 @@ class CatalogSnapshot:
     files: tuple[m.FileSummary, ...]
     datasets: tuple[m.DatasetSummary, ...]
     samples: tuple[m.Sample, ...]
+    segments: tuple[CatalogSegment, ...] = ()
+    sample_files: dict[tuple[str, str, str], set[str]] = field(default_factory=dict)
+    version_metadata: dict[str, Json] = field(default_factory=dict)
+    file_runs: dict[str, str] = field(default_factory=dict)
+    sample_runs: dict[tuple[str, str, str], tuple[str, ...]] = field(default_factory=dict)
 
 
 class GeneratedCatalog:

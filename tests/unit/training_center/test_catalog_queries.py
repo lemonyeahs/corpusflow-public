@@ -44,6 +44,22 @@ def test_overview_and_stats_units_and_unknowns(queries):
     assert stages["dpo"].count == 7 and stages["dpo"].unit == "pair"
 
 
+def test_generated_relations_are_stable_and_do_not_invent_runs(queries):
+    from corpusflow.modules.training_center.relations import CatalogRelations
+
+    relations = CatalogRelations(queries.snapshot)
+    for sample in queries.snapshot.samples:
+        result = relations.sample(sample.dataset_id, sample.dataset_version, sample.id)
+        assert result.sample == sample and result.processing_runs == ()
+        assert result.file_basis == "source_association"
+        assert result.files == relations.source_files(sample.source_refs[0].id)
+        assert result.version in relations.file(result.files[0].id).versions
+        assert relations.file(result.files[0].id).latest_processing_run is None
+        assert relations.version(result.version.version_id) == result.version
+    with pytest.raises(CatalogError, match="NOT_FOUND"):
+        relations.version("missing")
+
+
 @pytest.mark.parametrize(
     "filters",
     [

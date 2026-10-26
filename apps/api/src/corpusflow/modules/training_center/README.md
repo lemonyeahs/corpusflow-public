@@ -1,13 +1,16 @@
-# Agent 2：M1 首批 generated 只读目录
+# Agent 2：M1 目录读取、workspace 快照与数据集页面
 
-基线：`58fe070955b3a8c66806dc8f2d8ed2f152d5036d`，共享契约/统计口径 `1.0.0`。
+共享契约/统计口径 `1.0.0`。本轮指定基线 `acb7ce0fa31befaa203bf1213ad3eebbc4afaa06` 已正常合并到 `feat/tc-catalog-datasets`（合并提交 `1c93698`）。首批 generated API 为 `7e2f227`，workspace/页面为 `78a706e`，Agent 3 序列化器接入为 `0506eb4`。本轮验证见 [M1_DATASETS_FOLLOWUP.md](M1_DATASETS_FOLLOWUP.md)。
 
-本批提供目录读取器、查询服务和 FastAPI router。响应来自实际生成文件，不导入 `contract_examples` 或统一开发样例。集成负责人已将 9 个 GET 路由注册到默认 `create_app`，并重新导出实际 OpenAPI；契约测试直接使用默认应用。真实 PostgreSQL、独立 API 进程及关闭样例模式的前端验收见 [M1 集成报告](../../../../../../docs/reports/TRAINING_CENTER_M1_INTEGRATION.md)。
+本模块提供 generated 文件读取、workspace 数据库适配、查询服务和导出。业务响应不导入开发样例。指定基线 `acb7ce0` 已在默认 `create_app` 注册本 router，契约测试直接使用默认应用，不再重复挂载。generated 的真实 PostgreSQL/API/前端验收见 [M1 集成报告](../../../../../../docs/reports/TRAINING_CENTER_M1_INTEGRATION.md)；该报告不替代本分支新增 workspace、导出和页面的验证。React 页面由现有入口自动发现。
 
 ## 文件与接口
 
 - `catalog.py`：生成 v1 目录的限额读取、完整性/引用校验、发布/退役、解析结果缓存；无数据库依赖。
 - `query.py`：同一快照内的统计、搜索、过滤和稳定分页。
+- `workspace.py`：现有数据库实体的只读适配，冻结快照及固定有效期缓存。
+- `relations.py`：已授权快照上的来源→文件→版本→样本/处理记录读取；区分来源关联与实际片段证据。
+- `downloads.py`：真实 manifest 校验、导出授权、限额和临时文件；调用 Agent 3 的序列化器。
 - `api/v1/training_center.py`：独立 router；复用 `api.dependencies` 的 db/actor_id/workspace_id。每次请求验证用户及 active Membership，viewer 可以读取自己有权限的空间。
 
 路径前缀 `/api/v1/training-center`，下列 GET 路由已实现并通过 HTTP 测试：
@@ -22,15 +25,47 @@
 | `/datasets` | kind 筛选，按 CPT/SFT/DPO、id/version 排序 |
 | `/datasets/{dataset_id}/overview` | 记录数、split 去向、来源/字符长度/语言分布 |
 | `/datasets/{dataset_id}/samples` | 必填 version；split/q 先过滤再分页，sequence/id 升序 |
+| `/datasets/{dataset_id}/samples/{sample_id}` | 必填 version；复用 SamplesResponse，恰好一项；不依赖列表页码或过滤条件，找不到返回404 |
 | `/datasets/{dataset_id}/manifest` | 完整来源 manifest 及其规范序列化 SHA256；与排除时间的 revision 区分 |
+| `/datasets/{dataset_id}/export` | JSONL/Markdown/CSV/TXT；当前版本 split/q 过滤后的全部结果，返回 UTF-8 下载文件 |
 
-所有接口接受 catalog/revision，返回冻结 DTO。未提供 revision 时读取显式发布的活动版本，前端收到后应使用 pinScope 固定；提供 revision 时保持该版本，不切换到最新版本。越界 offset 返回空 items 和真实总数，limit 为 1–100。
+所有读取接口接受 catalog/revision，返回冻结 DTO。generated 未提供 revision 时读取显式发布的活动版本，workspace 则创建新的数据库快照；前端收到后使用 pinScope 固定。提供 revision 时保持该快照。越界 offset 返回空 items 和真实总数，limit 为 1–100。
 
 files.q 仅匹配 filename（Unicode casefold）；samples.q 匹配 CPT title/text、SFT 各轮内容、DPO prompt/chosen/rejected/preference_reason，跨字段以换行分隔，均先过滤再计算 total_count。DPO 一对计一个顶层记录。
 
 stats 的 from/to 是 UTC 时间戳、包含端点；未知 ingested_at 的文件无法满足时间过滤。timezone 使用 IANA 名称，非法时区、倒置范围返回 422 INVALID_ARGUMENT；有真实时间依据时按该时区日期补零。为避免无限展开，单次日序列最多 3660 天；超过返回 422 INVALID_ARGUMENT。无文件或缺失接入时间按契约返回 null 与 availability，不能生成历史趋势。当前生成器没有接入时间，正常结果为 ingested_at_missing。
 
-文件来源分布按文件；片段长度/语言分布为空（当前没有片段）；训练分布按相应顶层记录，主来源取 source_refs 第一项。格式过滤后的训练流转按选中文件的 source_ref 关联、每条样本只计一次，dataset_refs 来自同批文件。没有实际转换证据时 transitions=[]。
+文件来源分布按文件；generated 没有片段，workspace 片段来自每份 Document 最新 DocumentVersion 的真实 Segment。训练分布按相应顶层记录，主来源取 source_refs 第一项。generated 格式过滤后的记录按 source_ref 关联；workspace 按真实 evidence→segment→document→asset 关联，避免同来源的其他文件被误计。没有实际转换证据时 transitions=[]。
+
+## Workspace 数据库适配
+
+复用 Source、Asset/AssetBlob、Document/DocumentVersion/Segment、PipelineRun、Dataset、DatasetVersion、DatasetVersionSample 和 CandidateSample；不新增表或迁移。CPT 对应 `product_type=pretrain`。只纳入已发布且明确关联到版本的训练记录，不统计草稿或未关联候选；计数从关联记录重算，不信任历史聚合数。一个候选被不同已发布版本使用时，按各版本分别计数。
+
+PostgreSQL 使用独立 REPEATABLE READ 事务，SQLite 显式 BEGIN。样本、文件、来源和关联在一次读取中冻结；缓存返回深拷贝。快照最多存活900秒、每空间最多10份，可由现有配置下调；读取不续期。过期、淘汰、重启或其他空间的 revision 均返回409 SNAPSHOT_EXPIRED。**当前是进程内缓存，多进程部署前需共享存储或固定快照路由。**
+
+Agent 1 的统一快照接口尚在开发（用户已确认），本轮不新增 wire revision 协议。保留原临时 WorkspaceSnapshots，并提供 `WorkspaceCatalogProvider.load` 和 FastAPI `workspace_store` 注入点；真实共享存储接入仍未完成。具体签名和调用方责任见 [协作接入说明](HANDOFF.md)。
+
+文件时间取 Asset.created_at，处理状态和 processing_summary_ref 来自真实 PipelineRun；没有运行就不制造成功状态。所有关联按 workspace 约束。缺失或跨空间 evidence 返回409 INVALID_SAMPLE_EVIDENCE。旧 whitespace token 数据不作为模型 Tokens，保持 null。当前统计采用“每份文档最新版本”的片段口径，已发布样本仍可引用历史片段；请 Agent 1 确认该口径。
+
+训练记录上限及累计内容字节限额使用现有 Settings；元数据实体查询同样受记录数和原始字段字节预算约束，逐条读取、超限即413。单个数据库字段仍由驱动一次取回，超大字段的服务器端投影限制是后续规模化优化点。
+
+workspace manifest 读取原发布版本记录指向的对象，限定读取字节数并校验原 manifest_sha256；随后计算契约要求的完整规范 JSON content_hash。对象存储不可用明确503，不重建或拼接生成 manifest。
+
+## 数据集导出
+
+`export_format=jsonl|markdown|csv|txt`，必填 version，可选 split/q，固定当前 catalog/revision。导出和样本列表复用 `filtered_samples`，包含过滤后全部分页；拒绝 offset/limit。共享 ExportQuery 暂无 q，本轮将其作为独立路由查询参数接入，等待 Agent 1 纳入共享 DTO。直接调用 `corpusflow.services.processing_exports.serialize_records`，没有复制格式逻辑。
+
+workspace 每次下载重新检查版本仍已发布，以及完整版本所有证据文件的 training confirmed LicenseGrant；固定旧快照也不能绕过撤销授权。无可证明授权的文件则403 DOWNLOAD_NOT_AUTHORIZED。generated 使用当前 workspace 成员权限，不虚构授权记录。
+
+序列化完整完成、记录/字节限额和审计写入成功后才返回200响应头。先写 SpooledTemporaryFile（超过1 MiB落临时磁盘），再64 KiB分块发送，完成/异常时关闭；超限413 EXPORT_LIMIT_EXCEEDED。文件名采用UTF-8 Content-Disposition。审计保留目录、revision、split、q、格式和实际记录数。
+
+## React 页面与旧构建流程
+
+入口 `apps/web/src/features/training-datasets/index.tsx`；无需修改 App.tsx。支持 CPT/SFT/DPO 的目录/版本选择、概览分布、split和文本过滤分页、原始顺序SFT消息、DPO并排回答、manifest及四格式下载。URL和查询键绑定workspace/catalog/revision；快照过期可整体刷新，错误不会换成开发样例。
+
+样本详情使用版本限定接口，URL 中的 sample_id 即使不在当前列表页也能恢复抽屉。版本指标明确标注为版本总量，列表总数对应当前过滤范围。切换空间/目录/快照或卸载页面时中止下载。workspace 血缘跳转暂不传目录 revision，由图接口建立自己的快照；跨模块统一快照尚未接通。
+
+管理员/工程师可以进入工作空间构建页，复用原 DatasetPage/DpoPage 的审核/校验/发布流程。DatasetPage 仅增加可选 initialProductType；CPT 使用 pretrain，优先选同类型真实workspace数据集。生成目录ID不会传入构建请求。原高级入口保持默认行为。
 
 ## 生成、验证和显式发布
 
@@ -80,7 +115,7 @@ publish 全量校验候选版本后，通过同目录临时文件、flush/fsync 
 Agent 2 原交付未改共享入口；以下接入已由集成负责人完成。后续部署仍需指向对应环境的真实授权工作空间和已发布目录：
 
 1. `create_app` 已注册 `corpusflow.api.v1.training_center.router` 一次，不应重复注册。
-2. `docs/api/openapi.json` 已更新，含 Bearer 认证、X-Workspace-ID、成功与错误响应；设计 OpenAPI/DTO 本轮无字段变化。
+2. 基线的 `docs/api/openapi.json` 已含原目录路由、Bearer 认证及 X-Workspace-ID；本轮新增详情和导出路由尚待 Agent 1 同步，当前共享快照测试因此失败。实际差异见 [协作接入说明](HANDOFF.md)。
 3. 将 TRAINING_CENTER_DATA_DIR 指向已发布的规范目录；只读挂载使用已有可选 Compose 文件，不需新依赖。
 4. 使用真实授权 workspace 的 ID 生成/发布目录，关闭开发样例开关后联调首页/数据台；样例的 fixture workspace 不自动拥有授权。
 
@@ -98,11 +133,14 @@ app.include_router(training_center_router)
 
 可以据此展开真实来源→文件和样本→数据集关联；本批没有 operator_run、segment 或已执行边。图节点/边规范化和路由仍由 Agent 4 负责。未来若允许处理后生成目录，请先协调持久化 schema，不直接绕过当前完整性校验。
 
-## 后续批次
+本轮新增 `CatalogRelations(snapshot)`，提供 `source_files`、`file`、`version`、`sample`。generated 的样本→文件是 source_association，不表示执行过解析；workspace 的样本处理引用只来自证据 DocumentVersion.run_id，不能以文件最新运行替代历史生产运行。调用例子及字段映射见 [HANDOFF.md](HANDOFF.md)。
 
-- `catalog=workspace` 当前明确返回 503 ADAPTER_UNAVAILABLE；数据库适配及900秒/每空间10份的 workspace 快照存储尚未实现，不从 generated 凑数。
-- 导出等待 Agent 3 的 serialize_records；本批未添加 export 路由，不复制导出逻辑。
-- CPT/SFT/DPO React 页面及旧 DatasetPage/DpoPage 兼容适配尚未开始。
-- Agent 1 注册后需要 PostgreSQL/真实身份/已发布目录的联调；作者的 SQLite HTTP 测试不替代人工或其他 agent 独立复核。
+## 尚待集成与验收
 
-本批检查记录见 [M1_VALIDATION.md](M1_VALIDATION.md)。
+- Agent 1 交付统一快照 provider、补 ExportQuery.q、更新实际及设计 OpenAPI，并确认最新文档片段统计口径；router 已注册，无需重复处理。
+- Agent 4 将 generated 图适配接入已授权 GeneratedCatalog；页面已有血缘链接，当前图接口能力由 Agent 4 负责。
+- 文件/步骤清洗前后对照仍无稳定记录映射，明确404；不能按数组位置拼接。
+- PostgreSQL、真实对象存储、完整构建审核发布与浏览器真实后端联调仍待集成环境验收；SQLite/浏览器fixture测试不替代独立复核。
+- 本轮前端 typecheck/lint/build 和后端所属模块静态检查通过；共享 OpenAPI 快照差异仍待负责人整合。
+
+历史记录见 [M1_VALIDATION.md](M1_VALIDATION.md)、[M1_WORKSPACE_VALIDATION.md](M1_WORKSPACE_VALIDATION.md)；当前结果见 [M1_DATASETS_FOLLOWUP.md](M1_DATASETS_FOLLOWUP.md)。
