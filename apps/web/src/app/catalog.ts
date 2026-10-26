@@ -18,14 +18,14 @@ export function useCatalogScope() {
     setParams(previous => { const next = new URLSearchParams(previous); next.set("catalog", catalog); next.set("revision", scope.revision); return next; }, { replace: true });
   }
   function changeCatalog(nextCatalog: Catalog) {
-    setParams(previous => { const next = new URLSearchParams(previous); next.set("catalog", nextCatalog); ["revision", "offset", "dataset_id", "version", "sample_id"].forEach(key => next.delete(key)); return next; });
+    setParams(previous => { const next = new URLSearchParams(previous); next.set("catalog", nextCatalog); ["revision", "offset", "dataset_id", "version", "sample_id", "file_id", "detail_tab", "record_id", "root_id", "root_type"].forEach(key => next.delete(key)); return next; });
   }
   async function refreshSnapshot() {
     // Also remove the unpinned bootstrap query so an expired revision cannot be re-pinned.
     const queryKey = trainingKeys.catalog(workspaceId, catalog);
     await client.cancelQueries({ queryKey });
     client.removeQueries({ queryKey });
-    setParams(previous => { const next = new URLSearchParams(previous); next.delete("revision"); next.delete("offset"); return next; }, { replace: true });
+    setParams(previous => { const next = new URLSearchParams(previous); ["revision", "offset", "file_id", "detail_tab", "record_id"].forEach(key => next.delete(key)); return next; }, { replace: true });
   }
   return { catalog, revision, pinScope, changeCatalog, refreshSnapshot };
 }

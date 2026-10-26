@@ -2,7 +2,7 @@
 
 M0 基线：`58fe070`，共享契约/统计口径 `1.0.0`。本轮已将远程 main 的 `c62b570` 合入 Agent 2 分支（合并提交 `2384753`），包含 Agent 3 通用序列化器和 Agent 4 页面。首批 generated API 为 `7e2f227`；workspace/页面为 `78a706e`。
 
-本模块提供 generated 文件读取、workspace 数据库适配、查询服务、导出与独立 FastAPI router。业务响应不导入开发样例。**router 尚未注册到默认 create_app**；共享入口及实际 OpenAPI 由 Agent 1 集成。测试在 create_app 上显式挂载真实 router，通过现有认证函数查询隔离 SQLite；不是生产部署或 PostgreSQL 集成验收。React 页面已由现有入口自动发现。
+本模块提供 generated 文件读取、workspace 数据库适配、查询服务和导出。业务响应不导入开发样例。指定基线 `acb7ce0` 已在默认 `create_app` 注册本 router，契约测试直接使用默认应用，不再重复挂载。generated 的真实 PostgreSQL/API/前端验收见 [M1 集成报告](../../../../../../docs/reports/TRAINING_CENTER_M1_INTEGRATION.md)；该报告不替代本分支新增 workspace、导出和页面的验证。React 页面由现有入口自动发现。
 
 ## 文件与接口
 
@@ -94,6 +94,8 @@ publish 全量校验候选版本后，通过同目录临时文件、flush/fsync 
 
 ## 完整性、限额与缓存
 
+集成修复要求 generated-v1 恰好含 CPT/SFT/DPO 各一份数据集，空目录也保留三类实体；索引发布前按读取端相同的 1 MiB 上限检查。文件采用最多 64 KiB 分块读取，保持完整 SHA256 与读取期间增长超限检测，避免 Windows 小文件按整目录限额反复分配缓冲。
+
 校验 manifest 内容 revision、完整内容清单哈希、物理行数、字节数、workspace 归属、各实体唯一 ID、样本类型/字符数、来源组 split 隔离、source/dataset_version 引用和计数。拒绝重复 JSON key、非法 JSON、绝对路径、父目录穿越、符号链接及 Windows junction；同根目录内指向别的工作空间的链接也拒绝。
 
 按 Settings 限制单目录顶层训练记录最多 100000 条、内容文件累计 100 MiB，可下调不能放大。manifest 和索引也有有界读取，超限返回 413 CATALOG_LIMIT_EXCEEDED。内容/引用/已发布元数据损坏返回 409 CHECKSUM_MISMATCH，不泄露磁盘路径或切换目录。当前 v1 读取器只接受没有处理产物的生成目录；非空 segments/processing-runs/lineage-edges 返回 503 ADAPTER_UNAVAILABLE，等待 Agent 3/4 的持久化结构接入，不忽略它们再声称没有处理。
@@ -102,16 +104,16 @@ publish 全量校验候选版本后，通过同目录临时文件、flush/fsync 
 
 目录发布者必须独占管理目录、按不可变版本追加，不得在读取期间修改内容或置换路径；读取方进程只读。文件系统所有者的并发恶意路径置换不属于 HTTP 身份边界，部署者仍须正确设置目录权限。
 
-## Agent 1 集成请求
+## 应用集成（已完成）
 
-本批未改 App.tsx、main.py、business.py、共享 DTO、配置或锁文件。请 Agent 1 在自己的范围内：
+Agent 2 原交付未改共享入口；以下接入已由集成负责人完成。后续部署仍需指向对应环境的真实授权工作空间和已发布目录：
 
-1. 从 `corpusflow.api.v1.training_center` 导入 router，并在 create_app 注册一次。
-2. 运行实际 OpenAPI 导出及回归，更新 `docs/api/openapi.json`；设计 OpenAPI/DTO 本轮无字段变化。
+1. `create_app` 已注册 `corpusflow.api.v1.training_center.router` 一次，不应重复注册。
+2. `docs/api/openapi.json` 已更新，含 Bearer 认证、X-Workspace-ID、成功与错误响应；设计 OpenAPI/DTO 本轮无字段变化。
 3. 将 TRAINING_CENTER_DATA_DIR 指向已发布的规范目录；只读挂载使用已有可选 Compose 文件，不需新依赖。
 4. 使用真实授权 workspace 的 ID 生成/发布目录，关闭开发样例开关后联调首页/数据台；样例的 fixture workspace 不自动拥有授权。
 
-最小注册代码：
+入口中现有注册代码：
 
 ```python
 from corpusflow.api.v1.training_center import router as training_center_router

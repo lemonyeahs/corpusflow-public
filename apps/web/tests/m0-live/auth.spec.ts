@@ -45,7 +45,7 @@ test("real memberships override stored role, isolate workspace and revalidate sw
   await expect(page.getByText("当前身份无法访问此工作空间", { exact: true })).toBeVisible();
 });
 
-test("real backend failure and missing business route never become example data", async ({ page, request }) => {
+test("real backend authorization failure never becomes example data", async ({ page, request }) => {
   const response = await request.get("/api/v1/sources");
   expect(response.status()).toBe(401);
   await page.goto("/");
@@ -55,5 +55,5 @@ test("real backend failure and missing business route never become example data"
     try { await request("/training-center/files?catalog=generated", { token: "invalid", workspaceId: "invalid" }); return null; }
     catch (error) { return { code: (error as { code: string }).code, status: (error as { status: number }).status }; }
   });
-  expect(result).toEqual({ code: "NOT_FOUND", status: 404 });
+  expect(result).toEqual({ code: "UNAUTHENTICATED", status: 401 });
 });

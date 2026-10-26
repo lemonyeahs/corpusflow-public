@@ -98,11 +98,7 @@ def test_processing_counts_remain_compatible_with_parser_records():
 
 
 def test_jsonl_parser_preserves_structured_records_and_rejects_bad_lines():
-    content = (
-        b'{"id":"a","text":"'
-        + b"\\u4e2d\\u6587"
-        + b'"}\n{"id":"b","value":2}\n'
-    )
+    content = b'{"id":"a","text":"' + b"\\u4e2d\\u6587" + b'"}\n{"id":"b","value":2}\n'
     result = JSONLParserAdapter().parse(content, "records.jsonl", "application/jsonl")
     assert result.structured["record_count"] == 2
     assert result.structured["records"][0]["text"] == "中文"

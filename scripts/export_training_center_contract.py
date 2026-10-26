@@ -35,7 +35,9 @@ ROUTES = {
     "/training-center/files/{file_id}/comparison": "ComparisonResponse",
     "/lineage/graph": "LineageGraph",
 }
-IMPLEMENTED_ROUTES = {"/lineage/graph"}
+IMPLEMENTED_ROUTES = {"/lineage/graph"} | {
+    path for path in ROUTES if path.startswith("/training-center/")
+}
 
 
 def typescript(schema: dict[str, Any]) -> str:

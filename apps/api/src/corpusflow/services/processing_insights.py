@@ -83,9 +83,7 @@ def build_processing_summary(session: Session, run: PipelineRun) -> ProcessingSu
             input_refs = [file_ref]
         else:
             input_refs = previous_refs
-        failed_count = (
-            node.input_count if status == "failed" and input_unit == output_unit else 0
-        )
+        failed_count = node.input_count if status == "failed" and input_unit == output_unit else 0
         step = ProcessingStepSummary(
             id=node.id,
             run_id=run.id,
@@ -108,9 +106,7 @@ def build_processing_summary(session: Session, run: PipelineRun) -> ProcessingSu
             output_refs=output_refs if status in {"succeeded", "partial"} else [],
             started_at=None,
             completed_at=(
-                _utc(run.finished_at)
-                if status in {"succeeded", "partial", "failed"}
-                else None
+                _utc(run.finished_at) if status in {"succeeded", "partial", "failed"} else None
             ),
         )
         steps.append(step)

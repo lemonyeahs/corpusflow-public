@@ -1,10 +1,18 @@
 from __future__ import annotations
 
+import copy
+import io
 import json
 import os
+from types import SimpleNamespace
 
 import pytest
-from corpusflow.modules.training_center.catalog import CatalogError, GeneratedCatalog, safe_child
+from corpusflow.modules.training_center.catalog import (
+    CatalogError,
+    GeneratedCatalog,
+    bounded_read,
+    safe_child,
+)
 from corpusflow.modules.training_center.generation import (
     build_catalog,
     json_bytes,
@@ -106,6 +114,20 @@ def test_atomic_replace_failure_preserves_registry(published, monkeypatch):
     assert registry.read_bytes() == before
     assert store.load("workspace-a").scope.revision == revision
     assert not list(registry.parent.glob(".catalog-*.tmp"))
+
+
+def test_oversized_registry_preserves_readable_active_revision(published):
+    store, revision, _ = published
+    path = store.root / "workspace-a/catalog.json"
+    previous = path.read_bytes()
+    registry = json.loads(previous)
+    retired = [sha256(str(i).encode()) for i in range(6000)]
+    registry["retired_revisions"] = retired
+    registry["manifest_hashes"].update({value: value for value in retired})
+    with pytest.raises(CatalogError, match="CATALOG_LIMIT_EXCEEDED"):
+        store._write_registry("workspace-a", registry)
+    assert path.read_bytes() == previous
+    assert store.load("workspace-a").scope.revision == revision
 
 
 def test_warm_cache_revalidates_content_and_does_not_expose_mutable_cache(published):
@@ -224,6 +246,96 @@ def test_record_and_byte_limits(tmp_path):
     GeneratedCatalog(tmp_path, max_records=41, max_bytes=size).verify("workspace-a", revision)
     with pytest.raises(CatalogError, match="CATALOG_LIMIT_EXCEEDED"):
         GeneratedCatalog(tmp_path, max_bytes=size - 1).verify("workspace-a", revision)
+
+
+@pytest.mark.parametrize("size", [0, 17, 65536, 65537, 150000])
+def test_bounded_read_preserves_bytes_at_exact_limit(tmp_path, size):
+    value = bytes(i % 251 for i in range(size))
+    path = tmp_path / "bounded.bin"
+    path.write_bytes(value)
+    assert bounded_read(path, size) == value
+
+
+def test_bounded_read_caps_buffers_and_detects_growth_after_stat():
+    class BoundedStream(io.BytesIO):
+        def read(self, size=-1):
+            assert 0 < size <= 65536
+            return super().read(size)
+
+    class GrowingFile:
+        def stat(self):
+            return SimpleNamespace(st_size=1)
+
+        def open(self, mode):
+            assert mode == "rb"
+            return BoundedStream(b"x" * 150001)
+
+    with pytest.raises(CatalogError, match="CATALOG_LIMIT_EXCEEDED") as exc:
+        bounded_read(GrowingFile(), 150000)
+    assert exc.value.status == 413
+
+
+def test_bounded_read_small_file_does_not_allocate_catalog_limit():
+    class SmallStream(io.BytesIO):
+        def read(self, size=-1):
+            assert 0 < size <= 65536
+            return super().read(size)
+
+    class SmallFile:
+        def stat(self):
+            return SimpleNamespace(st_size=3)
+
+        def open(self, mode):
+            return SmallStream(b"abc")
+
+    assert bounded_read(SmallFile(), 100 * 1024 * 1024) == b"abc"
+
+
+def test_duplicate_kind_cannot_hide_records_behind_manifest_counts(tmp_path):
+    def mutate(manifest, content):
+        datasets = [json.loads(line) for line in content["datasets.jsonl"].splitlines()]
+        original = next(row for row in datasets if row["kind"] == "cpt")
+        extra = copy.deepcopy(original)
+        extra["id"] += "-extra"
+        extra["version_id"] += "-extra"
+        datasets.append(extra)
+        content["datasets.jsonl"] = b"".join(json_bytes(row) for row in datasets)
+        samples = [json.loads(line) for line in content["datasets/cpt.jsonl"].splitlines()]
+        additional = copy.deepcopy(samples)
+        for row in additional:
+            row["id"] += "-extra"
+            row["dataset_id"] = extra["id"]
+        content["datasets/cpt.jsonl"] = b"".join(json_bytes(row) for row in samples + additional)
+        files = [json.loads(line) for line in content["files.jsonl"].splitlines()]
+        for row in files:
+            if any(ref["id"] == original["version_id"] for ref in row["dataset_refs"]):
+                row["dataset_refs"].append(
+                    {
+                        "catalog": "generated",
+                        "type": "dataset_version",
+                        "id": extra["version_id"],
+                    }
+                )
+        content["files.jsonl"] = b"".join(json_bytes(row) for row in files)
+        # All references and file hashes are self-consistent, but counts still describe 41
+        # records while there are now 64. A kind-keyed dict used to overwrite this extra CPT.
+
+    revision, _ = candidate(tmp_path, mutate=mutate)
+    with pytest.raises(CatalogError, match="CHECKSUM_MISMATCH"):
+        GeneratedCatalog(tmp_path).publish("workspace-a", revision)
+
+
+def test_empty_catalog_still_requires_each_kind(tmp_path):
+    def mutate(manifest, content):
+        rows = [json.loads(line) for line in content["datasets.jsonl"].splitlines()]
+        content["datasets.jsonl"] = b"".join(
+            json_bytes(row) for row in rows if row["kind"] != "dpo"
+        )
+        del manifest["counts"]["datasets"]["dpo"]
+
+    revision, _ = candidate(tmp_path, counts=(0, 0, 0), mutate=mutate)
+    with pytest.raises(CatalogError, match="CHECKSUM_MISMATCH"):
+        GeneratedCatalog(tmp_path).publish("workspace-a", revision)
 
 
 @pytest.mark.parametrize("name", ["manifest.json", "sources.jsonl", "datasets/cpt.jsonl"])

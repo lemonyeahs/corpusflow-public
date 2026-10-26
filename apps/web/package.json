@@ -12,6 +12,7 @@
     "test:m0": "playwright test --config playwright.m0.config.ts"
   },
   "dependencies": {
+    "@ant-design/v5-patch-for-react-19": "^1.0.3",
     "@dagrejs/dagre": "^1.1.8",
     "@tanstack/react-query": "^5.105.0",
     "@vitejs/plugin-react": "latest",

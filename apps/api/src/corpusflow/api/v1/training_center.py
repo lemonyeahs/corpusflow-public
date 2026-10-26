@@ -1,4 +1,4 @@
-"""Agent 2 catalog reads. Agent 1 registers this router in create_app."""
+"""Authenticated catalog reads, registered by create_app."""
 
 from __future__ import annotations
 
@@ -6,14 +6,16 @@ from collections.abc import Iterator
 from threading import Lock
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 from starlette.background import BackgroundTask
 
 from corpusflow.api.dependencies import actor_id, db, workspace_id
 from corpusflow.contracts.training_center import models as m
 from corpusflow.core.config import Settings
+from corpusflow.core.errors import ErrorResponse
 from corpusflow.modules.training_center.catalog import CatalogError, GeneratedCatalog
 from corpusflow.modules.training_center.downloads import (
     authorize_export,
@@ -24,11 +26,31 @@ from corpusflow.modules.training_center.downloads import (
 from corpusflow.modules.training_center.query import CatalogQueries
 from corpusflow.modules.training_center.workspace import WorkspaceSnapshots
 
-router = APIRouter(prefix="/api/v1/training-center", tags=["training-center"])
+router = APIRouter(
+    prefix="/api/v1/training-center",
+    tags=["training-center"],
+    responses={status: {"model": ErrorResponse} for status in (401, 403, 404, 409, 413, 422, 503)},
+)
+bearer = HTTPBearer(auto_error=False, scheme_name="TrainingCenterBearer")
 _store_lock = Lock()
 
 
-def authorized_workspace(request: Request, session: Annotated[Session, Depends(db)]) -> str:
+def authorized_workspace(
+    request: Request,
+    session: Annotated[Session, Depends(db)],
+    _bearer: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+    _workspace: Annotated[
+        str | None,
+        Header(
+            alias="X-Workspace-ID",
+            description=(
+                "Authorized workspace. If omitted, retain the existing "
+                "first active membership policy."
+            ),
+        ),
+    ] = None,
+) -> str:
+    # Header/security declarations document the existing policy; they do not replace it.
     return workspace_id(request, session, actor_id(request, session))
 
 
