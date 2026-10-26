@@ -44,10 +44,25 @@ def _json(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
 
 
-def _text(record: Mapping[str, Any]) -> str:
+def _text(record: Mapping[str, Any], kind: RecordKind = "cleaned") -> str:
     value = record.get("text")
     if isinstance(value, str):
         return value
+    if kind == "sft":
+        messages = record.get("messages")
+        if not isinstance(messages, list):
+            raise ExportError("sft record messages must be a list")
+        return "\n\n".join(
+            f"{item.get('role', 'unknown')}:\n{item.get('content', '')}"
+            for item in messages
+            if isinstance(item, Mapping)
+        )
+    if kind == "dpo":
+        return (
+            f"Prompt:\n{record.get('prompt', '')}\n\n"
+            f"Chosen:\n{record.get('chosen', '')}\n\n"
+            f"Rejected:\n{record.get('rejected', '')}"
+        )
     return _json(record)
 
 
@@ -55,7 +70,7 @@ def _markdown(record: Mapping[str, Any], kind: RecordKind) -> str:
     identifier = str(record.get("id", "record"))
     if kind in {"cleaned", "cpt"}:
         title = record.get("title") or identifier
-        return f"## {title} ({identifier})\n\n{_text(record)}"
+        return f"## {title} ({identifier})\n\n{_text(record, kind)}"
     if kind == "sft":
         messages = record.get("messages")
         if not isinstance(messages, list):
@@ -110,7 +125,13 @@ def serialize_records(
         separator = "\n\n---\n\n" if export_format == "markdown" else "\n\n"
         first = True
         for record in records:
-            value = _markdown(record, record_kind) if export_format == "markdown" else _text(record)
+            value = (
+                _markdown(record, record_kind)
+                if export_format == "markdown"
+                else _text(record, record_kind)
+            )
+            if export_format == "txt":
+                value = f"{record.get('id', 'record')}\n\n{value}"
             if not first:
                 yield separator.encode("utf-8")
             yield value.encode("utf-8")

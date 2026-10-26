@@ -279,9 +279,17 @@ class NodeRun(Timestamped):
     operator_key: Mapped[str | None] = mapped_column(String(120), nullable=True)
     operator_version: Mapped[str | None] = mapped_column(String(40), nullable=True)
     config_snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
-    input_count: Mapped[int] = mapped_column(Integer, default=0)
-    output_count: Mapped[int] = mapped_column(Integer, default=0)
-    filtered_count: Mapped[int] = mapped_column(Integer, default=0)
+    input_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    output_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    filtered_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    modified_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    failed_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    input_unit: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    output_unit: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    input_refs: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON, nullable=True)
+    output_refs: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON, nullable=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     duration_ms: Mapped[float | None] = mapped_column(nullable=True)
     failure_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
     __table_args__ = (UniqueConstraint("run_id", "node_id", "attempt_no", name="uq_node_attempt"),)
@@ -295,6 +303,23 @@ class Artifact(Timestamped):
     storage_key: Mapped[str] = mapped_column(Text)
     content_sha256: Mapped[str] = mapped_column(String(64))
     immutable: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class ProcessingRecordMap(Timestamped):
+    """Persisted logical record mapping for one concrete step attempt."""
+
+    __tablename__ = "processing_record_maps"
+    workspace_id: Mapped[str] = mapped_column(String(36), index=True)
+    run_id: Mapped[str] = mapped_column(ForeignKey("pipeline_runs.id"), index=True)
+    node_run_id: Mapped[str] = mapped_column(ForeignKey("node_runs.id"), index=True)
+    record_id: Mapped[str] = mapped_column(String(255), index=True)
+    before_segment_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    after_segment_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    before_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    after_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    __table_args__ = (
+        UniqueConstraint("node_run_id", "record_id", name="uq_processing_record_map"),
+    )
 
 
 class Document(Timestamped):
@@ -326,6 +351,7 @@ class Segment(Timestamped):
     source_id: Mapped[str] = mapped_column(String(36), index=True)
     text: Mapped[str] = mapped_column(Text)
     content_hash: Mapped[str] = mapped_column(String(64), index=True)
+    record_key: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     quality_state: Mapped[str] = mapped_column(String(30), default="reviewed")
     location_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     token_count: Mapped[int] = mapped_column(Integer, default=0)
