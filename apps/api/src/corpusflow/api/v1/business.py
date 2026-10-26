@@ -21,6 +21,8 @@ from sqlalchemy import func, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from corpusflow.adapters.parser.base import ParserError
+from corpusflow.adapters.parser.docx import DOCXParserAdapter
 from corpusflow.api.dependencies import actor_id as actor_id
 from corpusflow.api.dependencies import db as db
 from corpusflow.api.dependencies import role_required as role_required
@@ -146,6 +148,15 @@ def extract_metadata(
     """Deterministic local extraction. It never calls an external model or API."""
     name = filename.lower()
     raw = content.decode("utf-8", "ignore")
+    if name.endswith(".docx") or media_type.split(";", 1)[0] == (
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ):
+        # ZIP headers are not document text and can contain NULs rejected by JSONB.
+        try:
+            raw = DOCXParserAdapter().parse(content, filename, media_type).text
+        except ParserError:
+            # Preserve the upload; the Worker reports malformed documents explicitly.
+            raw = ""
     pdf_text = content.decode("latin-1", "ignore") if name.endswith(".pdf") else raw
     text_value = pdf_text if name.endswith(".pdf") else raw
     title: str | None = None
@@ -181,6 +192,12 @@ def extract_metadata(
     elif content.lstrip().startswith((b"<!DOCTYPE html", b"<html", b"<HTML")):
         format_name = "html"
         media_type = "text/html"
+    elif name.endswith(".jsonl") or media_type.split(";", 1)[0] in {
+        "application/jsonl",
+        "application/x-ndjson",
+    }:
+        format_name = "jsonl"
+        media_type = "application/x-ndjson"
     elif content.lstrip().startswith((b"{", b"[")):
         format_name = "json"
         media_type = "application/json"
