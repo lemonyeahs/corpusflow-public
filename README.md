@@ -1,5 +1,7 @@
 # CorpusFlow
 
+训练数据中心改版协作入口：[Agent 开工规则](AGENTS.md) · [两人四 Agent 协作指南](docs/plans/TRAINING_CENTER_AGENT_COLLABORATION.md) · [并行开发任务书](docs/plans/TRAINING_CENTER_PARALLEL_PLAN.md) · [接口契约草案](docs/specs/TRAINING_CENTER_CONTRACT_V1.md) · [HTML 界面原型](docs/previews/training-data-center.html)。本组资料用于规划与视觉确认，尚未代表新业务功能已实现。
+
 当前交付包含真实 Web 数据工程工作台、P0/P1 核心闭环与已验证的 P2 增量。最新数据库迁移为 `0021_metadata_proposals`。**开发/演示环境已实现范围 CONDITIONAL PASS；完整 P2 与生产门禁尚未通过。** 本轮工作台重构验收见 [工作台重构验收](docs/reports/WORKSPACE_REFACTOR_ACCEPTANCE.md)，演示步骤见 [新工作台演示指南](docs/demo/NEW_WORKSPACE_DEMO_GUIDE.md)。V3.1 HTML 保留为独立 DEMO 参考，不代表工程实现状态。
 
 ## 本地启动
