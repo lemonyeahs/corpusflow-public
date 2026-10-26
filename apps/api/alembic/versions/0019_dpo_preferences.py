@@ -74,7 +74,9 @@ def upgrade():
             name="uq_preference_annotation_annotator",
         ),
     )
-    op.create_index("ix_preference_annotations_workspace_id", "preference_annotations", ["workspace_id"])
+    op.create_index(
+        "ix_preference_annotations_workspace_id", "preference_annotations", ["workspace_id"]
+    )
     op.create_index(
         "ix_preference_annotations_preference_sample_id",
         "preference_annotations",

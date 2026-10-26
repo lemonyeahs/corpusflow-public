@@ -246,9 +246,7 @@ def sample_text(product: str, payload: dict[str, Any]) -> str:
     if product == "evaluation":
         return str(payload.get("question", "")) + "\n" + str(payload.get("reference_answer", ""))
     if product == "dpo":
-        return "\n".join(
-            str(payload.get(key, "")) for key in ("prompt", "chosen", "rejected")
-        )
+        return "\n".join(str(payload.get(key, "")) for key in ("prompt", "chosen", "rejected"))
     return str(payload.get("text", ""))
 
 
@@ -354,7 +352,7 @@ def composition(
         fields["year"].append(str(metadata.get("year", "unknown")))
         split = (
             _split_for_source(sample.source_id)
-        if dataset.product_type in {"sft", "pretrain", "dpo"}
+            if dataset.product_type in {"sft", "pretrain", "dpo"}
             else "all"
         )
         if version:
@@ -456,9 +454,7 @@ def evaluate(
         "rag": "rag",
         "evaluation": "evaluation",
         "dpo": "training",
-    }[
-        product
-    ]
+    }[product]
     run = QualityEvaluationRun(
         workspace_id=workspace_id,
         rule_set_id=rule_set.id,
@@ -717,8 +713,7 @@ def evaluate(
             for sample in samples
         )
         distinct = sum(
-            sample.payload.get("chosen") != sample.payload.get("rejected")
-            for sample in samples
+            sample.payload.get("chosen") != sample.payload.get("rejected") for sample in samples
         )
         metric("dpo.preference_resolution_rate", resolved, size)
         metric("dpo.response_difference_rate", distinct, size)

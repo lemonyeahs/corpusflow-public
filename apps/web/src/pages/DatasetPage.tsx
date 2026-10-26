@@ -22,6 +22,8 @@ export function DatasetPage({ ctx, onPublished }: { ctx: ApiContext; onPublished
   const [chunkSize, setChunkSize] = useState("128");
   const [overlap, setOverlap] = useState("16");
   const [evaluationJson, setEvaluationJson] = useState("[]");
+  const [sampleRows, setSampleRows] = useState<Array<Record<string, unknown>>>([]);
+  const [sampleSearch, setSampleSearch] = useState("");
 
   const currentProduct = useMemo(() => datasets.find(item => item.dataset_id === selectedDataset)?.product_type || productType, [datasets, selectedDataset, productType]);
   const purpose = PURPOSES[currentProduct] || "training";
@@ -40,6 +42,7 @@ export function DatasetPage({ ctx, onPublished }: { ctx: ApiContext; onPublished
     } catch (err) { setError(err instanceof ApiError ? `${err.code}：${err.message}` : "数据产品加载失败"); }
   }
   useEffect(() => { void load(); }, [ctx.workspaceId]);
+  useEffect(() => { if (!selectedDataset || currentProduct !== "sft") { setSampleRows([]); return; } void api.datasetSamples(ctx, selectedDataset, sampleSearch ? `query=${encodeURIComponent(sampleSearch)}` : "").then(result => setSampleRows(result.items)).catch(() => setSampleRows([])); }, [ctx.workspaceId, selectedDataset, currentProduct, sampleSearch]);
 
   async function createDataset() {
     setBusy(true); setError("");
@@ -92,6 +95,7 @@ export function DatasetPage({ ctx, onPublished }: { ctx: ApiContext; onPublished
   return <Page title="数据产品中心" subtitle="统一复用构建、审核、质量授权门控和不可变发布；每类产品使用独立 Schema。">
     <div className="stepper"><span className="active">1 产品</span><span>2 来源/片段</span><span>3 预览</span><span>4 配置构建</span><span>5 候选审核</span><span>6 校验发布</span></div>
     {error && <ErrorBox message={error} />}
+    {currentProduct === "sft" && <Card title="真实 SFT 样本浏览"><div className="toolbar"><Field label="Prompt / Answer 搜索"><input value={sampleSearch} onChange={e => setSampleSearch(e.target.value)} placeholder="服务端检索消息内容" /></Field></div>{sampleRows.length ? <div className="list">{sampleRows.map(sample => { const payload = (sample.payload ?? {}) as Record<string, unknown>; const messages = Array.isArray(payload.messages) ? payload.messages as Array<Record<string, unknown>> : []; return <details className="segment" key={String(sample.sample_id)}><summary><code>{String(sample.sample_id).slice(0, 12)}</code> · {String(sample.version)} · {String(sample.status)}</summary><pre>{JSON.stringify(messages.length ? { messages } : payload, null, 2)}</pre><small>来源 Asset：{String(sample.source_id ?? "—")} · split：{String(sample.split ?? "—")}</small></details>; })}</div> : <Empty>当前工作空间没有已物化的 SFT 样本；请从现有数据集构建流程创建并审核。</Empty>}</Card>}
     <div className="two-col">
       <Card title="数据产品与输入">
         <div className="form-grid">

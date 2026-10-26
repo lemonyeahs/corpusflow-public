@@ -43,6 +43,7 @@ export interface DashboardOverview {
   scope: { workspace_id: string; source_id?: string | null; file_format?: string | null; asset_status?: string | null };
   raw: { source_count: number; asset_count: number; physical_file_count: number; unique_content_count: number; total_bytes: number; authorization: Record<string, number> };
   formats: Record<string, number>;
+  format_stats: Record<string, { count: number; bytes: number; parse_succeeded: number; parse_failed: number; last_uploaded_at?: string | null }>;
   business_types: Record<string, number>;
   parsing: { document_count: number; document_version_count: number; segment_count: number; parse_status: Record<string, number>; run_status: Record<string, number>; failure_reasons: Record<string, number> };
   quality: { issue_status: Record<string, number>; issue_count: number; candidate_status: Record<string, number>; candidate_count: number };
@@ -225,6 +226,9 @@ export interface Dataset {
   name: string;
   product_type: string;
   created_at?: string;
+  version_count?: number;
+  latest_version?: string | null;
+  sample_count?: number;
 }
 
 export interface CandidateSample {

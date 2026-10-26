@@ -1,6 +1,6 @@
 # CorpusFlow
 
-当前交付包含真实 Web 数据工程工作台、P0/P1 核心闭环与已验证的 P2 增量。最新数据库迁移为 `0018_blind_review`。**开发/演示环境已实现范围 CONDITIONAL PASS；完整 P2 与生产门禁尚未通过。** 最新证据见 [P2-Closure 验收](docs/reports/P2_CLOSURE_ACCEPTANCE.md)，操作见 [最终演示指南](docs/demo/FINAL_DEMO_GUIDE.md)。V3.1 HTML 保留为独立 DEMO 参考，不代表工程实现状态。
+当前交付包含真实 Web 数据工程工作台、P0/P1 核心闭环与已验证的 P2 增量。最新数据库迁移为 `0021_metadata_proposals`。**开发/演示环境已实现范围 CONDITIONAL PASS；完整 P2 与生产门禁尚未通过。** 本轮工作台重构验收见 [工作台重构验收](docs/reports/WORKSPACE_REFACTOR_ACCEPTANCE.md)，演示步骤见 [新工作台演示指南](docs/demo/NEW_WORKSPACE_DEMO_GUIDE.md)。V3.1 HTML 保留为独立 DEMO 参考，不代表工程实现状态。
 
 ## 本地启动
 
