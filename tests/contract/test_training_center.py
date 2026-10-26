@@ -150,6 +150,36 @@ def test_export_unavailable_never_returns_success_headers(api, monkeypatch):
     assert "content-disposition" not in response.headers
 
 
+def test_real_agent3_exports_through_http(api):
+    import json
+
+    client, store, _ = api
+    snapshot = store.load("workspace-a")
+    for dataset in snapshot.datasets:
+        for export_format, extension in (
+            ("jsonl", "jsonl"),
+            ("markdown", "md"),
+            ("csv", "csv"),
+            ("txt", "txt"),
+        ):
+            response = client.get(
+                f"{PREFIX}/datasets/{dataset.id}/export",
+                params={
+                    "version": dataset.version,
+                    "revision": snapshot.scope.revision,
+                    "export_format": export_format,
+                    "split": "train",
+                },
+            )
+            assert response.status_code == 200, response.text
+            assert f"filename=dataset.{extension}" in response.headers["content-disposition"]
+            assert int(response.headers["content-length"]) == len(response.content)
+            if export_format == "jsonl":
+                rows = [json.loads(line) for line in response.content.splitlines()]
+                assert len(rows) == dataset.split_counts.train
+                assert all(row["kind"] == dataset.kind and row["split"] == "train" for row in rows)
+
+
 def test_http_endpoints_use_verified_files_and_canonical_responses(api):
     client, store, _ = api
     snapshot = store.load("workspace-a")

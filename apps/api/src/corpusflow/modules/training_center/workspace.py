@@ -153,7 +153,14 @@ def snapshot_from_database(
         dataset = dataset_rows[version.dataset_id]
         kind = "cpt" if dataset.product_type == "pretrain" else dataset.product_type
         payload = candidate.payload
-        evidence = payload.get("evidence_ids", payload.get("metadata", {}).get("segment_ids", []))
+        if not isinstance(payload, dict):
+            raise CatalogError("INVALID_SAMPLE_FORMAT", 409)
+        evidence = payload.get("evidence_ids")
+        if evidence is None:
+            metadata_value = payload.get("metadata")
+            evidence = (
+                metadata_value.get("segment_ids", []) if isinstance(metadata_value, dict) else []
+            )
         if (
             not isinstance(evidence, list)
             or not evidence

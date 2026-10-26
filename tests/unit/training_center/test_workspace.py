@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import csv
 import io
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -206,6 +208,19 @@ def test_broken_evidence_and_foreign_reference_fail_closed(database):
             WorkspaceSnapshots().load("workspace-a", None, database)
 
 
+def test_evidence_metadata_fallback_and_nullable_metadata(database):
+    candidate = database.get(d.CandidateSample, "workspace-a-pretrain-sample0")
+    for payload in (
+        {"text": "正文", "metadata": {"segment_ids": ["workspace-a-seg2"]}},
+        {"text": "正文", "evidence_ids": ["workspace-a-seg2"], "metadata": None},
+    ):
+        candidate.payload = payload
+        database.commit()
+        snapshot = WorkspaceSnapshots().load("workspace-a", None, database)
+        sample = next(s for s in snapshot.samples if s.id == candidate.id)
+        assert sample.segment_refs[0].id == "workspace-a-seg2"
+
+
 def test_export_rechecks_live_grants_and_published_status(database):
     snapshot = WorkspaceSnapshots().load("workspace-a", None, database)
     dataset = snapshot.datasets[0]
@@ -252,13 +267,72 @@ def test_export_is_fully_spooled_and_bounded_before_headers(database, monkeypatc
             downloads.prepare_export(samples, dataset, "jsonl", records, budget)
 
 
-def test_missing_serializer_is_explicit(monkeypatch):
-    def unavailable(name):
-        raise ModuleNotFoundError(name)
+def test_serializer_failure_before_headers_is_explicit(database, monkeypatch):
+    snapshot = WorkspaceSnapshots().load("workspace-a", None, database)
 
-    monkeypatch.setattr(downloads.importlib, "import_module", unavailable)
+    def broken_chunks():
+        yield b"partial"
+        raise RuntimeError("serializer failed")
+
+    monkeypatch.setattr(
+        downloads,
+        "serializer",
+        lambda *args: SimpleNamespace(
+            chunks=broken_chunks(), content_type="text/plain", extension="txt"
+        ),
+    )
     with pytest.raises(CatalogError, match="ADAPTER_UNAVAILABLE"):
-        downloads.serializer([], "sft", "jsonl")
+        downloads.prepare_export([], snapshot.datasets[0], "txt", 100, 1000)
+
+
+@pytest.mark.parametrize("kind", ["cpt", "sft", "dpo"])
+@pytest.mark.parametrize("export_format", ["jsonl", "markdown", "csv", "txt"])
+def test_agent3_serializer_preserves_structures_and_utf8(database, kind, export_format):
+    snapshot = WorkspaceSnapshots().load("workspace-a", None, database)
+    dataset = next(d for d in snapshot.datasets if d.kind == kind)
+    sample = CatalogQueries(snapshot)._samples(dataset.id, dataset.version)[0]
+    text = '中文,"引号"\n第二行'
+    updates = (
+        {"text": text}
+        if kind == "cpt"
+        else {
+            "messages": [
+                m.Message(role="user", content=text),
+                m.Message(role="assistant", content="答复"),
+            ]
+        }
+        if kind == "sft"
+        else {"prompt": text}
+    )
+    sample = sample.model_copy(update=updates)
+    stream, content_type, _, size = downloads.prepare_export(
+        [sample], dataset, export_format, 10, 100_000
+    )
+    data = b"".join(downloads.chunks(stream))
+    assert size == len(data) and data.decode("utf-8")
+    expected = sample.model_dump()
+    if export_format == "jsonl":
+        assert json.loads(data) == expected
+        assert content_type == "application/x-ndjson"
+    elif export_format == "csv":
+        row = next(csv.DictReader(io.StringIO(data.decode("utf-8"))))
+        assert json.loads(row["source_refs"]) == expected["source_refs"]
+        if kind == "sft":
+            assert json.loads(row["messages"]) == expected["messages"]
+        else:
+            assert row["text" if kind == "cpt" else "prompt"] == text
+        if kind == "dpo":
+            assert row["chosen"] == expected["chosen"] and row["rejected"] == expected["rejected"]
+    elif export_format == "markdown":
+        assert text in data.decode("utf-8")
+        if kind == "sft":
+            assert data.index(b"user") < data.index(b"assistant")
+        if kind == "dpo":
+            assert b"**Chosen**" in data and b"**Rejected**" in data
+    elif kind == "cpt":
+        assert data.decode("utf-8").strip() == text
+    else:
+        assert json.loads(data) == expected
 
 
 def test_manifest_reads_real_object_checks_hash_and_closes(database, settings, monkeypatch):

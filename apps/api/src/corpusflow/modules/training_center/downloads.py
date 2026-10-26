@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import importlib
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterator
 from tempfile import SpooledTemporaryFile
-from typing import BinaryIO, Protocol, cast
+from typing import BinaryIO, cast
 from urllib.parse import quote
 
 from sqlalchemy import select
@@ -16,7 +15,9 @@ from corpusflow.contracts.training_center import models as m
 from corpusflow.core.config import Settings
 from corpusflow.db.models import DatasetVersion, LicenseGrant
 from corpusflow.modules.training_center.catalog import CatalogError, CatalogSnapshot, decode_json
-from corpusflow.modules.training_center.generation import Json, json_bytes, sha256
+from corpusflow.modules.training_center.generation import json_bytes, sha256
+from corpusflow.services.processing_exports import ExportFormat
+from corpusflow.services.processing_exports import serialize_records as serializer
 
 
 def stored_manifest(
@@ -101,25 +102,10 @@ def authorize_export(
         raise CatalogError("DOWNLOAD_NOT_AUTHORIZED", 403)
 
 
-class SerializedExport(Protocol):
-    chunks: Iterator[bytes]
-    content_type: str
-    extension: str
-
-
-def serializer(records: Iterable[Json], kind: str, export_format: str) -> SerializedExport:
-    """Late binding lets DB/UI reads run before Agent 3 delivers the shared serializer."""
-    try:
-        module = importlib.import_module("corpusflow.services.processing_exports")
-        return cast(SerializedExport, module.serialize_records(records, kind, export_format))
-    except (ImportError, AttributeError) as exc:
-        raise CatalogError("ADAPTER_UNAVAILABLE", 503) from exc
-
-
 def prepare_export(
     samples: list[m.Sample],
     dataset: m.DatasetSummary,
-    export_format: str,
+    export_format: ExportFormat,
     max_records: int,
     max_bytes: int,
 ) -> tuple[BinaryIO, str, str, int]:
@@ -144,9 +130,12 @@ def prepare_export(
             f"filename*=UTF-8''{quote(filename, safe='')}"
         )
         return output, serialized.content_type, disposition, size
-    except Exception:
+    except CatalogError:
         output.close()
         raise
+    except Exception as exc:
+        output.close()
+        raise CatalogError("ADAPTER_UNAVAILABLE", 503) from exc
 
 
 def chunks(stream: BinaryIO) -> Iterator[bytes]:
