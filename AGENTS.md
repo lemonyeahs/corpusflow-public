@@ -4,7 +4,7 @@
 
 1. [两人、四个 agent 协作指南](docs/plans/TRAINING_CENTER_AGENT_COLLABORATION.md)
 2. [并行开发任务书](docs/plans/TRAINING_CENTER_PARALLEL_PLAN.md)
-3. [共享接口契约草案](docs/specs/TRAINING_CENTER_CONTRACT_V1.md)
+3. [共享接口契约](docs/specs/TRAINING_CENTER_CONTRACT_V1.md)
 
 视觉参考：[HTML 原型](docs/previews/training-data-center.html)。原型是独立的视觉与交互参考，不代表业务接口、处理记录或统计功能已经实现。
 
@@ -19,7 +19,7 @@
 | Agent 3 | C＋F | 解析清洗、Worker、迁移、接入页面、导出 |
 | Agent 4 | D＋H | 多跳血缘与图页面、验收脚本、回归协调 |
 
-人员配置以四个 agent 为当前方案；模块范围及接口设计参考任务书和契约。契约仍是 M0 待评审草案，不应当作现有接口文档。
+人员配置以四个 agent 为当前方案；模块范围及接口设计参考任务书和契约。M0 契约已冻结为 1.0.0；它是实现设计基线，不应当作已上线业务接口文档。实际验收范围见 docs/reports/TRAINING_CENTER_M0_CLOSEOUT.md。
 
 ## 开工与文件归属
 

@@ -102,10 +102,10 @@ test("mobile navigation and desktop layout", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "训练数据集" })).toBeVisible();
   await expect(page.getByRole("dialog")).not.toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
-  await page.screenshot({ path: "test-results/m0/mobile.png", fullPage: true });
+  await page.screenshot({ path: test.info().outputPath("mobile.png"), fullPage: true });
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/#/home");
-  await page.screenshot({ path: "test-results/m0/desktop.png", fullPage: true });
+  await page.screenshot({ path: test.info().outputPath("desktop.png"), fullPage: true });
 });
 
 test("fixtures require explicit mode; real failures never fall back", async ({ page }) => {
@@ -123,8 +123,8 @@ test("fixtures require explicit mode; real failures never fall back", async ({ p
   const scenario = process.env.M0_SCENARIO || "success";
   if (fixtureMode && scenario !== "error") {
     expect(result.generated.data.scope.workspace_id).toBe("m0-space-a");
-    expect(result.generated.data.items.length).toBe(scenario === "empty" ? 0 : 1);
-  } else expect(result.generated.code).toBe(fixtureMode ? "FIXTURE_UNAVAILABLE" : "TEST_BACKEND_UNAVAILABLE");
+    expect(result.generated.data.items.length).toBe(scenario === "empty" ? 0 : 13);
+  } else expect(result.generated.code).toBe(fixtureMode ? "ADAPTER_UNAVAILABLE" : "TEST_BACKEND_UNAVAILABLE");
   expect(result.workspace.code).toBe("TEST_BACKEND_UNAVAILABLE");
   expect(result.missing.code).toBe("TEST_BACKEND_UNAVAILABLE");
 });

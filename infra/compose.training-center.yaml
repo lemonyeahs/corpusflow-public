@@ -1,0 +1,13 @@
+# Opt-in catalog mount, alongside compose.yaml. Create the host directory first.
+# Host path is independent of TRAINING_CENTER_DATA_DIR inside the container.
+services:
+  api:
+    environment:
+      TRAINING_CENTER_DATA_DIR: /training-center
+    volumes:
+      - type: bind
+        source: ${TRAINING_CENTER_HOST_DIR:-../.local/training-center}
+        target: /training-center
+        read_only: true
+        bind:
+          create_host_path: false

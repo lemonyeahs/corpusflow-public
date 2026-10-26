@@ -6,7 +6,7 @@ from corpusflow.main import create_app
 
 def test_schema_snapshot(settings):
     schema = create_app(settings).openapi()
-    assert schema == json.loads(Path("docs/api/openapi.json").read_text())
+    assert schema == json.loads(Path("docs/api/openapi.json").read_text(encoding="utf-8"))
     expected_paths = {
         "/health",
         "/ready",

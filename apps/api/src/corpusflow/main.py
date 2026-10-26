@@ -130,12 +130,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "PREFERENCE_IMMUTABLE",
             "PREFERENCE_NOT_RESOLVED",
             "DPO_PREFERENCE_INPUT_REQUIRED",
+            "SNAPSHOT_EXPIRED",
+            "COMPARISON_NOT_AVAILABLE",
+            "CATALOG_LIMIT_EXCEEDED",
+            "EXPORT_LIMIT_EXCEEDED",
         }
         return error_response(
             request,
             exc.status_code,
             detail if detail in known else codes.get(exc.status_code, "HTTP_ERROR"),
-            "请求路径不存在或方法不受支持",
+            {
+                "SNAPSHOT_EXPIRED": "快照已过期，请刷新整个查询范围",
+                "COMPARISON_NOT_AVAILABLE": "暂无清洗对比",
+                "CATALOG_LIMIT_EXCEEDED": "目录超过允许的数据规模",
+                "EXPORT_LIMIT_EXCEEDED": "导出超过允许的记录数或字节数",
+            }.get(detail, "请求路径不存在或方法不受支持"),
         )
 
     @app.exception_handler(RequestValidationError)

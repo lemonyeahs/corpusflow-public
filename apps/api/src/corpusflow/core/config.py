@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Literal
 
 from pydantic import Field, SecretStr, ValidationError, field_validator
@@ -20,6 +21,13 @@ class Settings(BaseSettings):
     object_store_access_key: SecretStr
     object_store_secret_key: SecretStr
     dependency_timeout: int = Field(default=2, ge=1, le=10)
+
+    # M0 configuration contract; query/snapshot/export enforcement is implemented by M1 routers.
+    training_center_data_dir: Path = Path(".local/training-center")
+    training_center_snapshot_ttl_seconds: int = Field(default=900, ge=60, le=86400)
+    training_center_snapshot_max_per_workspace: int = Field(default=10, ge=1, le=100)
+    training_center_max_records: int = Field(default=100000, ge=1, le=100000)
+    training_center_max_bytes: int = Field(default=104857600, ge=1, le=104857600)
 
     llm_provider: Literal["disabled", "openai_compatible"] = "disabled"
     llm_base_url: str = ""

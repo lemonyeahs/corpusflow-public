@@ -1,0 +1,5342 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Training Center M0 design contract — NOT the live API",
+    "version": "1.0.0",
+    "description": "Planned JSON response contracts. Live routes: docs/api/openapi.json. Binary exports, manifest and detail handoffs are specified in the v1 spec."
+  },
+  "paths": {
+    "/api/v1/training-center/overview": {
+      "get": {
+        "operationId": "design_training-center_overview",
+        "x-implementation-status": "planned",
+        "parameters": [
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "schema": {
+              "default": "generated",
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "title": "Catalog",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Revision"
+            },
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OverviewResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/formats/{format}/stats": {
+      "get": {
+        "operationId": "design_training-center_formats_format_stats",
+        "x-implementation-status": "planned",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "schema": {
+              "default": "generated",
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "title": "Catalog",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Revision"
+            },
+            "required": false
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "From"
+            },
+            "required": false
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "To"
+            },
+            "required": false
+          },
+          {
+            "name": "timezone",
+            "in": "query",
+            "schema": {
+              "default": "UTC",
+              "title": "Timezone",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "source_kind",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "web",
+                    "book",
+                    "paper",
+                    "other"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Source Kind"
+            },
+            "required": false
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Language"
+            },
+            "required": false
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "unprocessed",
+                    "queued",
+                    "running",
+                    "succeeded",
+                    "partial",
+                    "failed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Status"
+            },
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "FormatStatsResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormatStatsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/files": {
+      "get": {
+        "operationId": "design_training-center_files",
+        "x-implementation-status": "planned",
+        "parameters": [
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "schema": {
+              "default": "generated",
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "title": "Catalog",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Revision"
+            },
+            "required": false
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pdf",
+                    "html",
+                    "md",
+                    "txt",
+                    "docx",
+                    "csv",
+                    "json",
+                    "jsonl",
+                    "other"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "const": "all",
+                  "type": "string"
+                }
+              ],
+              "default": "all",
+              "title": "Format"
+            },
+            "required": false
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Q"
+            },
+            "required": false
+          },
+          {
+            "name": "source_kind",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "web",
+                    "book",
+                    "paper",
+                    "other"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Source Kind"
+            },
+            "required": false
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Language"
+            },
+            "required": false
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "unprocessed",
+                    "queued",
+                    "running",
+                    "succeeded",
+                    "partial",
+                    "failed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Status"
+            },
+            "required": false
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "FilesResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FilesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/files/{file_id}": {
+      "get": {
+        "operationId": "design_training-center_files_file_id",
+        "x-implementation-status": "planned",
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "schema": {
+              "default": "generated",
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "title": "Catalog",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Revision"
+            },
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "FileDetailResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileDetailResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/datasets/{dataset_id}/manifest": {
+      "get": {
+        "operationId": "design_training-center_datasets_dataset_id_manifest",
+        "x-implementation-status": "planned",
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "schema": {
+              "default": "generated",
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "title": "Catalog",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Revision"
+            },
+            "required": false
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "title": "Version",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ManifestResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManifestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/datasets": {
+      "get": {
+        "operationId": "design_training-center_datasets",
+        "x-implementation-status": "planned",
+        "parameters": [
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "schema": {
+              "default": "generated",
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "title": "Catalog",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Revision"
+            },
+            "required": false
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "cpt",
+                    "sft",
+                    "dpo"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Kind"
+            },
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DatasetsResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/datasets/{dataset_id}/overview": {
+      "get": {
+        "operationId": "design_training-center_datasets_dataset_id_overview",
+        "x-implementation-status": "planned",
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "schema": {
+              "default": "generated",
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "title": "Catalog",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Revision"
+            },
+            "required": false
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "title": "Version",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DatasetOverviewResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetOverviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/datasets/{dataset_id}/samples": {
+      "get": {
+        "operationId": "design_training-center_datasets_dataset_id_samples",
+        "x-implementation-status": "planned",
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "schema": {
+              "default": "generated",
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "title": "Catalog",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Revision"
+            },
+            "required": false
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "title": "Version",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "split",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "train",
+                    "validation",
+                    "test"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Split"
+            },
+            "required": false
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Q"
+            },
+            "required": false
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SamplesResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SamplesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pipeline-runs/{run_id}/summary": {
+      "get": {
+        "operationId": "design_pipeline-runs_run_id_summary",
+        "x-implementation-status": "planned",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "schema": {
+              "const": "workspace",
+              "default": "workspace",
+              "title": "Catalog",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Revision"
+            },
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ProcessingSummaryResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessingSummaryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pipeline-runs/{run_id}/steps/{step_id}/comparison": {
+      "get": {
+        "operationId": "design_pipeline-runs_run_id_steps_step_id_comparison",
+        "x-implementation-status": "planned",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "step_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "schema": {
+              "const": "workspace",
+              "default": "workspace",
+              "title": "Catalog",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Revision"
+            },
+            "required": false
+          },
+          {
+            "name": "record_id",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Record Id"
+            },
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ComparisonResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/files/{file_id}/comparison": {
+      "get": {
+        "operationId": "design_training-center_files_file_id_comparison",
+        "x-implementation-status": "planned",
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "schema": {
+              "default": "generated",
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "title": "Catalog",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Revision"
+            },
+            "required": false
+          },
+          {
+            "name": "record_id",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Record Id"
+            },
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ComparisonResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/lineage/graph": {
+      "get": {
+        "operationId": "design_lineage_graph",
+        "x-implementation-status": "planned",
+        "parameters": [
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "schema": {
+              "default": "generated",
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "title": "Catalog",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Revision"
+            },
+            "required": false
+          },
+          {
+            "name": "root_type",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "source",
+                "file",
+                "operator_run",
+                "segment",
+                "sample",
+                "dataset_version"
+              ],
+              "title": "Root Type",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "root_id",
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "title": "Root Id",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "schema": {
+              "default": "both",
+              "enum": [
+                "both",
+                "upstream",
+                "downstream"
+              ],
+              "title": "Direction",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "max_depth",
+            "in": "query",
+            "schema": {
+              "default": 6,
+              "maximum": 12,
+              "minimum": 1,
+              "title": "Max Depth",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "name": "max_nodes",
+            "in": "query",
+            "schema": {
+              "default": 200,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Max Nodes",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "LineageGraph",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineageGraph"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/training-center/datasets/{dataset_id}/export": {
+      "get": {
+        "x-implementation-status": "planned",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "schema": {
+              "default": "generated",
+              "enum": [
+                "generated",
+                "workspace"
+              ],
+              "title": "Catalog",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Revision"
+            },
+            "required": false
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "title": "Version",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "export_format",
+            "in": "query",
+            "schema": {
+              "default": "jsonl",
+              "enum": [
+                "jsonl",
+                "markdown",
+                "csv",
+                "txt"
+              ],
+              "title": "Export Format",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "split",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "train",
+                    "validation",
+                    "test"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Split"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete filtered UTF-8 export; capped before headers",
+            "headers": {
+              "Content-Disposition": {
+                "required": true,
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/x-ndjson": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/markdown": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pipeline-runs/{run_id}/export": {
+      "get": {
+        "x-implementation-status": "planned",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "export_format",
+            "in": "query",
+            "schema": {
+              "default": "jsonl",
+              "enum": [
+                "jsonl",
+                "markdown",
+                "csv",
+                "txt"
+              ],
+              "title": "Export Format",
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete filtered UTF-8 export; capped before headers",
+            "headers": {
+              "Content-Disposition": {
+                "required": true,
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/x-ndjson": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/markdown": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ApiErrorBody",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "details": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Details",
+            "type": "array"
+          },
+          "retryable": {
+            "title": "Retryable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "details",
+          "retryable"
+        ],
+        "title": "ErrorDetail",
+        "type": "object"
+      },
+      "ApiErrorBody": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          },
+          "request_id": {
+            "minLength": 1,
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "request_id"
+        ],
+        "title": "ApiErrorBody",
+        "type": "object"
+      },
+      "Activity": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "occurred_at": {
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "ref": {
+            "$ref": "#/components/schemas/ObjectRef"
+          }
+        },
+        "required": [
+          "id",
+          "occurred_at",
+          "label",
+          "ref"
+        ],
+        "title": "Activity",
+        "type": "object"
+      },
+      "ComparisonPeriod": {
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$",
+            "title": "From",
+            "type": "string"
+          },
+          "to": {
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$",
+            "title": "To",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "title": "ComparisonPeriod",
+        "type": "object"
+      },
+      "DatasetSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "workspace_id": {
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          },
+          "version": {
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          },
+          "version_id": {
+            "minLength": 1,
+            "title": "Version Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "cpt",
+              "sft",
+              "dpo"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "product_type": {
+            "enum": [
+              "pretrain",
+              "sft",
+              "dpo"
+            ],
+            "title": "Product Type",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "record_count": {
+            "minimum": 0,
+            "title": "Record Count",
+            "type": "integer"
+          },
+          "record_unit": {
+            "enum": [
+              "article",
+              "record",
+              "pair"
+            ],
+            "title": "Record Unit",
+            "type": "string"
+          },
+          "split_counts": {
+            "$ref": "#/components/schemas/SplitCounts"
+          },
+          "token_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count"
+          },
+          "token_count_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count Method"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "source_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "title": "Source Refs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "version",
+          "version_id",
+          "kind",
+          "product_type",
+          "name",
+          "record_count",
+          "record_unit",
+          "split_counts",
+          "token_count",
+          "token_count_method",
+          "status",
+          "source_refs"
+        ],
+        "title": "DatasetSummary",
+        "type": "object"
+      },
+      "Flow": {
+        "additionalProperties": false,
+        "properties": {
+          "scope_label": {
+            "title": "Scope Label",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/FlowStage"
+            },
+            "title": "Stages",
+            "type": "array"
+          },
+          "transitions": {
+            "items": {
+              "$ref": "#/components/schemas/FlowTransition"
+            },
+            "title": "Transitions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scope_label",
+          "stages",
+          "transitions"
+        ],
+        "title": "Flow",
+        "type": "object"
+      },
+      "FlowStage": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Count"
+          },
+          "unit": {
+            "enum": [
+              "file",
+              "segment",
+              "record",
+              "article",
+              "pair",
+              "byte",
+              "token",
+              "ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "count",
+          "unit"
+        ],
+        "title": "FlowStage",
+        "type": "object"
+      },
+      "FlowTransition": {
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "title": "From",
+            "type": "string"
+          },
+          "to": {
+            "title": "To",
+            "type": "string"
+          },
+          "relation": {
+            "title": "Relation",
+            "type": "string"
+          },
+          "retention_ratio": {
+            "anyOf": [
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retention Ratio"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "relation",
+          "retention_ratio"
+        ],
+        "title": "FlowTransition",
+        "type": "object"
+      },
+      "FormatCount": {
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "enum": [
+              "pdf",
+              "html",
+              "md",
+              "txt",
+              "docx",
+              "csv",
+              "json",
+              "jsonl",
+              "other"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "file_count": {
+            "minimum": 0,
+            "title": "File Count",
+            "type": "integer"
+          },
+          "unit": {
+            "const": "file",
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "format",
+          "file_count",
+          "unit"
+        ],
+        "title": "FormatCount",
+        "type": "object"
+      },
+      "Metric": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "unit": {
+            "enum": [
+              "file",
+              "segment",
+              "record",
+              "article",
+              "pair",
+              "byte",
+              "token",
+              "ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "numerator": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Numerator"
+          },
+          "denominator": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Denominator"
+          },
+          "delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Delta"
+          },
+          "comparison_period": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ComparisonPeriod"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "value",
+          "unit"
+        ],
+        "title": "Metric",
+        "type": "object"
+      },
+      "ObjectRef": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog": {
+            "enum": [
+              "generated",
+              "workspace"
+            ],
+            "title": "Catalog",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "source",
+              "file",
+              "operator_run",
+              "segment",
+              "sample",
+              "dataset_version"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "catalog",
+          "type",
+          "id"
+        ],
+        "title": "ObjectRef",
+        "type": "object"
+      },
+      "Scope": {
+        "additionalProperties": false,
+        "properties": {
+          "workspace_id": {
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          },
+          "catalog": {
+            "enum": [
+              "generated",
+              "workspace"
+            ],
+            "title": "Catalog",
+            "type": "string"
+          },
+          "revision": {
+            "minLength": 1,
+            "title": "Revision",
+            "type": "string"
+          },
+          "as_of": {
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$",
+            "title": "As Of",
+            "type": "string"
+          },
+          "metric_definition_version": {
+            "const": "1.0.0",
+            "title": "Metric Definition Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "catalog",
+          "revision",
+          "as_of",
+          "metric_definition_version"
+        ],
+        "title": "Scope",
+        "type": "object"
+      },
+      "SplitCounts": {
+        "additionalProperties": false,
+        "properties": {
+          "train": {
+            "minimum": 0,
+            "title": "Train",
+            "type": "integer"
+          },
+          "validation": {
+            "minimum": 0,
+            "title": "Validation",
+            "type": "integer"
+          },
+          "test": {
+            "minimum": 0,
+            "title": "Test",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "train",
+          "validation",
+          "test"
+        ],
+        "title": "SplitCounts",
+        "type": "object"
+      },
+      "OverviewResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Metric"
+            },
+            "title": "Metrics",
+            "type": "object"
+          },
+          "formats": {
+            "items": {
+              "$ref": "#/components/schemas/FormatCount"
+            },
+            "title": "Formats",
+            "type": "array"
+          },
+          "datasets": {
+            "items": {
+              "$ref": "#/components/schemas/DatasetSummary"
+            },
+            "title": "Datasets",
+            "type": "array"
+          },
+          "flow": {
+            "$ref": "#/components/schemas/Flow"
+          },
+          "recent_activities": {
+            "items": {
+              "$ref": "#/components/schemas/Activity"
+            },
+            "title": "Recent Activities",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scope",
+          "metrics",
+          "formats",
+          "datasets",
+          "flow",
+          "recent_activities"
+        ],
+        "title": "OverviewResponse",
+        "type": "object"
+      },
+      "Availability": {
+        "additionalProperties": false,
+        "properties": {
+          "ingestion_trend": {
+            "enum": [
+              "available",
+              "ingested_at_missing",
+              "no_files"
+            ],
+            "title": "Ingestion Trend",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ingestion_trend"
+        ],
+        "title": "Availability",
+        "type": "object"
+      },
+      "Bucket": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "count": {
+            "minimum": 0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "ratio": {
+            "anyOf": [
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "count",
+          "ratio"
+        ],
+        "title": "Bucket",
+        "type": "object"
+      },
+      "Distribution": {
+        "additionalProperties": false,
+        "properties": {
+          "measure": {
+            "title": "Measure",
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "file",
+              "segment",
+              "record",
+              "article",
+              "pair",
+              "byte",
+              "token",
+              "ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "total_count": {
+            "minimum": 0,
+            "title": "Total Count",
+            "type": "integer"
+          },
+          "buckets": {
+            "items": {
+              "$ref": "#/components/schemas/Bucket"
+            },
+            "title": "Buckets",
+            "type": "array"
+          }
+        },
+        "required": [
+          "measure",
+          "unit",
+          "total_count",
+          "buckets"
+        ],
+        "title": "Distribution",
+        "type": "object"
+      },
+      "TimePoint": {
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "count": {
+            "minimum": 0,
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "date",
+          "count"
+        ],
+        "title": "TimePoint",
+        "type": "object"
+      },
+      "TimeSeries": {
+        "additionalProperties": false,
+        "properties": {
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "from": {
+            "title": "From",
+            "type": "string"
+          },
+          "to": {
+            "title": "To",
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "file",
+              "segment",
+              "record",
+              "article",
+              "pair",
+              "byte",
+              "token",
+              "ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/TimePoint"
+            },
+            "title": "Points",
+            "type": "array"
+          }
+        },
+        "required": [
+          "timezone",
+          "from",
+          "to",
+          "unit",
+          "points"
+        ],
+        "title": "TimeSeries",
+        "type": "object"
+      },
+      "FormatStatsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Metric"
+            },
+            "title": "Metrics",
+            "type": "object"
+          },
+          "flow": {
+            "$ref": "#/components/schemas/Flow"
+          },
+          "ingestion_trend": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TimeSeries"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "availability": {
+            "$ref": "#/components/schemas/Availability"
+          },
+          "length_distribution": {
+            "$ref": "#/components/schemas/Distribution"
+          },
+          "language_distribution": {
+            "$ref": "#/components/schemas/Distribution"
+          },
+          "source_distribution": {
+            "$ref": "#/components/schemas/Distribution"
+          },
+          "dataset_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "title": "Dataset Refs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scope",
+          "metrics",
+          "flow",
+          "ingestion_trend",
+          "availability",
+          "length_distribution",
+          "language_distribution",
+          "source_distribution",
+          "dataset_refs"
+        ],
+        "title": "FormatStatsResponse",
+        "type": "object"
+      },
+      "DatasetsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DatasetSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scope",
+          "items"
+        ],
+        "title": "DatasetsResponse",
+        "type": "object"
+      },
+      "FileSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "workspace_id": {
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "format": {
+            "enum": [
+              "pdf",
+              "html",
+              "md",
+              "txt",
+              "docx",
+              "csv",
+              "json",
+              "jsonl",
+              "other"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "media_type": {
+            "title": "Media Type",
+            "type": "string"
+          },
+          "size_bytes": {
+            "minimum": 0,
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "source_ref": {
+            "$ref": "#/components/schemas/ObjectRef"
+          },
+          "source_kind": {
+            "enum": [
+              "web",
+              "book",
+              "paper",
+              "other"
+            ],
+            "title": "Source Kind",
+            "type": "string"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "ingested_at": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ingested At"
+          },
+          "processing_status": {
+            "enum": [
+              "unprocessed",
+              "queued",
+              "running",
+              "succeeded",
+              "partial",
+              "failed"
+            ],
+            "title": "Processing Status",
+            "type": "string"
+          },
+          "segment_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segment Count"
+          },
+          "dataset_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "title": "Dataset Refs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "filename",
+          "format",
+          "media_type",
+          "size_bytes",
+          "source_ref",
+          "source_kind",
+          "language",
+          "ingested_at",
+          "processing_status",
+          "segment_count",
+          "dataset_refs"
+        ],
+        "title": "FileSummary",
+        "type": "object"
+      },
+      "ProcessingRunRef": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog": {
+            "const": "workspace",
+            "title": "Catalog",
+            "type": "string"
+          },
+          "type": {
+            "const": "pipeline_run",
+            "title": "Type",
+            "type": "string"
+          },
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "catalog",
+          "type",
+          "id"
+        ],
+        "title": "ProcessingRunRef",
+        "type": "object"
+      },
+      "SourceSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "web",
+              "book",
+              "paper",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "license": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "License"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "author",
+          "url",
+          "license"
+        ],
+        "title": "SourceSummary",
+        "type": "object"
+      },
+      "FileDetailResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "file": {
+            "$ref": "#/components/schemas/FileSummary"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceSummary"
+          },
+          "processing_summary_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProcessingRunRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dataset_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "title": "Dataset Refs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scope",
+          "file",
+          "source",
+          "processing_summary_ref",
+          "dataset_refs"
+        ],
+        "title": "FileDetailResponse",
+        "type": "object"
+      },
+      "ManifestResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "dataset_id": {
+            "minLength": 1,
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "version": {
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          },
+          "manifest": {
+            "additionalProperties": true,
+            "title": "Manifest",
+            "type": "object"
+          },
+          "content_hash": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Content Hash",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scope",
+          "dataset_id",
+          "version",
+          "manifest",
+          "content_hash"
+        ],
+        "title": "ManifestResponse",
+        "type": "object"
+      },
+      "DestinationCount": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "enum": [
+              "train",
+              "validation",
+              "test"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "count": {
+            "minimum": 0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "unit": {
+            "enum": [
+              "article",
+              "record",
+              "pair"
+            ],
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "count",
+          "unit"
+        ],
+        "title": "DestinationCount",
+        "type": "object"
+      },
+      "DatasetOverviewResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "dataset": {
+            "$ref": "#/components/schemas/DatasetSummary"
+          },
+          "split_counts": {
+            "$ref": "#/components/schemas/SplitCounts"
+          },
+          "source_distribution": {
+            "$ref": "#/components/schemas/Distribution"
+          },
+          "destination_counts": {
+            "items": {
+              "$ref": "#/components/schemas/DestinationCount"
+            },
+            "title": "Destination Counts",
+            "type": "array"
+          },
+          "length_distribution": {
+            "$ref": "#/components/schemas/Distribution"
+          },
+          "language_distribution": {
+            "$ref": "#/components/schemas/Distribution"
+          },
+          "lineage_root_ref": {
+            "$ref": "#/components/schemas/ObjectRef"
+          }
+        },
+        "required": [
+          "scope",
+          "dataset",
+          "split_counts",
+          "source_distribution",
+          "destination_counts",
+          "length_distribution",
+          "language_distribution",
+          "lineage_root_ref"
+        ],
+        "title": "DatasetOverviewResponse",
+        "type": "object"
+      },
+      "FilesResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FileSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total_count": {
+            "minimum": 0,
+            "title": "Total Count",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "limit": {
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "scope",
+          "items",
+          "total_count",
+          "offset",
+          "limit"
+        ],
+        "title": "FilesResponse",
+        "type": "object"
+      },
+      "CptSample": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "workspace_id": {
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          },
+          "dataset_id": {
+            "minLength": 1,
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "dataset_version": {
+            "minLength": 1,
+            "title": "Dataset Version",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "split": {
+            "enum": [
+              "train",
+              "validation",
+              "test"
+            ],
+            "title": "Split",
+            "type": "string"
+          },
+          "source_group_id": {
+            "minLength": 1,
+            "title": "Source Group Id",
+            "type": "string"
+          },
+          "source_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "title": "Source Refs",
+            "type": "array"
+          },
+          "segment_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "title": "Segment Refs",
+            "type": "array"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "char_count": {
+            "minimum": 0,
+            "title": "Char Count",
+            "type": "integer"
+          },
+          "token_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count"
+          },
+          "token_count_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count Method"
+          },
+          "kind": {
+            "const": "cpt",
+            "title": "Kind",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Title"
+          }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "dataset_id",
+          "dataset_version",
+          "sequence",
+          "split",
+          "source_group_id",
+          "source_refs",
+          "segment_refs",
+          "language",
+          "char_count",
+          "token_count",
+          "token_count_method",
+          "kind",
+          "text"
+        ],
+        "title": "CptSample",
+        "type": "object"
+      },
+      "DpoSample": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "workspace_id": {
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          },
+          "dataset_id": {
+            "minLength": 1,
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "dataset_version": {
+            "minLength": 1,
+            "title": "Dataset Version",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "split": {
+            "enum": [
+              "train",
+              "validation",
+              "test"
+            ],
+            "title": "Split",
+            "type": "string"
+          },
+          "source_group_id": {
+            "minLength": 1,
+            "title": "Source Group Id",
+            "type": "string"
+          },
+          "source_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "title": "Source Refs",
+            "type": "array"
+          },
+          "segment_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "title": "Segment Refs",
+            "type": "array"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "char_count": {
+            "minimum": 0,
+            "title": "Char Count",
+            "type": "integer"
+          },
+          "token_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count"
+          },
+          "token_count_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count Method"
+          },
+          "kind": {
+            "const": "dpo",
+            "title": "Kind",
+            "type": "string"
+          },
+          "prompt": {
+            "title": "Prompt",
+            "type": "string"
+          },
+          "chosen": {
+            "title": "Chosen",
+            "type": "string"
+          },
+          "rejected": {
+            "title": "Rejected",
+            "type": "string"
+          },
+          "preference_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Preference Reason"
+          }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "dataset_id",
+          "dataset_version",
+          "sequence",
+          "split",
+          "source_group_id",
+          "source_refs",
+          "segment_refs",
+          "language",
+          "char_count",
+          "token_count",
+          "token_count_method",
+          "kind",
+          "prompt",
+          "chosen",
+          "rejected"
+        ],
+        "title": "DpoSample",
+        "type": "object"
+      },
+      "Message": {
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "enum": [
+              "system",
+              "user",
+              "assistant"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "content": {
+            "title": "Content",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "Message",
+        "type": "object"
+      },
+      "SftSample": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "workspace_id": {
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          },
+          "dataset_id": {
+            "minLength": 1,
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "dataset_version": {
+            "minLength": 1,
+            "title": "Dataset Version",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "split": {
+            "enum": [
+              "train",
+              "validation",
+              "test"
+            ],
+            "title": "Split",
+            "type": "string"
+          },
+          "source_group_id": {
+            "minLength": 1,
+            "title": "Source Group Id",
+            "type": "string"
+          },
+          "source_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "title": "Source Refs",
+            "type": "array"
+          },
+          "segment_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "title": "Segment Refs",
+            "type": "array"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "char_count": {
+            "minimum": 0,
+            "title": "Char Count",
+            "type": "integer"
+          },
+          "token_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count"
+          },
+          "token_count_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count Method"
+          },
+          "kind": {
+            "const": "sft",
+            "title": "Kind",
+            "type": "string"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            },
+            "title": "Messages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "dataset_id",
+          "dataset_version",
+          "sequence",
+          "split",
+          "source_group_id",
+          "source_refs",
+          "segment_refs",
+          "language",
+          "char_count",
+          "token_count",
+          "token_count_method",
+          "kind",
+          "messages"
+        ],
+        "title": "SftSample",
+        "type": "object"
+      },
+      "SamplesResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "items": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "cpt": "#/components/schemas/CptSample",
+                  "dpo": "#/components/schemas/DpoSample",
+                  "sft": "#/components/schemas/SftSample"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/CptSample"
+                },
+                {
+                  "$ref": "#/components/schemas/SftSample"
+                },
+                {
+                  "$ref": "#/components/schemas/DpoSample"
+                }
+              ]
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total_count": {
+            "minimum": 0,
+            "title": "Total Count",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "limit": {
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "scope",
+          "items",
+          "total_count",
+          "offset",
+          "limit"
+        ],
+        "title": "SamplesResponse",
+        "type": "object"
+      },
+      "ProcessingStepSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "run_id": {
+            "minLength": 1,
+            "title": "Run Id",
+            "type": "string"
+          },
+          "attempt": {
+            "minimum": 1,
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "operator_key": {
+            "title": "Operator Key",
+            "type": "string"
+          },
+          "operator_version": {
+            "title": "Operator Version",
+            "type": "string"
+          },
+          "config_hash": {
+            "title": "Config Hash",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "partial",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "input_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Count"
+          },
+          "output_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Count"
+          },
+          "input_unit": {
+            "enum": [
+              "file",
+              "record",
+              "segment"
+            ],
+            "title": "Input Unit",
+            "type": "string"
+          },
+          "output_unit": {
+            "enum": [
+              "file",
+              "record",
+              "segment"
+            ],
+            "title": "Output Unit",
+            "type": "string"
+          },
+          "modified_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modified Count"
+          },
+          "filtered_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filtered Count"
+          },
+          "failed_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed Count"
+          },
+          "input_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "title": "Input Refs",
+            "type": "array"
+          },
+          "output_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "title": "Output Refs",
+            "type": "array"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          }
+        },
+        "required": [
+          "id",
+          "run_id",
+          "attempt",
+          "operator_key",
+          "operator_version",
+          "config_hash",
+          "sequence",
+          "status",
+          "input_count",
+          "output_count",
+          "input_unit",
+          "output_unit",
+          "modified_count",
+          "filtered_count",
+          "failed_count",
+          "input_refs",
+          "output_refs",
+          "started_at",
+          "completed_at"
+        ],
+        "title": "ProcessingStepSummary",
+        "type": "object"
+      },
+      "ProcessingTotal": {
+        "additionalProperties": false,
+        "properties": {
+          "unit": {
+            "enum": [
+              "file",
+              "record",
+              "segment"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "input_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Count"
+          },
+          "output_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Count"
+          }
+        },
+        "required": [
+          "unit",
+          "input_count",
+          "output_count"
+        ],
+        "title": "ProcessingTotal",
+        "type": "object"
+      },
+      "ProcessingSummaryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "run_id": {
+            "minLength": 1,
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "partial",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "input_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "title": "Input Refs",
+            "type": "array"
+          },
+          "output_refs": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "title": "Output Refs",
+            "type": "array"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ProcessingStepSummary"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "totals": {
+            "items": {
+              "$ref": "#/components/schemas/ProcessingTotal"
+            },
+            "title": "Totals",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scope",
+          "run_id",
+          "status",
+          "input_refs",
+          "output_refs",
+          "steps",
+          "totals"
+        ],
+        "title": "ProcessingSummaryResponse",
+        "type": "object"
+      },
+      "RecordContent": {
+        "additionalProperties": false,
+        "properties": {
+          "record_id": {
+            "minLength": 1,
+            "title": "Record Id",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "record_id",
+          "text"
+        ],
+        "title": "RecordContent",
+        "type": "object"
+      },
+      "ComparisonResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "before": {
+            "$ref": "#/components/schemas/RecordContent"
+          },
+          "after": {
+            "$ref": "#/components/schemas/RecordContent"
+          },
+          "applied_steps": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectRef"
+            },
+            "title": "Applied Steps",
+            "type": "array"
+          },
+          "record_ref": {
+            "$ref": "#/components/schemas/ObjectRef"
+          },
+          "processing_run_ref": {
+            "$ref": "#/components/schemas/ProcessingRunRef"
+          },
+          "changes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Changes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scope",
+          "before",
+          "after",
+          "applied_steps",
+          "record_ref",
+          "processing_run_ref",
+          "changes"
+        ],
+        "title": "ComparisonResponse",
+        "type": "object"
+      },
+      "LineageEdge": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          },
+          "relation": {
+            "enum": [
+              "provides",
+              "parsed_by",
+              "processed_by",
+              "produced",
+              "derived_from",
+              "included_in",
+              "split_into"
+            ],
+            "title": "Relation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "target",
+          "relation"
+        ],
+        "title": "LineageEdge",
+        "type": "object"
+      },
+      "LineageNode": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "ref": {
+            "$ref": "#/components/schemas/ObjectRef"
+          },
+          "kind": {
+            "enum": [
+              "source",
+              "file",
+              "operator_run",
+              "segment",
+              "sample",
+              "dataset_version"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Metrics",
+            "type": "object"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "title": "Detail",
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "ref",
+          "kind",
+          "label",
+          "description",
+          "status",
+          "metrics",
+          "detail"
+        ],
+        "title": "LineageNode",
+        "type": "object"
+      },
+      "LineageGraph": {
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "root": {
+            "$ref": "#/components/schemas/ObjectRef"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/LineageNode"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/LineageEdge"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "truncated": {
+            "title": "Truncated",
+            "type": "boolean"
+          },
+          "truncation_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "max_depth",
+                  "max_nodes"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Truncation Reason"
+          }
+        },
+        "required": [
+          "scope",
+          "root",
+          "nodes",
+          "edges",
+          "truncated",
+          "truncation_reason"
+        ],
+        "title": "LineageGraph",
+        "type": "object"
+      },
+      "CatalogQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog": {
+            "default": "generated",
+            "enum": [
+              "generated",
+              "workspace"
+            ],
+            "title": "Catalog",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revision"
+          }
+        },
+        "title": "CatalogQuery",
+        "type": "object"
+      },
+      "FilesQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog": {
+            "default": "generated",
+            "enum": [
+              "generated",
+              "workspace"
+            ],
+            "title": "Catalog",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revision"
+          },
+          "format": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pdf",
+                  "html",
+                  "md",
+                  "txt",
+                  "docx",
+                  "csv",
+                  "json",
+                  "jsonl",
+                  "other"
+                ],
+                "type": "string"
+              },
+              {
+                "const": "all",
+                "type": "string"
+              }
+            ],
+            "default": "all",
+            "title": "Format"
+          },
+          "q": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Q"
+          },
+          "source_kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "web",
+                  "book",
+                  "paper",
+                  "other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Kind"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Language"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unprocessed",
+                  "queued",
+                  "running",
+                  "succeeded",
+                  "partial",
+                  "failed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Status"
+          },
+          "offset": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "limit": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "FilesQuery",
+        "type": "object"
+      },
+      "StatsQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog": {
+            "default": "generated",
+            "enum": [
+              "generated",
+              "workspace"
+            ],
+            "title": "Catalog",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revision"
+          },
+          "from": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "From"
+          },
+          "to": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "To"
+          },
+          "timezone": {
+            "default": "UTC",
+            "title": "Timezone",
+            "type": "string"
+          },
+          "source_kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "web",
+                  "book",
+                  "paper",
+                  "other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Kind"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Language"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unprocessed",
+                  "queued",
+                  "running",
+                  "succeeded",
+                  "partial",
+                  "failed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Status"
+          }
+        },
+        "title": "StatsQuery",
+        "type": "object"
+      },
+      "DatasetQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog": {
+            "default": "generated",
+            "enum": [
+              "generated",
+              "workspace"
+            ],
+            "title": "Catalog",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revision"
+          },
+          "version": {
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "DatasetQuery",
+        "type": "object"
+      },
+      "DatasetsQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog": {
+            "default": "generated",
+            "enum": [
+              "generated",
+              "workspace"
+            ],
+            "title": "Catalog",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revision"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "cpt",
+                  "sft",
+                  "dpo"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Kind"
+          }
+        },
+        "title": "DatasetsQuery",
+        "type": "object"
+      },
+      "SamplesQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog": {
+            "default": "generated",
+            "enum": [
+              "generated",
+              "workspace"
+            ],
+            "title": "Catalog",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revision"
+          },
+          "version": {
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "enum": [
+                  "train",
+                  "validation",
+                  "test"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Split"
+          },
+          "q": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Q"
+          },
+          "offset": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "limit": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "SamplesQuery",
+        "type": "object"
+      },
+      "GraphQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog": {
+            "default": "generated",
+            "enum": [
+              "generated",
+              "workspace"
+            ],
+            "title": "Catalog",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revision"
+          },
+          "root_type": {
+            "enum": [
+              "source",
+              "file",
+              "operator_run",
+              "segment",
+              "sample",
+              "dataset_version"
+            ],
+            "title": "Root Type",
+            "type": "string"
+          },
+          "root_id": {
+            "minLength": 1,
+            "title": "Root Id",
+            "type": "string"
+          },
+          "direction": {
+            "default": "both",
+            "enum": [
+              "both",
+              "upstream",
+              "downstream"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "max_depth": {
+            "default": 6,
+            "maximum": 12,
+            "minimum": 1,
+            "title": "Max Depth",
+            "type": "integer"
+          },
+          "max_nodes": {
+            "default": 200,
+            "maximum": 500,
+            "minimum": 1,
+            "title": "Max Nodes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "root_type",
+          "root_id"
+        ],
+        "title": "GraphQuery",
+        "type": "object"
+      },
+      "ComparisonQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog": {
+            "default": "generated",
+            "enum": [
+              "generated",
+              "workspace"
+            ],
+            "title": "Catalog",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revision"
+          },
+          "record_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Record Id"
+          }
+        },
+        "title": "ComparisonQuery",
+        "type": "object"
+      },
+      "ExportQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog": {
+            "default": "generated",
+            "enum": [
+              "generated",
+              "workspace"
+            ],
+            "title": "Catalog",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revision"
+          },
+          "version": {
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          },
+          "export_format": {
+            "default": "jsonl",
+            "enum": [
+              "jsonl",
+              "markdown",
+              "csv",
+              "txt"
+            ],
+            "title": "Export Format",
+            "type": "string"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "enum": [
+                  "train",
+                  "validation",
+                  "test"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Split"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "ExportQuery",
+        "type": "object"
+      },
+      "ProcessingExportQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "export_format": {
+            "default": "jsonl",
+            "enum": [
+              "jsonl",
+              "markdown",
+              "csv",
+              "txt"
+            ],
+            "title": "Export Format",
+            "type": "string"
+          }
+        },
+        "title": "ProcessingExportQuery",
+        "type": "object"
+      },
+      "ProcessingQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog": {
+            "const": "workspace",
+            "default": "workspace",
+            "title": "Catalog",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revision"
+          }
+        },
+        "title": "ProcessingQuery",
+        "type": "object"
+      },
+      "ProcessingComparisonQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog": {
+            "const": "workspace",
+            "default": "workspace",
+            "title": "Catalog",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revision"
+          },
+          "record_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Record Id"
+          }
+        },
+        "title": "ProcessingComparisonQuery",
+        "type": "object"
+      },
+      "Catalog": {
+        "enum": [
+          "generated",
+          "workspace"
+        ],
+        "type": "string"
+      },
+      "TrainingKind": {
+        "enum": [
+          "cpt",
+          "sft",
+          "dpo"
+        ],
+        "type": "string"
+      },
+      "Split": {
+        "enum": [
+          "train",
+          "validation",
+          "test"
+        ],
+        "type": "string"
+      },
+      "FileFormat": {
+        "enum": [
+          "pdf",
+          "html",
+          "md",
+          "txt",
+          "docx",
+          "csv",
+          "json",
+          "jsonl",
+          "other"
+        ],
+        "type": "string"
+      },
+      "SourceKind": {
+        "enum": [
+          "web",
+          "book",
+          "paper",
+          "other"
+        ],
+        "type": "string"
+      },
+      "ObjectType": {
+        "enum": [
+          "source",
+          "file",
+          "operator_run",
+          "segment",
+          "sample",
+          "dataset_version"
+        ],
+        "type": "string"
+      },
+      "ProcessingStatus": {
+        "enum": [
+          "unprocessed",
+          "queued",
+          "running",
+          "succeeded",
+          "partial",
+          "failed"
+        ],
+        "type": "string"
+      },
+      "Sample": {
+        "discriminator": {
+          "mapping": {
+            "cpt": "#/components/schemas/CptSample",
+            "dpo": "#/components/schemas/DpoSample",
+            "sft": "#/components/schemas/SftSample"
+          },
+          "propertyName": "kind"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/CptSample"
+          },
+          {
+            "$ref": "#/components/schemas/SftSample"
+          },
+          {
+            "$ref": "#/components/schemas/DpoSample"
+          }
+        ]
+      },
+      "Unit": {
+        "enum": [
+          "file",
+          "segment",
+          "record",
+          "article",
+          "pair",
+          "byte",
+          "token",
+          "ratio"
+        ],
+        "type": "string"
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

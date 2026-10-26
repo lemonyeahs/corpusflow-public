@@ -1,6 +1,8 @@
 # 训练数据中心 M0 公共骨架接入说明
 
-负责人：Agent 1（A＋E）。分支：`feat/tc-shell-explorer`。基线：`263821e`。
+负责人：集成负责人（跨模块收尾已获用户授权）。当前契约：`1.0.0`。
+
+本文前 9 节保留首轮交付背景；其中 draft、手工样例和待确认事项已由第 10 节取代。接入时以第 10 节及冻结契约为准。
 
 本轮交付前端公共骨架，不代表首页统计、接入处理、数据集查询或图 API 已实现。共享契约仍为 `1.0.0-draft`，待 Agent 2/3/4 与人工负责人评审。没有修改后端路由、数据库、Worker、迁移或其他分支。
 
@@ -154,3 +156,17 @@ Agent 1 的 `8e42e56` 和 Agent 2 的 `3afb47f` 已在集成仓库依次合并�
 - Agent 2 的 `contract_examples/` 仍是独立、可重放的提案，未接到浏览器拦截器或真实 HTTP。前端最小手工样例继续保留自身 provenance；不能把两套样例说成已经统一冻结。
 - 生成器新增测试改名为 `test_catalog_generation.py`，避免与已有 `tests/unit/test_generation.py` 冲突。其他 agent 应运行仓库级 pytest 收集，而不只测试自己的子目录。
 - P0-I、responsive 测试的登录落点已改为新首页。其余历史端到端测试仍含早于本轮的失效页面/按钮，需 Agent 4 结合当前旧业务流程独立修订，不能仅批量替换导航后声称业务验收通过。
+
+## 10. M0 冻结后的接入入口（取代上述草案状态）
+
+- 后端模型唯一来源：`apps/api/src/corpusflow/contracts/training_center/models.py`。从此导入请求/响应模型；请求用 FastAPI `Annotated[FilesQuery, Query()]`，复用 `corpusflow.api.dependencies` 的认证和数据库依赖。
+- 前端继续从 `src/contracts/training-center.ts` 导入，wire 类型由生成器维护；format/activity/destination、文件详情、manifest 包装、summary/comparison 已有具体类型。不要手改 `.generated.ts`。
+- 修改类型后在仓库根目录运行 `python scripts/export_training_center_contract.py`，修改样例来源后运行 `python scripts/build_training_center_examples.py`。两个命令的 `--check` 和 pytest 已纳入漂移校验。实际 API OpenAPI 与设计 OpenAPI 分开，后端没有虚假占位接口。
+- 唯一公共样例包为 `contracts/training-center/examples.json`。浏览器 fixtures.ts 引用该包，success/empty/error 仍由显式开发变量选择。数据集 ID、版本、revision 从包内 request/body 读取，旧 fixture-dataset-1 和 v1 已移除；CPT 第二页有 3 条，total_count=23。
+- generated 支持概览、TXT 无额外过滤的统计、文件筛选/分页、数据集列表/概览/样本和来源文件图。图必须给 root_type/root_id，数据集必须给 version；样例不支持的统计过滤返回 422，避免错误统计。详情/manifest 的标准响应可直接读取统一包，尚未接入拦截器。
+- C 样例使用 `/pipeline-runs/m0-example-run/summary?catalog=workspace&fixture=contract-v1` 和 `/pipeline-runs/m0-example-run/steps/m0-example-step-1/comparison?catalog=workspace&fixture=contract-v1`。省略显式 fixture 标记或使用真实运行 ID 时访问网络，认证/写入/下载始终访问网络。空场景为 queued/steps=[]，对比不可用返回 404；不伪造真实执行。
+- 处理整体运行用 ProcessingRunRef，图中执行步骤仍用 ObjectRef(type=operator_run)。去向统计冻结为 split；所有计数单位、空值、快照900秒/每空间10份、生成版本保留和100MiB/100000条上限见契约第9节。
+- 可选 Docker 只读目录挂载：先建立自己的生成目录，再合并 `infra/compose.yaml` 与 `infra/compose.training-center.yaml`；按需指定 TRAINING_CENTER_HOST_DIR。不要对共享栈执行重启。
+- `python scripts/verify_training_center_m0.py` 创建随机名本地 PostgreSQL、迁移 head、启动独立 API 和5191 Vite，实际验证登录、权限和工作空间隔离；结束后停止本次服务，保留本次容器用于诊断。它不连接共享后端，也不声称验证 MinIO、Redis、Worker 或新业务 API。
+
+最终结果与下一轮交付边界见 [M0 收尾报告](../reports/TRAINING_CENTER_M0_CLOSEOUT.md)。Agent 2/3/4 同步该收尾提交后继续各自 M1 目录，无需更改 App.tsx。旧构建页兼容适配、真实查询/处理/图路由、序列化器和功能页面仍需后续交付。

@@ -43,7 +43,9 @@ def main() -> None:
     parser.add_argument("--report-dir", type=Path)
     args = parser.parse_args()
     context = json.loads(
-        subprocess.check_output(["docker", "context", "inspect"], text=True, timeout=10)
+        subprocess.check_output(
+            ["docker", "context", "inspect"], text=True, encoding="utf-8", timeout=10
+        )
     )[0]
     endpoint = os.environ.get("DOCKER_HOST") or context["Endpoints"]["docker"]["Host"]
     if not endpoint.startswith(("unix://", "npipe://")):
@@ -97,6 +99,8 @@ def main() -> None:
             "CF_EXPECT_STORAGE_PERSISTENCE": "0",
             "COMPOSE_ANSI": "never",
             "BUILDKIT_PROGRESS": "plain",
+            "PYTHONUTF8": "1",
+            "PYTHONIOENCODING": "utf-8",
         }
         compose = [
             "docker",
@@ -117,6 +121,8 @@ def main() -> None:
                 cwd=ROOT,
                 env=env,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 timeout=timeout,
@@ -129,7 +135,7 @@ def main() -> None:
                 "OBJECT_STORE_SECRET_KEY",
             ):
                 output = output.replace(values[key], "[REDACTED]")
-            (reports / f"{name}.log").write_text(output)
+            (reports / f"{name}.log").write_text(output, encoding="utf-8", newline="\n")
             summary["steps"].append({"name": name, "exit_code": result.returncode})
             if result.returncode:
                 raise RuntimeError(f"{name} failed; see {reports / (name + '.log')}")
@@ -187,7 +193,9 @@ def main() -> None:
                 summary["retained_test_volumes"] = [
                     project + suffix for suffix in ("_pg-data", "_redis-data", "_s3-data")
                 ]
-                (reports / "result.json").write_text(json.dumps(summary, indent=2) + "\n")
+                (reports / "result.json").write_text(
+                    json.dumps(summary, indent=2) + "\n", encoding="utf-8", newline="\n"
+                )
     print(f"Full environment verification passed: {reports / 'result.json'}", flush=True)
 
 

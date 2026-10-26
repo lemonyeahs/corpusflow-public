@@ -16,5 +16,7 @@ settings = Settings(
     object_store_secret_key="schema",
 )
 Path("docs/api/openapi.json").write_text(
-    json.dumps(create_app(settings).openapi(), ensure_ascii=False, indent=2) + "\n"
+    json.dumps(create_app(settings).openapi(), ensure_ascii=False, indent=2) + "\n",
+    encoding="utf-8",
+    newline="\n",
 )

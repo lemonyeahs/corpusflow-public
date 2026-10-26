@@ -7,7 +7,7 @@ export default defineConfig({
   timeout: 30_000,
   workers: 1,
   reporter: "list",
-  outputDir: "test-results/m0",
+  outputDir: fixtures ? "test-results/m0-fixtures" : "test-results/m0",
   use: { baseURL: `http://127.0.0.1:${port}`, trace: "retain-on-failure", screenshot: "only-on-failure" },
   projects: [{ name: fixtures ? "m0-fixtures" : "m0-real-mode", use: { ...devices["Desktop Chrome"], channel: process.env.M0_BROWSER_CHANNEL || "chrome" } }],
   webServer: {

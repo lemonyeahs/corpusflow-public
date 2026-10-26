@@ -1,15 +1,17 @@
-# 训练数据中心共享契约 v1（M0 基线草案）
+# 训练数据中心共享契约 v1（M0 冻结基线）
 
 配套：[并行开发任务书](../plans/TRAINING_CENTER_PARALLEL_PLAN.md)。
 
-本文冻结团队间的设计基线，不表示下面的新接口已经存在。M0 由 A 汇总 B/C/D 的评审，补齐可执行 Pydantic/TypeScript DTO、响应样例和 OpenAPI 校验后，才作为实现验收基线。后续破坏性修改需提升契约版本并同步所有调用方。
+版本：`1.0.0`，统计口径版本：`1.0.0`。集成负责人根据 Agent 2/3/4 交付和独立复核冻结 M0 接口设计；不表示下面的新业务接口已经存在。后续破坏性修改需提升契约版本并同步所有调用方。
+
+唯一类型来源是 `apps/api/src/corpusflow/contracts/training_center/models.py`。前端从 `src/contracts/training-center.ts` 导入自动生成的 wire DTO；禁止直接编辑 `.generated.ts`。统一样例为 `contracts/training-center/examples.json`。设计 OpenAPI 为 `docs/api/training-center.openapi.json`，路径均标记 planned；实际已注册路由仍以 `docs/api/openapi.json` 为准。响应严格校验字段与语义，Query DTO 允许 FastAPI 解码 HTTP 字符串参数。
 
 ## 1. 全局约定
 
 - 业务 API 前缀 `/api/v1`，沿用现有 Bearer token、`X-Workspace-ID` 和错误包裹结构。
 - 新页面默认目录是 `catalog=generated`；真实上传完成后的跳转显式使用 `catalog=workspace`。URL 与查询键保留目录选择，后端不可混合统计两个目录。
 - `generated`：受当前工作空间授权约束的只读生成文件目录。`workspace`：现有真实资产/运行/训练数据，通过数据库适配器读取。两者都是正常 API 数据来源，开发请求拦截样例另有显式开关，不能混淆。
-- `scope = {workspace_id, catalog, revision, as_of, metric_definition_version}`。generated revision 为 manifest 的内容版本；workspace revision 为后端分配的统计快照标识，B 在 M0 明确快照保留策略。
+- `scope = {workspace_id, catalog, revision, as_of, metric_definition_version}`。generated revision 为 manifest 的内容版本，as_of 为其 generated_at；workspace revision 为后端分配的统计快照标识。保留策略见第 9 节。
 - 列表默认 `offset=0, limit=20`，`limit` 上限 100；返回 `{scope, items, total_count, offset, limit}`，有稳定排序及 ID 二级排序。
 - 日期使用 ISO 8601 UTC。趋势展示时区使用显式 `timezone`，默认 UTC，页面标明时区。
 - 数量使用整数，比例使用 `[0,1]` 浮点值；小数转百分比由前端格式化。`null` 表示没有依据或没有统计，不可当成 0。
@@ -57,7 +59,7 @@ type SourceKind = 'web' | 'book' | 'paper' | 'other';
 
 ### 3.2 样本
 
-公共字段：`id, kind, dataset_id, dataset_version, split, source_group_id, source_refs[], segment_refs[], language, char_count, token_count, token_count_method`。
+公共字段：`id, workspace_id, kind, dataset_id, dataset_version, sequence, split, source_group_id, source_refs[], segment_refs[], language, char_count, token_count, token_count_method`。sequence 是版本内稳定排序序号；样本按 sequence/id 升序，过滤在分页前完成。
 
 - CPT：`text`，可选 `title`；界面显示单位“篇”。
 - SFT：`messages: [{role: 'system'|'user'|'assistant', content: string}]`，保留多轮顺序；界面单位“条”。
@@ -67,7 +69,7 @@ type SourceKind = 'web' | 'book' | 'paper' | 'other';
 
 ### 3.3 文件摘要
 
-`id, filename, format, media_type, size_bytes, source_ref, source_kind, ingested_at, processing_status, segment_count, dataset_refs[]`。
+`id, workspace_id, filename, format, media_type, size_bytes, source_ref, source_kind, language, ingested_at, processing_status, segment_count, dataset_refs[]`。language/ingested_at/segment_count 可空，文件按 filename/id 升序。
 
 `processing_status = unprocessed | queued | running | succeeded | partial | failed`。没有真实处理记录的文件不能仅根据脚本已生成就被标记为清洗完成。
 
@@ -96,12 +98,12 @@ type SourceKind = 'web' | 'book' | 'paper' | 'other';
 | `GET /datasets/{dataset_id}/manifest` | version | manifest 对象与内容哈希 | G/验收 |
 | `GET /datasets/{dataset_id}/export` | version, export_format, split 可选 | 下载响应，范围为对应版本和筛选后的全部记录 | G |
 
-- `DatasetSummary`：id, version, kind, name, record_count, record_unit, split_counts, token_count, token_count_method, status, source_refs。
+- `DatasetSummary`：id, workspace_id, version, version_id, kind, product_type, name, record_count, record_unit, split_counts, token_count, token_count_method, status, source_refs。version 是用户选择的版本字符串，version_id 是 dataset_version 引用的实体 ID；两者不可互换。generated 的 status=available 仅表示内容可读；workspace 保留现有版本状态，不代表自动通过发布门禁。
 - `flow`：`{scope_label, stages:[{key,label,count,unit}], transitions:[{from,to,relation,retention_ratio}]}`；仅同单位且确实为子集过滤时填写 retention_ratio，其他 null。
 - 所有 stats 过滤参数作用于其声明的同一个 cohort；若刻意展示全工作空间流转，响应明确 scope_label，页面不能误标为当前 PDF 的流转。
 - 对比不存在返回约定的 `404 COMPARISON_NOT_AVAILABLE`，页面提示“暂无清洗对比”；不能即时编造一段 before/after。
 - workspace 适配器复用已有资产、片段、数据集和版本记录，不从 generated 目录凑数据。已发布 workspace 数据集的导出沿用现有用途/权限规则。
-- 数据量上限和流式下载策略在 M0 定义；不得把“导出当前页”伪装成“导出全部”。
+- 数据量上限和流式下载策略见第 9 节；不得把“导出当前页”伪装成“导出全部”。
 
 ## 5. C 负责的执行与导出接口
 
@@ -213,6 +215,8 @@ interface LineageGraph {
   segments.jsonl
   processing-runs.jsonl
   lineage-edges.jsonl
+  datasets.jsonl
+  source-files/*.txt
   datasets/
     cpt.jsonl
     sft.jsonl
@@ -243,3 +247,40 @@ interface LineageGraph {
 | 检查命令、结果、版本与已知问题 | A～G → H | 每个 PR 与 M3 |
 
 所有交接都带契约版本；存在阻断时指出缺少的字段/行为以及可继续独立开发的部分，不用“等后端好了再说”代替明确依赖。
+
+## 9. M0 收口决定（2026-10-27）
+
+### 统计与引用
+
+- 单位固定为 `file/segment/record/article/pair/byte/token/ratio`。CPT article、SFT record、DPO pair；跨训练类型总数使用 record。计数为非负整数；ratio 在 0–1；未知值保留 null。
+- 首页 formats 是 `{format,file_count,unit:'file'}` 的九个文件格式桶，all 仅用于查询；常见八类之外的 other 不可遗漏总数。activities 是 `{id,occurred_at,label,ref}`，没有实际活动时为空。
+- destination_counts 冻结为三个 split 的 `{key,count,unit}` 数组，与 split_counts 完全一致；不表示下游模型使用量或外部任务去向。
+- 样本来源分布以 source_refs 第一项为主来源，缺失/未知为 unknown；每个样本只计一次，不能按多来源重复累加。source_refs 顺序因此有语义，不得任意排序。
+- char_count 按 Unicode 码点：CPT text、SFT 所有 message.content、DPO prompt+chosen+rejected；不含 title/preference_reason。无确认的模型 tokenizer 时 token_count 和方法都为 null。
+- 生成目录无接入时间时 ingestion_trend=null，availability.ingestion_trend 为 ingested_at_missing；无文件为 no_files；有依据时为 available。不得用样本分布代替片段分布。
+- 文件详情 source 为 `{id,name,kind,author,url,license}`，后三项可空。processing_summary_ref 为 `ProcessingRunRef|null`。`ProcessingRunRef={catalog:'workspace',type:'pipeline_run',id}` 指整体运行；它不是图节点 ObjectRef，operator_run 仍专指某次真实步骤执行。
+- ManifestResponse 包装 `{scope,dataset_id,version,manifest,content_hash}`。manifest 是带 schema_version 的来源文档；generated 使用生成器的 `training-center.generated.v1`（可含全目录内容清单），workspace 沿用原物化 manifest，不能拼接生成来源。content_hash 是完整 manifest（含时间）的 UTF-8、排序键、紧凑 JSON、末尾 LF 的 SHA256；不同于排除时间元数据的 revision。
+
+### 处理、图和导出
+
+- ProcessingSummaryResponse 包含 scope、run_id、status、input_refs、output_refs、steps、totals。steps 按 sequence 唯一升序，ID 对应实际 attempt；totals 为每单位一项 `{unit,input_count,output_count}`，只计整个运行边界，不累加串行步骤重复经过的记录。尚未执行时 steps/totals 可空，不等同于成功处理零条。
+- ComparisonResponse 包含 scope、before/after（均为 `{record_id,text}`）、applied_steps（步骤 ObjectRef）、record_ref、processing_run_ref、changes 字符串数组。before/after 必须是同一记录；无可见对应记录返回 404 COMPARISON_NOT_AVAILABLE，不返回伪造空对比。
+- graph 请求必须给 root_type/root_id。空图可返回所请求 root 和空 nodes/edges；不存在或越权对象仍按 404/403 处理，不能统一伪装成空图。非空图必须包含 root；每条边端点都必须存在，truncated 与 reason 一致。
+- 单次目录读取最多 100,000 个顶层训练记录、内容文件累计 100 MiB；超限 413 CATALOG_LIMIT_EXCEEDED。单次下载最多 100,000 条、编码后 100 MiB，超限 413 EXPORT_LIMIT_EXCEEDED；可以下调限制，不可在未经预算复核时扩大。
+- 下载响应 Content-Type 必须含 UTF-8，Content-Disposition 使用安全文件名及 filename* UTF-8。默认只下载成功完成输出；失败/未完成运行返回 409 INVALID_STATE_TRANSITION。服务端使用分块序列化，并在发送响应头前完成授权、范围和大小校验（可先写入本次专用临时文件）；不能先发 200 再悄悄截断。前端现有 Blob 下载受上述 100 MiB 上限约束。序列化器实现仍属于 M1。
+
+### 快照、配置和接入责任
+
+- generated revision 不可变，至少保留当前与前一版本；显式退役后 409 SNAPSHOT_EXPIRED。发布者先验证 manifest 完成标记、workspace_id、所有哈希，再原子切换活动指针。没有读取器驱动的自动删除。
+- workspace 快照有效期固定 900 秒，按 workspace/catalog 绑定；每个工作空间最多 10 份，容量不足时淘汰最旧快照，所有过期/淘汰请求统一 409。请求期间使用同一冻结数据，清理责任归快照存储服务；读取不续期。M1 实现可先用进程缓存，重启即过期，部署多进程前必须换共享存储或保证快照路由一致。
+- Settings 已提供 TRAINING_CENTER_DATA_DIR（默认 `.local/training-center`）、TTL、容量和数据上限。API 可按 `infra/compose.training-center.yaml` 显式挂载只读目录；该可选配置不会自动挂载或重启共享服务。
+- Agent 2 实现路径安全与授权：只能解析已授权 workspace/revision，拒绝绝对路径、父目录逃逸和符号链接逃逸；自定义生成输出不自动注册为公开目录。配置存在不等于 HTTP 读取器/快照缓存已经实现。
+- 新路由复用 `corpusflow.api.dependencies` 的 db/actor_id/workspace_id/role_required，保留现有策略。main 已支持 SNAPSHOT_EXPIRED、COMPARISON_NOT_AVAILABLE 和超限错误；不添加返回样例的后端占位路由。Agent 2/3/4 提交真实路由后由集成人员注册并更新实际 OpenAPI。
+
+### 统一样例与检查
+
+`contracts/training-center/examples.json` 是 B/C/D 的唯一前端样例包：B 的固定种子 23/11/7 与全空数据重放；C 是明确标注 synthetic 的协议样例；D 是 B 来源/文件关系的投影及 max_nodes 截断样例。C 的成功状态只表达协议，不是持久化执行事实。原 Agent 2 proposal 文件保留为可重放来源，不再作为公共类型定义。
+
+`python scripts/export_training_center_contract.py --check` 检查生成 TypeScript/设计 OpenAPI 是否过期；`python scripts/build_training_center_examples.py --check` 检查样例漂移。`tests/contract/test_training_center_baseline.py` 校验请求与响应、OpenAPI 结构/引用、计数/范围/图语义、UTF-8 下载字节和真实 FastAPI 参数解码。
+
+浏览器只在 DEV 且 VITE_TC_FIXTURES=true 时使用统一样例，不回退真实请求。普通 workspace、认证、写入和下载走真实接口。C 的只读样例还要求 `fixture=contract-v1` 和保留的 m0-example-run/step ID；真实运行 ID 永不拦截。样例未覆盖的统计过滤明确 422，未覆盖路由仍走网络；这不代表业务实现可忽略这些过滤。
