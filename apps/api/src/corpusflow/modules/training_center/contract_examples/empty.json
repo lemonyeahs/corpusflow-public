@@ -1,0 +1,986 @@
+{
+  "proposal_version": "agent2.m0.v1",
+  "provenance": {
+    "generated_at": "2026-10-26T17:04:58.146687Z",
+    "generation_config": {
+      "counts": {
+        "cpt": 0,
+        "dpo": 0,
+        "sft": 0
+      },
+      "language": "zh",
+      "max_source_group_size": 5
+    },
+    "generator": {
+      "path": "scripts/generate_training_center.py",
+      "version": "1.0.0"
+    },
+    "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+    "schema_version": "training-center.generated.v1",
+    "seed": 42,
+    "workspace_id": "tc-agent2"
+  },
+  "responses": {
+    "cpt_overview": {
+      "body": {
+        "dataset": {
+          "id": "99b1b5a8-f368-571b-bb34-4890fe930eef",
+          "kind": "cpt",
+          "name": "CPT 训练数据",
+          "product_type": "pretrain",
+          "record_count": 0,
+          "record_unit": "article",
+          "source_refs": [],
+          "split_counts": {
+            "test": 0,
+            "train": 0,
+            "validation": 0
+          },
+          "status": "available",
+          "token_count": null,
+          "token_count_method": null,
+          "version": "1",
+          "version_id": "0d69275b-0d7d-5815-b90b-08effa6aea36",
+          "workspace_id": "tc-agent2"
+        },
+        "destination_counts": [
+          {
+            "count": 0,
+            "key": "train",
+            "unit": "article"
+          },
+          {
+            "count": 0,
+            "key": "validation",
+            "unit": "article"
+          },
+          {
+            "count": 0,
+            "key": "test",
+            "unit": "article"
+          }
+        ],
+        "language_distribution": {
+          "buckets": [
+            {
+              "count": 0,
+              "key": "zh",
+              "label": "zh",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "en",
+              "label": "en",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": null
+            }
+          ],
+          "measure": "training_record_language",
+          "total_count": 0,
+          "unit": "article"
+        },
+        "length_distribution": {
+          "buckets": [
+            {
+              "count": 0,
+              "key": "0-127",
+              "label": "0-127",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "128-255",
+              "label": "128-255",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "256+",
+              "label": "256+",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": null
+            }
+          ],
+          "measure": "training_record_char_length",
+          "total_count": 0,
+          "unit": "article"
+        },
+        "lineage_root_ref": {
+          "catalog": "generated",
+          "id": "0d69275b-0d7d-5815-b90b-08effa6aea36",
+          "type": "dataset_version"
+        },
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.146687Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "workspace_id": "tc-agent2"
+        },
+        "source_distribution": {
+          "buckets": [
+            {
+              "count": 0,
+              "key": "web",
+              "label": "web",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "book",
+              "label": "book",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "paper",
+              "label": "paper",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": null
+            }
+          ],
+          "measure": "training_record_primary_source_kind",
+          "total_count": 0,
+          "unit": "article"
+        },
+        "split_counts": {
+          "test": 0,
+          "train": 0,
+          "validation": 0
+        }
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/99b1b5a8-f368-571b-bb34-4890fe930eef/overview",
+        "query": {
+          "catalog": "generated",
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "version": "1"
+        }
+      },
+      "status_code": 200
+    },
+    "cpt_samples": {
+      "body": {
+        "items": [],
+        "limit": 20,
+        "offset": 0,
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.146687Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "workspace_id": "tc-agent2"
+        },
+        "total_count": 0
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/99b1b5a8-f368-571b-bb34-4890fe930eef/samples",
+        "query": {
+          "catalog": "generated",
+          "limit": 20,
+          "offset": 0,
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "version": "1"
+        }
+      },
+      "status_code": 200
+    },
+    "cpt_samples_next": {
+      "body": {
+        "items": [],
+        "limit": 20,
+        "offset": 20,
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.146687Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "workspace_id": "tc-agent2"
+        },
+        "total_count": 0
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/99b1b5a8-f368-571b-bb34-4890fe930eef/samples",
+        "query": {
+          "catalog": "generated",
+          "limit": 20,
+          "offset": 20,
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "version": "1"
+        }
+      },
+      "status_code": 200
+    },
+    "dpo_overview": {
+      "body": {
+        "dataset": {
+          "id": "63c58623-c41a-55bc-be05-aa3884bba229",
+          "kind": "dpo",
+          "name": "DPO 训练数据",
+          "product_type": "dpo",
+          "record_count": 0,
+          "record_unit": "pair",
+          "source_refs": [],
+          "split_counts": {
+            "test": 0,
+            "train": 0,
+            "validation": 0
+          },
+          "status": "available",
+          "token_count": null,
+          "token_count_method": null,
+          "version": "1",
+          "version_id": "e4b74a82-42e0-5b04-a23a-fa96fd9e2075",
+          "workspace_id": "tc-agent2"
+        },
+        "destination_counts": [
+          {
+            "count": 0,
+            "key": "train",
+            "unit": "pair"
+          },
+          {
+            "count": 0,
+            "key": "validation",
+            "unit": "pair"
+          },
+          {
+            "count": 0,
+            "key": "test",
+            "unit": "pair"
+          }
+        ],
+        "language_distribution": {
+          "buckets": [
+            {
+              "count": 0,
+              "key": "zh",
+              "label": "zh",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "en",
+              "label": "en",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": null
+            }
+          ],
+          "measure": "training_record_language",
+          "total_count": 0,
+          "unit": "pair"
+        },
+        "length_distribution": {
+          "buckets": [
+            {
+              "count": 0,
+              "key": "0-127",
+              "label": "0-127",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "128-255",
+              "label": "128-255",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "256+",
+              "label": "256+",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": null
+            }
+          ],
+          "measure": "training_record_char_length",
+          "total_count": 0,
+          "unit": "pair"
+        },
+        "lineage_root_ref": {
+          "catalog": "generated",
+          "id": "e4b74a82-42e0-5b04-a23a-fa96fd9e2075",
+          "type": "dataset_version"
+        },
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.146687Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "workspace_id": "tc-agent2"
+        },
+        "source_distribution": {
+          "buckets": [
+            {
+              "count": 0,
+              "key": "web",
+              "label": "web",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "book",
+              "label": "book",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "paper",
+              "label": "paper",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": null
+            }
+          ],
+          "measure": "training_record_primary_source_kind",
+          "total_count": 0,
+          "unit": "pair"
+        },
+        "split_counts": {
+          "test": 0,
+          "train": 0,
+          "validation": 0
+        }
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/63c58623-c41a-55bc-be05-aa3884bba229/overview",
+        "query": {
+          "catalog": "generated",
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "version": "1"
+        }
+      },
+      "status_code": 200
+    },
+    "dpo_samples": {
+      "body": {
+        "items": [],
+        "limit": 20,
+        "offset": 0,
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.146687Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "workspace_id": "tc-agent2"
+        },
+        "total_count": 0
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/63c58623-c41a-55bc-be05-aa3884bba229/samples",
+        "query": {
+          "catalog": "generated",
+          "limit": 20,
+          "offset": 0,
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "version": "1"
+        }
+      },
+      "status_code": 200
+    },
+    "files": {
+      "body": {
+        "items": [],
+        "limit": 20,
+        "offset": 0,
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.146687Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "workspace_id": "tc-agent2"
+        },
+        "total_count": 0
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/files",
+        "query": {
+          "catalog": "generated",
+          "format": "txt",
+          "limit": 20,
+          "offset": 0,
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437"
+        }
+      },
+      "status_code": 200
+    },
+    "overview": {
+      "body": {
+        "datasets": [
+          {
+            "id": "99b1b5a8-f368-571b-bb34-4890fe930eef",
+            "kind": "cpt",
+            "name": "CPT 训练数据",
+            "product_type": "pretrain",
+            "record_count": 0,
+            "record_unit": "article",
+            "source_refs": [],
+            "split_counts": {
+              "test": 0,
+              "train": 0,
+              "validation": 0
+            },
+            "status": "available",
+            "token_count": null,
+            "token_count_method": null,
+            "version": "1",
+            "version_id": "0d69275b-0d7d-5815-b90b-08effa6aea36",
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "id": "2be75c57-ca39-542d-b188-3936a7cd3d59",
+            "kind": "sft",
+            "name": "SFT 训练数据",
+            "product_type": "sft",
+            "record_count": 0,
+            "record_unit": "record",
+            "source_refs": [],
+            "split_counts": {
+              "test": 0,
+              "train": 0,
+              "validation": 0
+            },
+            "status": "available",
+            "token_count": null,
+            "token_count_method": null,
+            "version": "1",
+            "version_id": "2e21615a-95c8-588d-9457-27a29cf69ec3",
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "id": "63c58623-c41a-55bc-be05-aa3884bba229",
+            "kind": "dpo",
+            "name": "DPO 训练数据",
+            "product_type": "dpo",
+            "record_count": 0,
+            "record_unit": "pair",
+            "source_refs": [],
+            "split_counts": {
+              "test": 0,
+              "train": 0,
+              "validation": 0
+            },
+            "status": "available",
+            "token_count": null,
+            "token_count_method": null,
+            "version": "1",
+            "version_id": "e4b74a82-42e0-5b04-a23a-fa96fd9e2075",
+            "workspace_id": "tc-agent2"
+          }
+        ],
+        "flow": {
+          "scope_label": "generated catalog: all files and training records",
+          "stages": [
+            {
+              "count": 0,
+              "key": "files",
+              "label": "文件",
+              "unit": "file"
+            },
+            {
+              "count": 0,
+              "key": "segments",
+              "label": "片段",
+              "unit": "segment"
+            },
+            {
+              "count": 0,
+              "key": "cpt",
+              "label": "CPT",
+              "unit": "article"
+            },
+            {
+              "count": 0,
+              "key": "sft",
+              "label": "SFT",
+              "unit": "record"
+            },
+            {
+              "count": 0,
+              "key": "dpo",
+              "label": "DPO",
+              "unit": "pair"
+            }
+          ],
+          "transitions": []
+        },
+        "formats": [
+          {
+            "file_count": 0,
+            "format": "pdf",
+            "unit": "file"
+          },
+          {
+            "file_count": 0,
+            "format": "html",
+            "unit": "file"
+          },
+          {
+            "file_count": 0,
+            "format": "md",
+            "unit": "file"
+          },
+          {
+            "file_count": 0,
+            "format": "txt",
+            "unit": "file"
+          },
+          {
+            "file_count": 0,
+            "format": "docx",
+            "unit": "file"
+          },
+          {
+            "file_count": 0,
+            "format": "csv",
+            "unit": "file"
+          },
+          {
+            "file_count": 0,
+            "format": "json",
+            "unit": "file"
+          },
+          {
+            "file_count": 0,
+            "format": "jsonl",
+            "unit": "file"
+          },
+          {
+            "file_count": 0,
+            "format": "other",
+            "unit": "file"
+          }
+        ],
+        "metrics": {
+          "file_count": {
+            "unit": "file",
+            "value": 0
+          },
+          "quality_pass_rate": {
+            "delta": null,
+            "unit": "ratio",
+            "value": null
+          },
+          "segment_count": {
+            "unit": "segment",
+            "value": 0
+          },
+          "token_count": {
+            "unit": "token",
+            "value": null
+          },
+          "training_record_count": {
+            "unit": "record",
+            "value": 0
+          }
+        },
+        "recent_activities": [],
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.146687Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "workspace_id": "tc-agent2"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/overview",
+        "query": {
+          "catalog": "generated",
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437"
+        }
+      },
+      "status_code": 200
+    },
+    "sft_overview": {
+      "body": {
+        "dataset": {
+          "id": "2be75c57-ca39-542d-b188-3936a7cd3d59",
+          "kind": "sft",
+          "name": "SFT 训练数据",
+          "product_type": "sft",
+          "record_count": 0,
+          "record_unit": "record",
+          "source_refs": [],
+          "split_counts": {
+            "test": 0,
+            "train": 0,
+            "validation": 0
+          },
+          "status": "available",
+          "token_count": null,
+          "token_count_method": null,
+          "version": "1",
+          "version_id": "2e21615a-95c8-588d-9457-27a29cf69ec3",
+          "workspace_id": "tc-agent2"
+        },
+        "destination_counts": [
+          {
+            "count": 0,
+            "key": "train",
+            "unit": "record"
+          },
+          {
+            "count": 0,
+            "key": "validation",
+            "unit": "record"
+          },
+          {
+            "count": 0,
+            "key": "test",
+            "unit": "record"
+          }
+        ],
+        "language_distribution": {
+          "buckets": [
+            {
+              "count": 0,
+              "key": "zh",
+              "label": "zh",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "en",
+              "label": "en",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": null
+            }
+          ],
+          "measure": "training_record_language",
+          "total_count": 0,
+          "unit": "record"
+        },
+        "length_distribution": {
+          "buckets": [
+            {
+              "count": 0,
+              "key": "0-127",
+              "label": "0-127",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "128-255",
+              "label": "128-255",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "256+",
+              "label": "256+",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": null
+            }
+          ],
+          "measure": "training_record_char_length",
+          "total_count": 0,
+          "unit": "record"
+        },
+        "lineage_root_ref": {
+          "catalog": "generated",
+          "id": "2e21615a-95c8-588d-9457-27a29cf69ec3",
+          "type": "dataset_version"
+        },
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.146687Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "workspace_id": "tc-agent2"
+        },
+        "source_distribution": {
+          "buckets": [
+            {
+              "count": 0,
+              "key": "web",
+              "label": "web",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "book",
+              "label": "book",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "paper",
+              "label": "paper",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": null
+            }
+          ],
+          "measure": "training_record_primary_source_kind",
+          "total_count": 0,
+          "unit": "record"
+        },
+        "split_counts": {
+          "test": 0,
+          "train": 0,
+          "validation": 0
+        }
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/2be75c57-ca39-542d-b188-3936a7cd3d59/overview",
+        "query": {
+          "catalog": "generated",
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "version": "1"
+        }
+      },
+      "status_code": 200
+    },
+    "sft_samples": {
+      "body": {
+        "items": [],
+        "limit": 20,
+        "offset": 0,
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.146687Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "workspace_id": "tc-agent2"
+        },
+        "total_count": 0
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/2be75c57-ca39-542d-b188-3936a7cd3d59/samples",
+        "query": {
+          "catalog": "generated",
+          "limit": 20,
+          "offset": 0,
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "version": "1"
+        }
+      },
+      "status_code": 200
+    },
+    "txt_stats": {
+      "body": {
+        "availability": {
+          "ingestion_trend": "no_files"
+        },
+        "dataset_refs": [],
+        "flow": {
+          "scope_label": "format=txt; linked records via source_ref",
+          "stages": [
+            {
+              "count": 0,
+              "key": "files",
+              "label": "文件",
+              "unit": "file"
+            },
+            {
+              "count": 0,
+              "key": "segments",
+              "label": "片段",
+              "unit": "segment"
+            },
+            {
+              "count": 0,
+              "key": "cpt",
+              "label": "CPT",
+              "unit": "article"
+            },
+            {
+              "count": 0,
+              "key": "sft",
+              "label": "SFT",
+              "unit": "record"
+            },
+            {
+              "count": 0,
+              "key": "dpo",
+              "label": "DPO",
+              "unit": "pair"
+            }
+          ],
+          "transitions": []
+        },
+        "ingestion_trend": null,
+        "language_distribution": {
+          "buckets": [
+            {
+              "count": 0,
+              "key": "zh",
+              "label": "zh",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "en",
+              "label": "en",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": null
+            }
+          ],
+          "measure": "segment_language",
+          "total_count": 0,
+          "unit": "segment"
+        },
+        "length_distribution": {
+          "buckets": [
+            {
+              "count": 0,
+              "key": "0-127",
+              "label": "0-127",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "128-255",
+              "label": "128-255",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "256+",
+              "label": "256+",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": null
+            }
+          ],
+          "measure": "segment_char_length",
+          "total_count": 0,
+          "unit": "segment"
+        },
+        "metrics": {
+          "file_count": {
+            "unit": "file",
+            "value": 0
+          },
+          "quality_pass_rate": {
+            "delta": null,
+            "unit": "ratio",
+            "value": null
+          },
+          "segment_count": {
+            "unit": "segment",
+            "value": 0
+          },
+          "size_bytes": {
+            "unit": "byte",
+            "value": 0
+          },
+          "token_count": {
+            "unit": "token",
+            "value": null
+          }
+        },
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.146687Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "workspace_id": "tc-agent2"
+        },
+        "source_distribution": {
+          "buckets": [
+            {
+              "count": 0,
+              "key": "web",
+              "label": "web",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "book",
+              "label": "book",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "paper",
+              "label": "paper",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": null
+            }
+          ],
+          "measure": "file_source_kind",
+          "total_count": 0,
+          "unit": "file"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/formats/txt/stats",
+        "query": {
+          "catalog": "generated",
+          "revision": "d4ecfb3f8baaef7d439f47d4c7c95ffa76255d0870224c29593f45d238ca2437",
+          "timezone": "UTC"
+        }
+      },
+      "status_code": 200
+    }
+  }
+}

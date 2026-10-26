@@ -1,0 +1,260 @@
+{
+  "proposal_version": "agent2.m0.v1",
+  "responses": {
+    "cpt_overview": {
+      "body": {
+        "error": {
+          "code": "SNAPSHOT_EXPIRED",
+          "details": [],
+          "message": "快照已过期，请重新加载。",
+          "retryable": false
+        },
+        "request_id": "example-request-001"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/ef51ffd7-bafe-5f66-b871-b656d1d7ab01/overview",
+        "query": {
+          "catalog": "generated",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "version": "1"
+        }
+      },
+      "status_code": 409
+    },
+    "cpt_samples": {
+      "body": {
+        "error": {
+          "code": "SNAPSHOT_EXPIRED",
+          "details": [],
+          "message": "快照已过期，请重新加载。",
+          "retryable": false
+        },
+        "request_id": "example-request-001"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/ef51ffd7-bafe-5f66-b871-b656d1d7ab01/samples",
+        "query": {
+          "catalog": "generated",
+          "limit": 20,
+          "offset": 0,
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "version": "1"
+        }
+      },
+      "status_code": 409
+    },
+    "cpt_samples_next": {
+      "body": {
+        "error": {
+          "code": "SNAPSHOT_EXPIRED",
+          "details": [],
+          "message": "快照已过期，请重新加载。",
+          "retryable": false
+        },
+        "request_id": "example-request-001"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/ef51ffd7-bafe-5f66-b871-b656d1d7ab01/samples",
+        "query": {
+          "catalog": "generated",
+          "limit": 20,
+          "offset": 20,
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "version": "1"
+        }
+      },
+      "status_code": 409
+    },
+    "dpo_overview": {
+      "body": {
+        "error": {
+          "code": "SNAPSHOT_EXPIRED",
+          "details": [],
+          "message": "快照已过期，请重新加载。",
+          "retryable": false
+        },
+        "request_id": "example-request-001"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/dec29797-48ec-5fa0-9915-785815216ab4/overview",
+        "query": {
+          "catalog": "generated",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "version": "1"
+        }
+      },
+      "status_code": 409
+    },
+    "dpo_samples": {
+      "body": {
+        "error": {
+          "code": "SNAPSHOT_EXPIRED",
+          "details": [],
+          "message": "快照已过期，请重新加载。",
+          "retryable": false
+        },
+        "request_id": "example-request-001"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/dec29797-48ec-5fa0-9915-785815216ab4/samples",
+        "query": {
+          "catalog": "generated",
+          "limit": 20,
+          "offset": 0,
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "version": "1"
+        }
+      },
+      "status_code": 409
+    },
+    "files": {
+      "body": {
+        "error": {
+          "code": "SNAPSHOT_EXPIRED",
+          "details": [],
+          "message": "快照已过期，请重新加载。",
+          "retryable": false
+        },
+        "request_id": "example-request-001"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/files",
+        "query": {
+          "catalog": "generated",
+          "format": "txt",
+          "limit": 20,
+          "offset": 0,
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a"
+        }
+      },
+      "status_code": 409
+    },
+    "not_found": {
+      "body": {
+        "error": {
+          "code": "NOT_FOUND",
+          "details": [],
+          "message": "对象不存在。",
+          "retryable": false
+        },
+        "request_id": "example-request-002"
+      },
+      "status_code": 404
+    },
+    "overview": {
+      "body": {
+        "error": {
+          "code": "SNAPSHOT_EXPIRED",
+          "details": [],
+          "message": "快照已过期，请重新加载。",
+          "retryable": false
+        },
+        "request_id": "example-request-001"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/overview",
+        "query": {
+          "catalog": "generated",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a"
+        }
+      },
+      "status_code": 409
+    },
+    "permission_denied": {
+      "body": {
+        "error": {
+          "code": "PERMISSION_DENIED",
+          "details": [],
+          "message": "无权访问当前工作空间。",
+          "retryable": false
+        },
+        "request_id": "example-request-002"
+      },
+      "status_code": 403
+    },
+    "sft_overview": {
+      "body": {
+        "error": {
+          "code": "SNAPSHOT_EXPIRED",
+          "details": [],
+          "message": "快照已过期，请重新加载。",
+          "retryable": false
+        },
+        "request_id": "example-request-001"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/3afd77f5-661a-5c95-b065-ea743ab8ff7a/overview",
+        "query": {
+          "catalog": "generated",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "version": "1"
+        }
+      },
+      "status_code": 409
+    },
+    "sft_samples": {
+      "body": {
+        "error": {
+          "code": "SNAPSHOT_EXPIRED",
+          "details": [],
+          "message": "快照已过期，请重新加载。",
+          "retryable": false
+        },
+        "request_id": "example-request-001"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/3afd77f5-661a-5c95-b065-ea743ab8ff7a/samples",
+        "query": {
+          "catalog": "generated",
+          "limit": 20,
+          "offset": 0,
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "version": "1"
+        }
+      },
+      "status_code": 409
+    },
+    "txt_stats": {
+      "body": {
+        "error": {
+          "code": "SNAPSHOT_EXPIRED",
+          "details": [],
+          "message": "快照已过期，请重新加载。",
+          "retryable": false
+        },
+        "request_id": "example-request-001"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/formats/txt/stats",
+        "query": {
+          "catalog": "generated",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "timezone": "UTC"
+        }
+      },
+      "status_code": 409
+    },
+    "validation_failed": {
+      "body": {
+        "error": {
+          "code": "VALIDATION_FAILED",
+          "details": [],
+          "message": "分页参数不合法。",
+          "retryable": false
+        },
+        "request_id": "example-request-002"
+      },
+      "status_code": 422
+    }
+  }
+}

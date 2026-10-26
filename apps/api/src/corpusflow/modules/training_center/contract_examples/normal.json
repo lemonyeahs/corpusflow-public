@@ -1,0 +1,2686 @@
+{
+  "proposal_version": "agent2.m0.v1",
+  "provenance": {
+    "generated_at": "2026-10-26T17:04:58.072988Z",
+    "generation_config": {
+      "counts": {
+        "cpt": 23,
+        "dpo": 7,
+        "sft": 11
+      },
+      "language": "zh",
+      "max_source_group_size": 5
+    },
+    "generator": {
+      "path": "scripts/generate_training_center.py",
+      "version": "1.0.0"
+    },
+    "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+    "schema_version": "training-center.generated.v1",
+    "seed": 42,
+    "workspace_id": "tc-agent2"
+  },
+  "responses": {
+    "cpt_overview": {
+      "body": {
+        "dataset": {
+          "id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+          "kind": "cpt",
+          "name": "CPT 训练数据",
+          "product_type": "pretrain",
+          "record_count": 23,
+          "record_unit": "article",
+          "source_refs": [
+            {
+              "catalog": "generated",
+              "id": "26d20041-f889-5052-9fd7-d7f799ddd517",
+              "type": "source"
+            },
+            {
+              "catalog": "generated",
+              "id": "299dffa6-e2ec-50d0-9045-bb050db0ae38",
+              "type": "source"
+            },
+            {
+              "catalog": "generated",
+              "id": "2d5bb21c-6a2a-5655-a4e9-0bb60f450ced",
+              "type": "source"
+            },
+            {
+              "catalog": "generated",
+              "id": "41bb9b35-fde1-574c-8a86-b5a5ef27d2fb",
+              "type": "source"
+            },
+            {
+              "catalog": "generated",
+              "id": "6cc569f4-9790-5a75-9139-c0b9075a0205",
+              "type": "source"
+            },
+            {
+              "catalog": "generated",
+              "id": "8e5b53c4-3f57-5e78-9e19-79186dd8ffe9",
+              "type": "source"
+            },
+            {
+              "catalog": "generated",
+              "id": "cdc36d8a-d1a4-542f-acff-f432038c23c9",
+              "type": "source"
+            }
+          ],
+          "split_counts": {
+            "test": 1,
+            "train": 21,
+            "validation": 1
+          },
+          "status": "available",
+          "token_count": null,
+          "token_count_method": null,
+          "version": "1",
+          "version_id": "ac5dc581-9e8e-5d17-ae8f-297386996908",
+          "workspace_id": "tc-agent2"
+        },
+        "destination_counts": [
+          {
+            "count": 21,
+            "key": "train",
+            "unit": "article"
+          },
+          {
+            "count": 1,
+            "key": "validation",
+            "unit": "article"
+          },
+          {
+            "count": 1,
+            "key": "test",
+            "unit": "article"
+          }
+        ],
+        "language_distribution": {
+          "buckets": [
+            {
+              "count": 23,
+              "key": "zh",
+              "label": "zh",
+              "ratio": 1.0
+            },
+            {
+              "count": 0,
+              "key": "en",
+              "label": "en",
+              "ratio": 0.0
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": 0.0
+            }
+          ],
+          "measure": "training_record_language",
+          "total_count": 23,
+          "unit": "article"
+        },
+        "length_distribution": {
+          "buckets": [
+            {
+              "count": 23,
+              "key": "0-127",
+              "label": "0-127",
+              "ratio": 1.0
+            },
+            {
+              "count": 0,
+              "key": "128-255",
+              "label": "128-255",
+              "ratio": 0.0
+            },
+            {
+              "count": 0,
+              "key": "256+",
+              "label": "256+",
+              "ratio": 0.0
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": 0.0
+            }
+          ],
+          "measure": "training_record_char_length",
+          "total_count": 23,
+          "unit": "article"
+        },
+        "lineage_root_ref": {
+          "catalog": "generated",
+          "id": "ac5dc581-9e8e-5d17-ae8f-297386996908",
+          "type": "dataset_version"
+        },
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.072988Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "workspace_id": "tc-agent2"
+        },
+        "source_distribution": {
+          "buckets": [
+            {
+              "count": 10,
+              "key": "web",
+              "label": "web",
+              "ratio": 0.43478260869565216
+            },
+            {
+              "count": 5,
+              "key": "book",
+              "label": "book",
+              "ratio": 0.21739130434782608
+            },
+            {
+              "count": 8,
+              "key": "paper",
+              "label": "paper",
+              "ratio": 0.34782608695652173
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": 0.0
+            }
+          ],
+          "measure": "training_record_primary_source_kind",
+          "total_count": 23,
+          "unit": "article"
+        },
+        "split_counts": {
+          "test": 1,
+          "train": 21,
+          "validation": 1
+        }
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/ef51ffd7-bafe-5f66-b871-b656d1d7ab01/overview",
+        "query": {
+          "catalog": "generated",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "version": "1"
+        }
+      },
+      "status_code": 200
+    },
+    "cpt_samples": {
+      "body": {
+        "items": [
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "9f396d6d-6227-59a2-9169-016e2904888f",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 1,
+            "source_group_id": "8519624d-4096-5bee-b734-87f7a2426d0c",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "8e5b53c4-3f57-5e78-9e19-79186dd8ffe9",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于来源追溯，第 1 组情境 1 应注意什么？\n\n保留来源标识与内容版本，便于检查记录之间的关联。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "来源追溯",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "781602d1-21d0-5602-9488-480680aa4440",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 2,
+            "source_group_id": "8519624d-4096-5bee-b734-87f7a2426d0c",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "8e5b53c4-3f57-5e78-9e19-79186dd8ffe9",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于来源追溯，第 1 组情境 2 应注意什么？\n\n保留来源标识与内容版本，便于检查记录之间的关联。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "来源追溯",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "109e7a15-0a66-5314-9ffa-20bf78fbf20c",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 3,
+            "source_group_id": "8519624d-4096-5bee-b734-87f7a2426d0c",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "8e5b53c4-3f57-5e78-9e19-79186dd8ffe9",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于来源追溯，第 1 组情境 3 应注意什么？\n\n保留来源标识与内容版本，便于检查记录之间的关联。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "来源追溯",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "48c1de0c-5136-5565-856d-91e907828f33",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 4,
+            "source_group_id": "8519624d-4096-5bee-b734-87f7a2426d0c",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "8e5b53c4-3f57-5e78-9e19-79186dd8ffe9",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于来源追溯，第 1 组情境 4 应注意什么？\n\n保留来源标识与内容版本，便于检查记录之间的关联。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "来源追溯",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "8c984756-2ef6-5488-8b52-47491323a19a",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 5,
+            "source_group_id": "8519624d-4096-5bee-b734-87f7a2426d0c",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "8e5b53c4-3f57-5e78-9e19-79186dd8ffe9",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于来源追溯，第 1 组情境 5 应注意什么？\n\n保留来源标识与内容版本，便于检查记录之间的关联。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "来源追溯",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 73,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "e1c8c7a1-5b55-512c-ad4f-fe87aa81a6c0",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 6,
+            "source_group_id": "ec317653-ab79-50a3-9b5d-22a0ba6804b7",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "41bb9b35-fde1-574c-8a86-b5a5ef27d2fb",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于版本管理，第 2 组情境 1 应注意什么？\n\n为每个不可变版本保留配置与内容哈希，避免混合不同快照。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "版本管理",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 73,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "f52de198-f25b-5b92-afc9-4b4cb80c097b",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 7,
+            "source_group_id": "ec317653-ab79-50a3-9b5d-22a0ba6804b7",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "41bb9b35-fde1-574c-8a86-b5a5ef27d2fb",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于版本管理，第 2 组情境 2 应注意什么？\n\n为每个不可变版本保留配置与内容哈希，避免混合不同快照。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "版本管理",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 73,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "6d36ce61-0dde-5ae4-afd8-86d1e8a81d40",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 8,
+            "source_group_id": "ec317653-ab79-50a3-9b5d-22a0ba6804b7",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "41bb9b35-fde1-574c-8a86-b5a5ef27d2fb",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于版本管理，第 2 组情境 3 应注意什么？\n\n为每个不可变版本保留配置与内容哈希，避免混合不同快照。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "版本管理",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 73,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "0344c0c2-4804-5463-b638-ee5cc6d98a7e",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 9,
+            "source_group_id": "ec317653-ab79-50a3-9b5d-22a0ba6804b7",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "41bb9b35-fde1-574c-8a86-b5a5ef27d2fb",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于版本管理，第 2 组情境 4 应注意什么？\n\n为每个不可变版本保留配置与内容哈希，避免混合不同快照。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "版本管理",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 73,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "10a8d72a-ce3d-55ea-9af2-90f786e905be",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 10,
+            "source_group_id": "ec317653-ab79-50a3-9b5d-22a0ba6804b7",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "41bb9b35-fde1-574c-8a86-b5a5ef27d2fb",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于版本管理，第 2 组情境 5 应注意什么？\n\n为每个不可变版本保留配置与内容哈希，避免混合不同快照。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "版本管理",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "d240f498-29f5-5536-abcb-1068e4d642d4",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 11,
+            "source_group_id": "d40becd1-c4a5-5759-98e7-80747b7bde8b",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "cdc36d8a-d1a4-542f-acff-f432038c23c9",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于分组切分，第 3 组情境 1 应注意什么？\n\n同一来源组只属于一个集合，切分后再检查重复内容。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "分组切分",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "500a474f-46ff-568a-915a-b5d9b69be755",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 12,
+            "source_group_id": "d40becd1-c4a5-5759-98e7-80747b7bde8b",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "cdc36d8a-d1a4-542f-acff-f432038c23c9",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于分组切分，第 3 组情境 2 应注意什么？\n\n同一来源组只属于一个集合，切分后再检查重复内容。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "分组切分",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "9eb24430-a061-561d-b2cb-bc4d34c4025b",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 13,
+            "source_group_id": "d40becd1-c4a5-5759-98e7-80747b7bde8b",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "cdc36d8a-d1a4-542f-acff-f432038c23c9",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于分组切分，第 3 组情境 3 应注意什么？\n\n同一来源组只属于一个集合，切分后再检查重复内容。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "分组切分",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "09d5421b-06dc-50da-9ae5-4ff5835f3fa6",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 14,
+            "source_group_id": "d40becd1-c4a5-5759-98e7-80747b7bde8b",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "cdc36d8a-d1a4-542f-acff-f432038c23c9",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于分组切分，第 3 组情境 4 应注意什么？\n\n同一来源组只属于一个集合，切分后再检查重复内容。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "分组切分",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "c4882651-2ec3-5429-991b-0351b31a0519",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 15,
+            "source_group_id": "d40becd1-c4a5-5759-98e7-80747b7bde8b",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "cdc36d8a-d1a4-542f-acff-f432038c23c9",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于分组切分，第 3 组情境 5 应注意什么？\n\n同一来源组只属于一个集合，切分后再检查重复内容。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "分组切分",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "9718b7b0-f117-5d31-9195-73dea219d094",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 16,
+            "source_group_id": "22b0a479-42df-57fd-bcd2-131ca8dbfa9d",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "2d5bb21c-6a2a-5655-a4e9-0bb60f450ced",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于分组切分，第 4 组情境 1 应注意什么？\n\n同一来源组只属于一个集合，切分后再检查重复内容。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "分组切分",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "c411a117-69ed-59ec-b90d-a6dc01c2ee84",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 17,
+            "source_group_id": "22b0a479-42df-57fd-bcd2-131ca8dbfa9d",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "2d5bb21c-6a2a-5655-a4e9-0bb60f450ced",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于分组切分，第 4 组情境 2 应注意什么？\n\n同一来源组只属于一个集合，切分后再检查重复内容。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "分组切分",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "62209d84-a938-5687-b1eb-64bf778dd791",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 18,
+            "source_group_id": "22b0a479-42df-57fd-bcd2-131ca8dbfa9d",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "2d5bb21c-6a2a-5655-a4e9-0bb60f450ced",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于分组切分，第 4 组情境 3 应注意什么？\n\n同一来源组只属于一个集合，切分后再检查重复内容。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "分组切分",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "20d75073-ea68-5c3b-9e99-bf847f894a96",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 19,
+            "source_group_id": "22b0a479-42df-57fd-bcd2-131ca8dbfa9d",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "2d5bb21c-6a2a-5655-a4e9-0bb60f450ced",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于分组切分，第 4 组情境 4 应注意什么？\n\n同一来源组只属于一个集合，切分后再检查重复内容。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "分组切分",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "6538ff96-c3fc-54f4-890d-0e82938a10b6",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 20,
+            "source_group_id": "22b0a479-42df-57fd-bcd2-131ca8dbfa9d",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "2d5bb21c-6a2a-5655-a4e9-0bb60f450ced",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于分组切分，第 4 组情境 5 应注意什么？\n\n同一来源组只属于一个集合，切分后再检查重复内容。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "分组切分",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          }
+        ],
+        "limit": 20,
+        "offset": 0,
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.072988Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "workspace_id": "tc-agent2"
+        },
+        "total_count": 23
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/ef51ffd7-bafe-5f66-b871-b656d1d7ab01/samples",
+        "query": {
+          "catalog": "generated",
+          "limit": 20,
+          "offset": 0,
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "version": "1"
+        }
+      },
+      "status_code": 200
+    },
+    "cpt_samples_next": {
+      "body": {
+        "items": [
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "15fb006b-b334-51a5-bbff-fcc7a9f38b0e",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 21,
+            "source_group_id": "73a18910-fea1-5367-bbd3-fadd6f7d1ddd",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "299dffa6-e2ec-50d0-9045-bb050db0ae38",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "text": "关于来源追溯，第 5 组情境 1 应注意什么？\n\n保留来源标识与内容版本，便于检查记录之间的关联。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "来源追溯",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 73,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "962f76d5-3743-5c5f-88ba-b26cd9ef79ff",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 22,
+            "source_group_id": "88a7d5a4-a396-5219-9459-fd58078f8379",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "26d20041-f889-5052-9fd7-d7f799ddd517",
+                "type": "source"
+              }
+            ],
+            "split": "validation",
+            "text": "关于版本管理，第 6 组情境 1 应注意什么？\n\n为每个不可变版本保留配置与内容哈希，避免混合不同快照。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "版本管理",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 70,
+            "dataset_id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "dataset_version": "1",
+            "id": "7bec0d81-5bfb-5763-9f49-ce5ae1b8f867",
+            "kind": "cpt",
+            "language": "zh",
+            "segment_refs": [],
+            "sequence": 23,
+            "source_group_id": "9ed6f574-f594-50ee-99f7-74ce18daa323",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "6cc569f4-9790-5a75-9139-c0b9075a0205",
+                "type": "source"
+              }
+            ],
+            "split": "test",
+            "text": "关于来源追溯，第 7 组情境 1 应注意什么？\n\n保留来源标识与内容版本，便于检查记录之间的关联。建议记录检查依据，并对不确定内容安排复核。",
+            "title": "来源追溯",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          }
+        ],
+        "limit": 20,
+        "offset": 20,
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.072988Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "workspace_id": "tc-agent2"
+        },
+        "total_count": 23
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/ef51ffd7-bafe-5f66-b871-b656d1d7ab01/samples",
+        "query": {
+          "catalog": "generated",
+          "limit": 20,
+          "offset": 20,
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "version": "1"
+        }
+      },
+      "status_code": 200
+    },
+    "dpo_overview": {
+      "body": {
+        "dataset": {
+          "id": "dec29797-48ec-5fa0-9915-785815216ab4",
+          "kind": "dpo",
+          "name": "DPO 训练数据",
+          "product_type": "dpo",
+          "record_count": 7,
+          "record_unit": "pair",
+          "source_refs": [
+            {
+              "catalog": "generated",
+              "id": "19193b45-c9fe-568c-88c8-173fcad3589e",
+              "type": "source"
+            },
+            {
+              "catalog": "generated",
+              "id": "4f27754b-b7e0-596f-92bd-b873984441ac",
+              "type": "source"
+            },
+            {
+              "catalog": "generated",
+              "id": "52966ec3-5799-51c8-b5e3-9de4fa800f7d",
+              "type": "source"
+            }
+          ],
+          "split_counts": {
+            "test": 0,
+            "train": 6,
+            "validation": 1
+          },
+          "status": "available",
+          "token_count": null,
+          "token_count_method": null,
+          "version": "1",
+          "version_id": "01e46ce9-21a3-5ecb-9626-69e45e60341c",
+          "workspace_id": "tc-agent2"
+        },
+        "destination_counts": [
+          {
+            "count": 6,
+            "key": "train",
+            "unit": "pair"
+          },
+          {
+            "count": 1,
+            "key": "validation",
+            "unit": "pair"
+          },
+          {
+            "count": 0,
+            "key": "test",
+            "unit": "pair"
+          }
+        ],
+        "language_distribution": {
+          "buckets": [
+            {
+              "count": 7,
+              "key": "zh",
+              "label": "zh",
+              "ratio": 1.0
+            },
+            {
+              "count": 0,
+              "key": "en",
+              "label": "en",
+              "ratio": 0.0
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": 0.0
+            }
+          ],
+          "measure": "training_record_language",
+          "total_count": 7,
+          "unit": "pair"
+        },
+        "length_distribution": {
+          "buckets": [
+            {
+              "count": 7,
+              "key": "0-127",
+              "label": "0-127",
+              "ratio": 1.0
+            },
+            {
+              "count": 0,
+              "key": "128-255",
+              "label": "128-255",
+              "ratio": 0.0
+            },
+            {
+              "count": 0,
+              "key": "256+",
+              "label": "256+",
+              "ratio": 0.0
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": 0.0
+            }
+          ],
+          "measure": "training_record_char_length",
+          "total_count": 7,
+          "unit": "pair"
+        },
+        "lineage_root_ref": {
+          "catalog": "generated",
+          "id": "01e46ce9-21a3-5ecb-9626-69e45e60341c",
+          "type": "dataset_version"
+        },
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.072988Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "workspace_id": "tc-agent2"
+        },
+        "source_distribution": {
+          "buckets": [
+            {
+              "count": 5,
+              "key": "web",
+              "label": "web",
+              "ratio": 0.7142857142857143
+            },
+            {
+              "count": 0,
+              "key": "book",
+              "label": "book",
+              "ratio": 0.0
+            },
+            {
+              "count": 2,
+              "key": "paper",
+              "label": "paper",
+              "ratio": 0.2857142857142857
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": 0.0
+            }
+          ],
+          "measure": "training_record_primary_source_kind",
+          "total_count": 7,
+          "unit": "pair"
+        },
+        "split_counts": {
+          "test": 0,
+          "train": 6,
+          "validation": 1
+        }
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/dec29797-48ec-5fa0-9915-785815216ab4/overview",
+        "query": {
+          "catalog": "generated",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "version": "1"
+        }
+      },
+      "status_code": 200
+    },
+    "dpo_samples": {
+      "body": {
+        "items": [
+          {
+            "char_count": 91,
+            "chosen": "识别敏感字段后使用占位符，并检查上下文是否仍然可用。建议记录检查依据，并对不确定内容安排复核。",
+            "dataset_id": "dec29797-48ec-5fa0-9915-785815216ab4",
+            "dataset_version": "1",
+            "id": "d8429410-6464-5ad3-a5cd-a80a0997c295",
+            "kind": "dpo",
+            "language": "zh",
+            "preference_reason": "优选回答给出可核验步骤，避免无依据的成功判断。",
+            "prompt": "关于隐私保护，第 1 组情境 1 应注意什么？",
+            "rejected": "无需检查依据，直接认为所有记录都已经通过。",
+            "segment_refs": [],
+            "sequence": 1,
+            "source_group_id": "38928331-f0ef-54fd-b76b-3012e24dd3f9",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "4f27754b-b7e0-596f-92bd-b873984441ac",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 91,
+            "chosen": "识别敏感字段后使用占位符，并检查上下文是否仍然可用。建议记录检查依据，并对不确定内容安排复核。",
+            "dataset_id": "dec29797-48ec-5fa0-9915-785815216ab4",
+            "dataset_version": "1",
+            "id": "169b92e0-faea-5074-b5c1-16a508ab8587",
+            "kind": "dpo",
+            "language": "zh",
+            "preference_reason": "优选回答给出可核验步骤，避免无依据的成功判断。",
+            "prompt": "关于隐私保护，第 1 组情境 2 应注意什么？",
+            "rejected": "无需检查依据，直接认为所有记录都已经通过。",
+            "segment_refs": [],
+            "sequence": 2,
+            "source_group_id": "38928331-f0ef-54fd-b76b-3012e24dd3f9",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "4f27754b-b7e0-596f-92bd-b873984441ac",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 91,
+            "chosen": "识别敏感字段后使用占位符，并检查上下文是否仍然可用。建议记录检查依据，并对不确定内容安排复核。",
+            "dataset_id": "dec29797-48ec-5fa0-9915-785815216ab4",
+            "dataset_version": "1",
+            "id": "15689cbd-64f5-5db7-b037-25a256cf4cb2",
+            "kind": "dpo",
+            "language": "zh",
+            "preference_reason": "优选回答给出可核验步骤，避免无依据的成功判断。",
+            "prompt": "关于隐私保护，第 1 组情境 3 应注意什么？",
+            "rejected": "无需检查依据，直接认为所有记录都已经通过。",
+            "segment_refs": [],
+            "sequence": 3,
+            "source_group_id": "38928331-f0ef-54fd-b76b-3012e24dd3f9",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "4f27754b-b7e0-596f-92bd-b873984441ac",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 91,
+            "chosen": "识别敏感字段后使用占位符，并检查上下文是否仍然可用。建议记录检查依据，并对不确定内容安排复核。",
+            "dataset_id": "dec29797-48ec-5fa0-9915-785815216ab4",
+            "dataset_version": "1",
+            "id": "3794d2b4-e7ef-5f08-90c8-3edb6baa7eea",
+            "kind": "dpo",
+            "language": "zh",
+            "preference_reason": "优选回答给出可核验步骤，避免无依据的成功判断。",
+            "prompt": "关于隐私保护，第 1 组情境 4 应注意什么？",
+            "rejected": "无需检查依据，直接认为所有记录都已经通过。",
+            "segment_refs": [],
+            "sequence": 4,
+            "source_group_id": "38928331-f0ef-54fd-b76b-3012e24dd3f9",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "4f27754b-b7e0-596f-92bd-b873984441ac",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 91,
+            "chosen": "识别敏感字段后使用占位符，并检查上下文是否仍然可用。建议记录检查依据，并对不确定内容安排复核。",
+            "dataset_id": "dec29797-48ec-5fa0-9915-785815216ab4",
+            "dataset_version": "1",
+            "id": "288ccd13-e0e6-5fe5-b2f8-e82adba0ba2b",
+            "kind": "dpo",
+            "language": "zh",
+            "preference_reason": "优选回答给出可核验步骤，避免无依据的成功判断。",
+            "prompt": "关于隐私保护，第 1 组情境 5 应注意什么？",
+            "rejected": "无需检查依据，直接认为所有记录都已经通过。",
+            "segment_refs": [],
+            "sequence": 5,
+            "source_group_id": "38928331-f0ef-54fd-b76b-3012e24dd3f9",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "4f27754b-b7e0-596f-92bd-b873984441ac",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 89,
+            "chosen": "保留来源标识与内容版本，便于检查记录之间的关联。建议记录检查依据，并对不确定内容安排复核。",
+            "dataset_id": "dec29797-48ec-5fa0-9915-785815216ab4",
+            "dataset_version": "1",
+            "id": "317dcfb3-1283-53d4-9044-87eec7b83ed6",
+            "kind": "dpo",
+            "language": "zh",
+            "preference_reason": "优选回答给出可核验步骤，避免无依据的成功判断。",
+            "prompt": "关于来源追溯，第 2 组情境 1 应注意什么？",
+            "rejected": "无需检查依据，直接认为所有记录都已经通过。",
+            "segment_refs": [],
+            "sequence": 6,
+            "source_group_id": "dbac0765-1d4a-504d-8067-62c1beed8b86",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "19193b45-c9fe-568c-88c8-173fcad3589e",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 89,
+            "chosen": "同一来源组只属于一个集合，切分后再检查重复内容。建议记录检查依据，并对不确定内容安排复核。",
+            "dataset_id": "dec29797-48ec-5fa0-9915-785815216ab4",
+            "dataset_version": "1",
+            "id": "6205b186-9113-5577-a578-402d3bbbf50b",
+            "kind": "dpo",
+            "language": "zh",
+            "preference_reason": "优选回答给出可核验步骤，避免无依据的成功判断。",
+            "prompt": "关于分组切分，第 3 组情境 1 应注意什么？",
+            "rejected": "无需检查依据，直接认为所有记录都已经通过。",
+            "segment_refs": [],
+            "sequence": 7,
+            "source_group_id": "cb2e369c-784a-5fa4-9ed3-08b90f8607a9",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "52966ec3-5799-51c8-b5e3-9de4fa800f7d",
+                "type": "source"
+              }
+            ],
+            "split": "validation",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          }
+        ],
+        "limit": 20,
+        "offset": 0,
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.072988Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "workspace_id": "tc-agent2"
+        },
+        "total_count": 7
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/dec29797-48ec-5fa0-9915-785815216ab4/samples",
+        "query": {
+          "catalog": "generated",
+          "limit": 20,
+          "offset": 0,
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "version": "1"
+        }
+      },
+      "status_code": 200
+    },
+    "files": {
+      "body": {
+        "items": [
+          {
+            "dataset_refs": [
+              {
+                "catalog": "generated",
+                "id": "ac5dc581-9e8e-5d17-ae8f-297386996908",
+                "type": "dataset_version"
+              }
+            ],
+            "filename": "0a776b1f-e6fc-5987-bc7d-44259eb6bb4e.txt",
+            "format": "txt",
+            "id": "0a776b1f-e6fc-5987-bc7d-44259eb6bb4e",
+            "ingested_at": null,
+            "language": "zh",
+            "media_type": "text/plain",
+            "processing_status": "unprocessed",
+            "segment_count": 0,
+            "size_bytes": 232,
+            "source_kind": "web",
+            "source_ref": {
+              "catalog": "generated",
+              "id": "41bb9b35-fde1-574c-8a86-b5a5ef27d2fb",
+              "type": "source"
+            },
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "dataset_refs": [
+              {
+                "catalog": "generated",
+                "id": "01e46ce9-21a3-5ecb-9626-69e45e60341c",
+                "type": "dataset_version"
+              }
+            ],
+            "filename": "170fdc3d-69ef-5f67-b535-69ad79bce5d2.txt",
+            "format": "txt",
+            "id": "170fdc3d-69ef-5f67-b535-69ad79bce5d2",
+            "ingested_at": null,
+            "language": "zh",
+            "media_type": "text/plain",
+            "processing_status": "unprocessed",
+            "segment_count": 0,
+            "size_bytes": 223,
+            "source_kind": "paper",
+            "source_ref": {
+              "catalog": "generated",
+              "id": "19193b45-c9fe-568c-88c8-173fcad3589e",
+              "type": "source"
+            },
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "dataset_refs": [
+              {
+                "catalog": "generated",
+                "id": "01e46ce9-21a3-5ecb-9626-69e45e60341c",
+                "type": "dataset_version"
+              }
+            ],
+            "filename": "258cc509-f89c-55b5-9199-61cb2d0efae5.txt",
+            "format": "txt",
+            "id": "258cc509-f89c-55b5-9199-61cb2d0efae5",
+            "ingested_at": null,
+            "language": "zh",
+            "media_type": "text/plain",
+            "processing_status": "unprocessed",
+            "segment_count": 0,
+            "size_bytes": 229,
+            "source_kind": "web",
+            "source_ref": {
+              "catalog": "generated",
+              "id": "4f27754b-b7e0-596f-92bd-b873984441ac",
+              "type": "source"
+            },
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "dataset_refs": [
+              {
+                "catalog": "generated",
+                "id": "ac5dc581-9e8e-5d17-ae8f-297386996908",
+                "type": "dataset_version"
+              }
+            ],
+            "filename": "2b2ad978-fe2f-5a8e-8427-240347e2dd48.txt",
+            "format": "txt",
+            "id": "2b2ad978-fe2f-5a8e-8427-240347e2dd48",
+            "ingested_at": null,
+            "language": "zh",
+            "media_type": "text/plain",
+            "processing_status": "unprocessed",
+            "segment_count": 0,
+            "size_bytes": 223,
+            "source_kind": "book",
+            "source_ref": {
+              "catalog": "generated",
+              "id": "cdc36d8a-d1a4-542f-acff-f432038c23c9",
+              "type": "source"
+            },
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "dataset_refs": [
+              {
+                "catalog": "generated",
+                "id": "ac5dc581-9e8e-5d17-ae8f-297386996908",
+                "type": "dataset_version"
+              }
+            ],
+            "filename": "431bd33a-0330-5b46-abc3-731fd008a4b9.txt",
+            "format": "txt",
+            "id": "431bd33a-0330-5b46-abc3-731fd008a4b9",
+            "ingested_at": null,
+            "language": "zh",
+            "media_type": "text/plain",
+            "processing_status": "unprocessed",
+            "segment_count": 0,
+            "size_bytes": 223,
+            "source_kind": "paper",
+            "source_ref": {
+              "catalog": "generated",
+              "id": "8e5b53c4-3f57-5e78-9e19-79186dd8ffe9",
+              "type": "source"
+            },
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "dataset_refs": [
+              {
+                "catalog": "generated",
+                "id": "ac5dc581-9e8e-5d17-ae8f-297386996908",
+                "type": "dataset_version"
+              }
+            ],
+            "filename": "4a8b546d-07b5-5d69-95b2-9e864f651d13.txt",
+            "format": "txt",
+            "id": "4a8b546d-07b5-5d69-95b2-9e864f651d13",
+            "ingested_at": null,
+            "language": "zh",
+            "media_type": "text/plain",
+            "processing_status": "unprocessed",
+            "segment_count": 0,
+            "size_bytes": 223,
+            "source_kind": "paper",
+            "source_ref": {
+              "catalog": "generated",
+              "id": "6cc569f4-9790-5a75-9139-c0b9075a0205",
+              "type": "source"
+            },
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "dataset_refs": [
+              {
+                "catalog": "generated",
+                "id": "3e9711fe-37d7-5ccd-9e91-7796b14f9eae",
+                "type": "dataset_version"
+              }
+            ],
+            "filename": "9be2eada-c972-5659-bae1-a16e1bf86cd0.txt",
+            "format": "txt",
+            "id": "9be2eada-c972-5659-bae1-a16e1bf86cd0",
+            "ingested_at": null,
+            "language": "zh",
+            "media_type": "text/plain",
+            "processing_status": "unprocessed",
+            "segment_count": 0,
+            "size_bytes": 223,
+            "source_kind": "web",
+            "source_ref": {
+              "catalog": "generated",
+              "id": "e1517c58-1e40-5a83-aa0a-925bee91c908",
+              "type": "source"
+            },
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "dataset_refs": [
+              {
+                "catalog": "generated",
+                "id": "ac5dc581-9e8e-5d17-ae8f-297386996908",
+                "type": "dataset_version"
+              }
+            ],
+            "filename": "b2c0d1e8-1f53-5dee-bf2b-35f93a8470f3.txt",
+            "format": "txt",
+            "id": "b2c0d1e8-1f53-5dee-bf2b-35f93a8470f3",
+            "ingested_at": null,
+            "language": "zh",
+            "media_type": "text/plain",
+            "processing_status": "unprocessed",
+            "segment_count": 0,
+            "size_bytes": 232,
+            "source_kind": "paper",
+            "source_ref": {
+              "catalog": "generated",
+              "id": "26d20041-f889-5052-9fd7-d7f799ddd517",
+              "type": "source"
+            },
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "dataset_refs": [
+              {
+                "catalog": "generated",
+                "id": "3e9711fe-37d7-5ccd-9e91-7796b14f9eae",
+                "type": "dataset_version"
+              }
+            ],
+            "filename": "b7c0a64e-c2ac-51ef-9109-eb3db6aeb456.txt",
+            "format": "txt",
+            "id": "b7c0a64e-c2ac-51ef-9109-eb3db6aeb456",
+            "ingested_at": null,
+            "language": "zh",
+            "media_type": "text/plain",
+            "processing_status": "unprocessed",
+            "segment_count": 0,
+            "size_bytes": 223,
+            "source_kind": "web",
+            "source_ref": {
+              "catalog": "generated",
+              "id": "ddf18eaa-311c-576d-9c99-1973e82bf203",
+              "type": "source"
+            },
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "dataset_refs": [
+              {
+                "catalog": "generated",
+                "id": "ac5dc581-9e8e-5d17-ae8f-297386996908",
+                "type": "dataset_version"
+              }
+            ],
+            "filename": "be4934f3-a18b-5dea-acf2-6e089178820d.txt",
+            "format": "txt",
+            "id": "be4934f3-a18b-5dea-acf2-6e089178820d",
+            "ingested_at": null,
+            "language": "zh",
+            "media_type": "text/plain",
+            "processing_status": "unprocessed",
+            "segment_count": 0,
+            "size_bytes": 223,
+            "source_kind": "web",
+            "source_ref": {
+              "catalog": "generated",
+              "id": "2d5bb21c-6a2a-5655-a4e9-0bb60f450ced",
+              "type": "source"
+            },
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "dataset_refs": [
+              {
+                "catalog": "generated",
+                "id": "ac5dc581-9e8e-5d17-ae8f-297386996908",
+                "type": "dataset_version"
+              }
+            ],
+            "filename": "e4cb3916-ade9-5e81-86bf-bfd691cde17f.txt",
+            "format": "txt",
+            "id": "e4cb3916-ade9-5e81-86bf-bfd691cde17f",
+            "ingested_at": null,
+            "language": "zh",
+            "media_type": "text/plain",
+            "processing_status": "unprocessed",
+            "segment_count": 0,
+            "size_bytes": 223,
+            "source_kind": "paper",
+            "source_ref": {
+              "catalog": "generated",
+              "id": "299dffa6-e2ec-50d0-9045-bb050db0ae38",
+              "type": "source"
+            },
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "dataset_refs": [
+              {
+                "catalog": "generated",
+                "id": "3e9711fe-37d7-5ccd-9e91-7796b14f9eae",
+                "type": "dataset_version"
+              }
+            ],
+            "filename": "fd6f7b06-0f3b-52af-bc20-35ab20b69b97.txt",
+            "format": "txt",
+            "id": "fd6f7b06-0f3b-52af-bc20-35ab20b69b97",
+            "ingested_at": null,
+            "language": "zh",
+            "media_type": "text/plain",
+            "processing_status": "unprocessed",
+            "segment_count": 0,
+            "size_bytes": 229,
+            "source_kind": "paper",
+            "source_ref": {
+              "catalog": "generated",
+              "id": "a985c1d2-866d-5bc6-981f-e25c2590ca32",
+              "type": "source"
+            },
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "dataset_refs": [
+              {
+                "catalog": "generated",
+                "id": "01e46ce9-21a3-5ecb-9626-69e45e60341c",
+                "type": "dataset_version"
+              }
+            ],
+            "filename": "fdc30558-a8d6-53d5-87ed-a798d77f20cc.txt",
+            "format": "txt",
+            "id": "fdc30558-a8d6-53d5-87ed-a798d77f20cc",
+            "ingested_at": null,
+            "language": "zh",
+            "media_type": "text/plain",
+            "processing_status": "unprocessed",
+            "segment_count": 0,
+            "size_bytes": 223,
+            "source_kind": "paper",
+            "source_ref": {
+              "catalog": "generated",
+              "id": "52966ec3-5799-51c8-b5e3-9de4fa800f7d",
+              "type": "source"
+            },
+            "workspace_id": "tc-agent2"
+          }
+        ],
+        "limit": 20,
+        "offset": 0,
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.072988Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "workspace_id": "tc-agent2"
+        },
+        "total_count": 13
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/files",
+        "query": {
+          "catalog": "generated",
+          "format": "txt",
+          "limit": 20,
+          "offset": 0,
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a"
+        }
+      },
+      "status_code": 200
+    },
+    "overview": {
+      "body": {
+        "datasets": [
+          {
+            "id": "ef51ffd7-bafe-5f66-b871-b656d1d7ab01",
+            "kind": "cpt",
+            "name": "CPT 训练数据",
+            "product_type": "pretrain",
+            "record_count": 23,
+            "record_unit": "article",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "26d20041-f889-5052-9fd7-d7f799ddd517",
+                "type": "source"
+              },
+              {
+                "catalog": "generated",
+                "id": "299dffa6-e2ec-50d0-9045-bb050db0ae38",
+                "type": "source"
+              },
+              {
+                "catalog": "generated",
+                "id": "2d5bb21c-6a2a-5655-a4e9-0bb60f450ced",
+                "type": "source"
+              },
+              {
+                "catalog": "generated",
+                "id": "41bb9b35-fde1-574c-8a86-b5a5ef27d2fb",
+                "type": "source"
+              },
+              {
+                "catalog": "generated",
+                "id": "6cc569f4-9790-5a75-9139-c0b9075a0205",
+                "type": "source"
+              },
+              {
+                "catalog": "generated",
+                "id": "8e5b53c4-3f57-5e78-9e19-79186dd8ffe9",
+                "type": "source"
+              },
+              {
+                "catalog": "generated",
+                "id": "cdc36d8a-d1a4-542f-acff-f432038c23c9",
+                "type": "source"
+              }
+            ],
+            "split_counts": {
+              "test": 1,
+              "train": 21,
+              "validation": 1
+            },
+            "status": "available",
+            "token_count": null,
+            "token_count_method": null,
+            "version": "1",
+            "version_id": "ac5dc581-9e8e-5d17-ae8f-297386996908",
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "id": "3afd77f5-661a-5c95-b065-ea743ab8ff7a",
+            "kind": "sft",
+            "name": "SFT 训练数据",
+            "product_type": "sft",
+            "record_count": 11,
+            "record_unit": "record",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "a985c1d2-866d-5bc6-981f-e25c2590ca32",
+                "type": "source"
+              },
+              {
+                "catalog": "generated",
+                "id": "ddf18eaa-311c-576d-9c99-1973e82bf203",
+                "type": "source"
+              },
+              {
+                "catalog": "generated",
+                "id": "e1517c58-1e40-5a83-aa0a-925bee91c908",
+                "type": "source"
+              }
+            ],
+            "split_counts": {
+              "test": 0,
+              "train": 10,
+              "validation": 1
+            },
+            "status": "available",
+            "token_count": null,
+            "token_count_method": null,
+            "version": "1",
+            "version_id": "3e9711fe-37d7-5ccd-9e91-7796b14f9eae",
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "id": "dec29797-48ec-5fa0-9915-785815216ab4",
+            "kind": "dpo",
+            "name": "DPO 训练数据",
+            "product_type": "dpo",
+            "record_count": 7,
+            "record_unit": "pair",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "19193b45-c9fe-568c-88c8-173fcad3589e",
+                "type": "source"
+              },
+              {
+                "catalog": "generated",
+                "id": "4f27754b-b7e0-596f-92bd-b873984441ac",
+                "type": "source"
+              },
+              {
+                "catalog": "generated",
+                "id": "52966ec3-5799-51c8-b5e3-9de4fa800f7d",
+                "type": "source"
+              }
+            ],
+            "split_counts": {
+              "test": 0,
+              "train": 6,
+              "validation": 1
+            },
+            "status": "available",
+            "token_count": null,
+            "token_count_method": null,
+            "version": "1",
+            "version_id": "01e46ce9-21a3-5ecb-9626-69e45e60341c",
+            "workspace_id": "tc-agent2"
+          }
+        ],
+        "flow": {
+          "scope_label": "generated catalog: all files and training records",
+          "stages": [
+            {
+              "count": 13,
+              "key": "files",
+              "label": "文件",
+              "unit": "file"
+            },
+            {
+              "count": 0,
+              "key": "segments",
+              "label": "片段",
+              "unit": "segment"
+            },
+            {
+              "count": 23,
+              "key": "cpt",
+              "label": "CPT",
+              "unit": "article"
+            },
+            {
+              "count": 11,
+              "key": "sft",
+              "label": "SFT",
+              "unit": "record"
+            },
+            {
+              "count": 7,
+              "key": "dpo",
+              "label": "DPO",
+              "unit": "pair"
+            }
+          ],
+          "transitions": []
+        },
+        "formats": [
+          {
+            "file_count": 0,
+            "format": "pdf",
+            "unit": "file"
+          },
+          {
+            "file_count": 0,
+            "format": "html",
+            "unit": "file"
+          },
+          {
+            "file_count": 0,
+            "format": "md",
+            "unit": "file"
+          },
+          {
+            "file_count": 13,
+            "format": "txt",
+            "unit": "file"
+          },
+          {
+            "file_count": 0,
+            "format": "docx",
+            "unit": "file"
+          },
+          {
+            "file_count": 0,
+            "format": "csv",
+            "unit": "file"
+          },
+          {
+            "file_count": 0,
+            "format": "json",
+            "unit": "file"
+          },
+          {
+            "file_count": 0,
+            "format": "jsonl",
+            "unit": "file"
+          },
+          {
+            "file_count": 0,
+            "format": "other",
+            "unit": "file"
+          }
+        ],
+        "metrics": {
+          "file_count": {
+            "unit": "file",
+            "value": 13
+          },
+          "quality_pass_rate": {
+            "delta": null,
+            "unit": "ratio",
+            "value": null
+          },
+          "segment_count": {
+            "unit": "segment",
+            "value": 0
+          },
+          "token_count": {
+            "unit": "token",
+            "value": null
+          },
+          "training_record_count": {
+            "unit": "record",
+            "value": 41
+          }
+        },
+        "recent_activities": [],
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.072988Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "workspace_id": "tc-agent2"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/overview",
+        "query": {
+          "catalog": "generated",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a"
+        }
+      },
+      "status_code": 200
+    },
+    "sft_overview": {
+      "body": {
+        "dataset": {
+          "id": "3afd77f5-661a-5c95-b065-ea743ab8ff7a",
+          "kind": "sft",
+          "name": "SFT 训练数据",
+          "product_type": "sft",
+          "record_count": 11,
+          "record_unit": "record",
+          "source_refs": [
+            {
+              "catalog": "generated",
+              "id": "a985c1d2-866d-5bc6-981f-e25c2590ca32",
+              "type": "source"
+            },
+            {
+              "catalog": "generated",
+              "id": "ddf18eaa-311c-576d-9c99-1973e82bf203",
+              "type": "source"
+            },
+            {
+              "catalog": "generated",
+              "id": "e1517c58-1e40-5a83-aa0a-925bee91c908",
+              "type": "source"
+            }
+          ],
+          "split_counts": {
+            "test": 0,
+            "train": 10,
+            "validation": 1
+          },
+          "status": "available",
+          "token_count": null,
+          "token_count_method": null,
+          "version": "1",
+          "version_id": "3e9711fe-37d7-5ccd-9e91-7796b14f9eae",
+          "workspace_id": "tc-agent2"
+        },
+        "destination_counts": [
+          {
+            "count": 10,
+            "key": "train",
+            "unit": "record"
+          },
+          {
+            "count": 1,
+            "key": "validation",
+            "unit": "record"
+          },
+          {
+            "count": 0,
+            "key": "test",
+            "unit": "record"
+          }
+        ],
+        "language_distribution": {
+          "buckets": [
+            {
+              "count": 11,
+              "key": "zh",
+              "label": "zh",
+              "ratio": 1.0
+            },
+            {
+              "count": 0,
+              "key": "en",
+              "label": "en",
+              "ratio": 0.0
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": 0.0
+            }
+          ],
+          "measure": "training_record_language",
+          "total_count": 11,
+          "unit": "record"
+        },
+        "length_distribution": {
+          "buckets": [
+            {
+              "count": 11,
+              "key": "0-127",
+              "label": "0-127",
+              "ratio": 1.0
+            },
+            {
+              "count": 0,
+              "key": "128-255",
+              "label": "128-255",
+              "ratio": 0.0
+            },
+            {
+              "count": 0,
+              "key": "256+",
+              "label": "256+",
+              "ratio": 0.0
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": 0.0
+            }
+          ],
+          "measure": "training_record_char_length",
+          "total_count": 11,
+          "unit": "record"
+        },
+        "lineage_root_ref": {
+          "catalog": "generated",
+          "id": "3e9711fe-37d7-5ccd-9e91-7796b14f9eae",
+          "type": "dataset_version"
+        },
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.072988Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "workspace_id": "tc-agent2"
+        },
+        "source_distribution": {
+          "buckets": [
+            {
+              "count": 6,
+              "key": "web",
+              "label": "web",
+              "ratio": 0.5454545454545454
+            },
+            {
+              "count": 0,
+              "key": "book",
+              "label": "book",
+              "ratio": 0.0
+            },
+            {
+              "count": 5,
+              "key": "paper",
+              "label": "paper",
+              "ratio": 0.45454545454545453
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": 0.0
+            }
+          ],
+          "measure": "training_record_primary_source_kind",
+          "total_count": 11,
+          "unit": "record"
+        },
+        "split_counts": {
+          "test": 0,
+          "train": 10,
+          "validation": 1
+        }
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/3afd77f5-661a-5c95-b065-ea743ab8ff7a/overview",
+        "query": {
+          "catalog": "generated",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "version": "1"
+        }
+      },
+      "status_code": 200
+    },
+    "sft_samples": {
+      "body": {
+        "items": [
+          {
+            "char_count": 117,
+            "dataset_id": "3afd77f5-661a-5c95-b065-ea743ab8ff7a",
+            "dataset_version": "1",
+            "id": "99150b7d-5622-5907-a692-2d1e3ba33117",
+            "kind": "sft",
+            "language": "zh",
+            "messages": [
+              {
+                "content": "请给出具体建议，并说明需要核验的内容。",
+                "role": "system"
+              },
+              {
+                "content": "关于质量评估，第 1 组情境 1 应注意什么？",
+                "role": "user"
+              },
+              {
+                "content": "固定评估口径，分别记录有效内容、缺失字段与待复核项。建议记录检查依据，并对不确定内容安排复核。",
+                "role": "assistant"
+              },
+              {
+                "content": "如果缺少检查依据呢？",
+                "role": "user"
+              },
+              {
+                "content": "标记为待核验，不能推断已经通过检查。",
+                "role": "assistant"
+              }
+            ],
+            "segment_refs": [],
+            "sequence": 1,
+            "source_group_id": "25b3bfde-629b-5885-bc45-4af0f3bc7d2f",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "a985c1d2-866d-5bc6-981f-e25c2590ca32",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 117,
+            "dataset_id": "3afd77f5-661a-5c95-b065-ea743ab8ff7a",
+            "dataset_version": "1",
+            "id": "afc256ab-41c6-5c9c-8159-1783d1468f06",
+            "kind": "sft",
+            "language": "zh",
+            "messages": [
+              {
+                "content": "请给出具体建议，并说明需要核验的内容。",
+                "role": "system"
+              },
+              {
+                "content": "关于质量评估，第 1 组情境 2 应注意什么？",
+                "role": "user"
+              },
+              {
+                "content": "固定评估口径，分别记录有效内容、缺失字段与待复核项。建议记录检查依据，并对不确定内容安排复核。",
+                "role": "assistant"
+              },
+              {
+                "content": "如果缺少检查依据呢？",
+                "role": "user"
+              },
+              {
+                "content": "标记为待核验，不能推断已经通过检查。",
+                "role": "assistant"
+              }
+            ],
+            "segment_refs": [],
+            "sequence": 2,
+            "source_group_id": "25b3bfde-629b-5885-bc45-4af0f3bc7d2f",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "a985c1d2-866d-5bc6-981f-e25c2590ca32",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 117,
+            "dataset_id": "3afd77f5-661a-5c95-b065-ea743ab8ff7a",
+            "dataset_version": "1",
+            "id": "0cd6152e-e73d-585c-84aa-b9792b0c3ac5",
+            "kind": "sft",
+            "language": "zh",
+            "messages": [
+              {
+                "content": "请给出具体建议，并说明需要核验的内容。",
+                "role": "system"
+              },
+              {
+                "content": "关于质量评估，第 1 组情境 3 应注意什么？",
+                "role": "user"
+              },
+              {
+                "content": "固定评估口径，分别记录有效内容、缺失字段与待复核项。建议记录检查依据，并对不确定内容安排复核。",
+                "role": "assistant"
+              },
+              {
+                "content": "如果缺少检查依据呢？",
+                "role": "user"
+              },
+              {
+                "content": "标记为待核验，不能推断已经通过检查。",
+                "role": "assistant"
+              }
+            ],
+            "segment_refs": [],
+            "sequence": 3,
+            "source_group_id": "25b3bfde-629b-5885-bc45-4af0f3bc7d2f",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "a985c1d2-866d-5bc6-981f-e25c2590ca32",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 117,
+            "dataset_id": "3afd77f5-661a-5c95-b065-ea743ab8ff7a",
+            "dataset_version": "1",
+            "id": "8b0f9960-4af3-589e-a338-e12e65d6d4b1",
+            "kind": "sft",
+            "language": "zh",
+            "messages": [
+              {
+                "content": "请给出具体建议，并说明需要核验的内容。",
+                "role": "system"
+              },
+              {
+                "content": "关于质量评估，第 1 组情境 4 应注意什么？",
+                "role": "user"
+              },
+              {
+                "content": "固定评估口径，分别记录有效内容、缺失字段与待复核项。建议记录检查依据，并对不确定内容安排复核。",
+                "role": "assistant"
+              },
+              {
+                "content": "如果缺少检查依据呢？",
+                "role": "user"
+              },
+              {
+                "content": "标记为待核验，不能推断已经通过检查。",
+                "role": "assistant"
+              }
+            ],
+            "segment_refs": [],
+            "sequence": 4,
+            "source_group_id": "25b3bfde-629b-5885-bc45-4af0f3bc7d2f",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "a985c1d2-866d-5bc6-981f-e25c2590ca32",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 117,
+            "dataset_id": "3afd77f5-661a-5c95-b065-ea743ab8ff7a",
+            "dataset_version": "1",
+            "id": "67f0fa01-99c7-59d8-b1c1-8d4258893c40",
+            "kind": "sft",
+            "language": "zh",
+            "messages": [
+              {
+                "content": "请给出具体建议，并说明需要核验的内容。",
+                "role": "system"
+              },
+              {
+                "content": "关于质量评估，第 1 组情境 5 应注意什么？",
+                "role": "user"
+              },
+              {
+                "content": "固定评估口径，分别记录有效内容、缺失字段与待复核项。建议记录检查依据，并对不确定内容安排复核。",
+                "role": "assistant"
+              },
+              {
+                "content": "如果缺少检查依据呢？",
+                "role": "user"
+              },
+              {
+                "content": "标记为待核验，不能推断已经通过检查。",
+                "role": "assistant"
+              }
+            ],
+            "segment_refs": [],
+            "sequence": 5,
+            "source_group_id": "25b3bfde-629b-5885-bc45-4af0f3bc7d2f",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "a985c1d2-866d-5bc6-981f-e25c2590ca32",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 115,
+            "dataset_id": "3afd77f5-661a-5c95-b065-ea743ab8ff7a",
+            "dataset_version": "1",
+            "id": "95ee63be-d511-51ea-9e82-d564f0777567",
+            "kind": "sft",
+            "language": "zh",
+            "messages": [
+              {
+                "content": "请给出具体建议，并说明需要核验的内容。",
+                "role": "system"
+              },
+              {
+                "content": "关于来源追溯，第 2 组情境 1 应注意什么？",
+                "role": "user"
+              },
+              {
+                "content": "保留来源标识与内容版本，便于检查记录之间的关联。建议记录检查依据，并对不确定内容安排复核。",
+                "role": "assistant"
+              },
+              {
+                "content": "如果缺少检查依据呢？",
+                "role": "user"
+              },
+              {
+                "content": "标记为待核验，不能推断已经通过检查。",
+                "role": "assistant"
+              }
+            ],
+            "segment_refs": [],
+            "sequence": 6,
+            "source_group_id": "cd91607f-f3ff-5df8-ba47-5f357d819101",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "e1517c58-1e40-5a83-aa0a-925bee91c908",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 115,
+            "dataset_id": "3afd77f5-661a-5c95-b065-ea743ab8ff7a",
+            "dataset_version": "1",
+            "id": "119f33d4-0114-5c68-92fd-df23dd19f768",
+            "kind": "sft",
+            "language": "zh",
+            "messages": [
+              {
+                "content": "请给出具体建议，并说明需要核验的内容。",
+                "role": "system"
+              },
+              {
+                "content": "关于来源追溯，第 2 组情境 2 应注意什么？",
+                "role": "user"
+              },
+              {
+                "content": "保留来源标识与内容版本，便于检查记录之间的关联。建议记录检查依据，并对不确定内容安排复核。",
+                "role": "assistant"
+              },
+              {
+                "content": "如果缺少检查依据呢？",
+                "role": "user"
+              },
+              {
+                "content": "标记为待核验，不能推断已经通过检查。",
+                "role": "assistant"
+              }
+            ],
+            "segment_refs": [],
+            "sequence": 7,
+            "source_group_id": "cd91607f-f3ff-5df8-ba47-5f357d819101",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "e1517c58-1e40-5a83-aa0a-925bee91c908",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 115,
+            "dataset_id": "3afd77f5-661a-5c95-b065-ea743ab8ff7a",
+            "dataset_version": "1",
+            "id": "6f0d8ba0-6869-5556-9920-935ab35817ae",
+            "kind": "sft",
+            "language": "zh",
+            "messages": [
+              {
+                "content": "请给出具体建议，并说明需要核验的内容。",
+                "role": "system"
+              },
+              {
+                "content": "关于来源追溯，第 2 组情境 3 应注意什么？",
+                "role": "user"
+              },
+              {
+                "content": "保留来源标识与内容版本，便于检查记录之间的关联。建议记录检查依据，并对不确定内容安排复核。",
+                "role": "assistant"
+              },
+              {
+                "content": "如果缺少检查依据呢？",
+                "role": "user"
+              },
+              {
+                "content": "标记为待核验，不能推断已经通过检查。",
+                "role": "assistant"
+              }
+            ],
+            "segment_refs": [],
+            "sequence": 8,
+            "source_group_id": "cd91607f-f3ff-5df8-ba47-5f357d819101",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "e1517c58-1e40-5a83-aa0a-925bee91c908",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 115,
+            "dataset_id": "3afd77f5-661a-5c95-b065-ea743ab8ff7a",
+            "dataset_version": "1",
+            "id": "cbc5492b-6c50-5404-bd78-5aa0d0432c9e",
+            "kind": "sft",
+            "language": "zh",
+            "messages": [
+              {
+                "content": "请给出具体建议，并说明需要核验的内容。",
+                "role": "system"
+              },
+              {
+                "content": "关于来源追溯，第 2 组情境 4 应注意什么？",
+                "role": "user"
+              },
+              {
+                "content": "保留来源标识与内容版本，便于检查记录之间的关联。建议记录检查依据，并对不确定内容安排复核。",
+                "role": "assistant"
+              },
+              {
+                "content": "如果缺少检查依据呢？",
+                "role": "user"
+              },
+              {
+                "content": "标记为待核验，不能推断已经通过检查。",
+                "role": "assistant"
+              }
+            ],
+            "segment_refs": [],
+            "sequence": 9,
+            "source_group_id": "cd91607f-f3ff-5df8-ba47-5f357d819101",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "e1517c58-1e40-5a83-aa0a-925bee91c908",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 115,
+            "dataset_id": "3afd77f5-661a-5c95-b065-ea743ab8ff7a",
+            "dataset_version": "1",
+            "id": "799de396-27e4-5e04-bcd0-43bcb4fa5f41",
+            "kind": "sft",
+            "language": "zh",
+            "messages": [
+              {
+                "content": "请给出具体建议，并说明需要核验的内容。",
+                "role": "system"
+              },
+              {
+                "content": "关于来源追溯，第 2 组情境 5 应注意什么？",
+                "role": "user"
+              },
+              {
+                "content": "保留来源标识与内容版本，便于检查记录之间的关联。建议记录检查依据，并对不确定内容安排复核。",
+                "role": "assistant"
+              },
+              {
+                "content": "如果缺少检查依据呢？",
+                "role": "user"
+              },
+              {
+                "content": "标记为待核验，不能推断已经通过检查。",
+                "role": "assistant"
+              }
+            ],
+            "segment_refs": [],
+            "sequence": 10,
+            "source_group_id": "cd91607f-f3ff-5df8-ba47-5f357d819101",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "e1517c58-1e40-5a83-aa0a-925bee91c908",
+                "type": "source"
+              }
+            ],
+            "split": "train",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          },
+          {
+            "char_count": 115,
+            "dataset_id": "3afd77f5-661a-5c95-b065-ea743ab8ff7a",
+            "dataset_version": "1",
+            "id": "8e679ce9-ef64-5946-bba1-b14716efb7a4",
+            "kind": "sft",
+            "language": "zh",
+            "messages": [
+              {
+                "content": "请给出具体建议，并说明需要核验的内容。",
+                "role": "system"
+              },
+              {
+                "content": "关于分组切分，第 3 组情境 1 应注意什么？",
+                "role": "user"
+              },
+              {
+                "content": "同一来源组只属于一个集合，切分后再检查重复内容。建议记录检查依据，并对不确定内容安排复核。",
+                "role": "assistant"
+              },
+              {
+                "content": "如果缺少检查依据呢？",
+                "role": "user"
+              },
+              {
+                "content": "标记为待核验，不能推断已经通过检查。",
+                "role": "assistant"
+              }
+            ],
+            "segment_refs": [],
+            "sequence": 11,
+            "source_group_id": "6790f2c3-3209-5c02-a45f-6e794cd52465",
+            "source_refs": [
+              {
+                "catalog": "generated",
+                "id": "ddf18eaa-311c-576d-9c99-1973e82bf203",
+                "type": "source"
+              }
+            ],
+            "split": "validation",
+            "token_count": null,
+            "token_count_method": null,
+            "workspace_id": "tc-agent2"
+          }
+        ],
+        "limit": 20,
+        "offset": 0,
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.072988Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "workspace_id": "tc-agent2"
+        },
+        "total_count": 11
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/datasets/3afd77f5-661a-5c95-b065-ea743ab8ff7a/samples",
+        "query": {
+          "catalog": "generated",
+          "limit": 20,
+          "offset": 0,
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "version": "1"
+        }
+      },
+      "status_code": 200
+    },
+    "txt_stats": {
+      "body": {
+        "availability": {
+          "ingestion_trend": "ingested_at_missing"
+        },
+        "dataset_refs": [
+          {
+            "catalog": "generated",
+            "id": "01e46ce9-21a3-5ecb-9626-69e45e60341c",
+            "type": "dataset_version"
+          },
+          {
+            "catalog": "generated",
+            "id": "3e9711fe-37d7-5ccd-9e91-7796b14f9eae",
+            "type": "dataset_version"
+          },
+          {
+            "catalog": "generated",
+            "id": "ac5dc581-9e8e-5d17-ae8f-297386996908",
+            "type": "dataset_version"
+          }
+        ],
+        "flow": {
+          "scope_label": "format=txt; linked records via source_ref",
+          "stages": [
+            {
+              "count": 13,
+              "key": "files",
+              "label": "文件",
+              "unit": "file"
+            },
+            {
+              "count": 0,
+              "key": "segments",
+              "label": "片段",
+              "unit": "segment"
+            },
+            {
+              "count": 23,
+              "key": "cpt",
+              "label": "CPT",
+              "unit": "article"
+            },
+            {
+              "count": 11,
+              "key": "sft",
+              "label": "SFT",
+              "unit": "record"
+            },
+            {
+              "count": 7,
+              "key": "dpo",
+              "label": "DPO",
+              "unit": "pair"
+            }
+          ],
+          "transitions": []
+        },
+        "ingestion_trend": null,
+        "language_distribution": {
+          "buckets": [
+            {
+              "count": 0,
+              "key": "zh",
+              "label": "zh",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "en",
+              "label": "en",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": null
+            }
+          ],
+          "measure": "segment_language",
+          "total_count": 0,
+          "unit": "segment"
+        },
+        "length_distribution": {
+          "buckets": [
+            {
+              "count": 0,
+              "key": "0-127",
+              "label": "0-127",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "128-255",
+              "label": "128-255",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "256+",
+              "label": "256+",
+              "ratio": null
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": null
+            }
+          ],
+          "measure": "segment_char_length",
+          "total_count": 0,
+          "unit": "segment"
+        },
+        "metrics": {
+          "file_count": {
+            "unit": "file",
+            "value": 13
+          },
+          "quality_pass_rate": {
+            "delta": null,
+            "unit": "ratio",
+            "value": null
+          },
+          "segment_count": {
+            "unit": "segment",
+            "value": 0
+          },
+          "size_bytes": {
+            "unit": "byte",
+            "value": 2929
+          },
+          "token_count": {
+            "unit": "token",
+            "value": null
+          }
+        },
+        "scope": {
+          "as_of": "2026-10-26T17:04:58.072988Z",
+          "catalog": "generated",
+          "metric_definition_version": "training-center.metrics.proposal.v1",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "workspace_id": "tc-agent2"
+        },
+        "source_distribution": {
+          "buckets": [
+            {
+              "count": 5,
+              "key": "web",
+              "label": "web",
+              "ratio": 0.38461538461538464
+            },
+            {
+              "count": 1,
+              "key": "book",
+              "label": "book",
+              "ratio": 0.07692307692307693
+            },
+            {
+              "count": 7,
+              "key": "paper",
+              "label": "paper",
+              "ratio": 0.5384615384615384
+            },
+            {
+              "count": 0,
+              "key": "unknown",
+              "label": "unknown",
+              "ratio": 0.0
+            }
+          ],
+          "measure": "file_source_kind",
+          "total_count": 13,
+          "unit": "file"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/training-center/formats/txt/stats",
+        "query": {
+          "catalog": "generated",
+          "revision": "d092affb85dc269e97a6088f17195483cdf6baa03bb0e61a5a2b29409cb6567a",
+          "timezone": "UTC"
+        }
+      },
+      "status_code": 200
+    }
+  }
+}
