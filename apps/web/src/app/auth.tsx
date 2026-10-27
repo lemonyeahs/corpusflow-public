@@ -1,3 +1,4 @@
+import { DEMO_MODE, demoSession } from "./demo-mode";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Navigate, Outlet, useLocation, useSearchParams } from "react-router-dom";
@@ -9,6 +10,7 @@ import { createQueryClient } from "./query";
 
 export const SESSION_STORAGE_KEY = "corpusflow.p0h.session";
 function stored(): Session | null {
+  if (DEMO_MODE) return demoSession;
   try {
     const value: unknown = JSON.parse(localStorage.getItem(SESSION_STORAGE_KEY) || "null");
     if (!value || typeof value !== "object") return null;
@@ -21,8 +23,8 @@ interface AuthValue { session: Session | null; login: (session: Session) => void
 const AuthContext = createContext<AuthValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState(stored);
-  function login(next: Session) { localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(next)); setSession(next); }
-  function logout() { localStorage.removeItem(SESSION_STORAGE_KEY); setSession(null); }
+  function login(next: Session) { if (DEMO_MODE) { setSession(demoSession); return; } localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(next)); setSession(next); }
+  function logout() { if (DEMO_MODE) { window.location.hash = "/home?catalog=workspace"; return; } localStorage.removeItem(SESSION_STORAGE_KEY); setSession(null); }
   useEffect(() => {
     const sync = (event: StorageEvent) => { if (event.key === SESSION_STORAGE_KEY || event.key === null) setSession(stored()); };
     window.addEventListener("storage", sync);

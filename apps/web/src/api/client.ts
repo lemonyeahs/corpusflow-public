@@ -1,3 +1,4 @@
+import { DEMO_MODE } from "../app/demo-mode";
 import type {
   Asset, AssetDetail, CandidateSample, DashboardOverview, Dataset, DatasetProductType, DatasetVersion, DemoCase, DpoOverview, DpoPreference, LineageEdge, LineageView, Manifest,
   OperatorDefinition, PipelineRun, ProcessingArtifact, QualityIssue, QualityEvaluation, QualityRules, QualityRuleConfig, QualityReportData, QualityCoverage, QualityComparison, Session, Source, Workspace,
@@ -30,7 +31,10 @@ export async function request<T>(path: string, context?: ApiContext, init: Reque
   if (context?.workspaceId) headers.set("X-Workspace-ID", context.workspaceId);
   if (init.body && !(init.body instanceof Blob) && typeof init.body === "string") headers.set("Content-Type", "application/json");
   let response: Response | undefined;
-  if (import.meta.env.DEV && import.meta.env.VITE_TC_FIXTURES === "true") {
+  if (import.meta.env.DEV && DEMO_MODE) {
+    const { demoResponse } = await import("../dev/training-center/demo");
+    response = demoResponse(path, init);
+  } else if (import.meta.env.DEV && import.meta.env.VITE_TC_FIXTURES === "true") {
     const { fixtureResponse } = await import("../dev/training-center/interceptor");
     response = fixtureResponse(path, headers, init);
   }
@@ -70,6 +74,7 @@ export const api = {
   assetLineageView: (ctx: ApiContext, id: string, versionId?: string) => request<LineageView>(`/assets/${id}/lineage-view${versionId ? `?document_version_id=${encodeURIComponent(versionId)}` : ""}`, ctx),
   initUpload: (ctx: ApiContext, body: { filename: string; size: number; content_type: string }) => request<{ upload_id: string; status: string; object_key: string }>("/uploads/init", ctx, json(body)),
   uploadContent: (ctx: ApiContext, id: string, file: Blob, onProgress?: (value: number) => void) => new Promise<{ upload_id: string; status: string; bytes: number; sha256: string }>((resolve, reject) => {
+    if (DEMO_MODE) { reject(new ApiError(409, { error: { code: "FRONTEND_DEMO_ONLY", message: "纯前端演示不上传文件" } })); return; }
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", `${BASE_URL}/uploads/${id}/content`);
     xhr.setRequestHeader("Accept", "application/json");

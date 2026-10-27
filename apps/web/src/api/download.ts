@@ -1,3 +1,4 @@
+import { DEMO_MODE } from "../app/demo-mode";
 import { ApiError, BASE_URL, type ApiContext } from "./client";
 
 export interface DownloadResult { blob: Blob; filename: string; contentType: string }
@@ -10,6 +11,7 @@ export function downloadFilename(disposition: string | null, fallback: string) {
 }
 /** Binary endpoints are deliberately separate from request<T>. No fixture downloads. */
 export async function download(path: string, context: ApiContext, fallbackFilename: string, signal?: AbortSignal): Promise<DownloadResult> {
+  if (DEMO_MODE) throw new ApiError(409, { error: { code: "FRONTEND_DEMO_ONLY", message: "纯前端演示不连接后端下载，请查看版本清单与样本预览。" } });
   const response = await fetch(`${BASE_URL}${path}`, { signal, headers: { Authorization: `Bearer ${context.token}`, "X-Workspace-ID": context.workspaceId } });
   if (!response.ok) {
     const body = await response.json().catch(() => ({ error: { code: "DOWNLOAD_FAILED", message: "下载失败" } }));

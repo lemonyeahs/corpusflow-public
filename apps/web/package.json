@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "demo": "vite --mode demo --host 127.0.0.1",
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.m0.json",
     "lint": "eslint .",

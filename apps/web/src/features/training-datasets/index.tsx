@@ -1,3 +1,4 @@
+import { DEMO_MODE } from "../../app/demo-mode";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -60,7 +61,7 @@ export default function TrainingDatasets() {
   useEffect(() => () => downloadController.current?.abort(), [ctx.workspaceId, scope.catalog, scope.revision]);
   const rawOffset = Number(params.get("offset") || 0);
   const offset = Number.isSafeInteger(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
-  const canBuild = ["admin", "engineer", "reviewer"].includes(ctx.session.role);
+  const canBuild = !DEMO_MODE && ["admin", "engineer", "reviewer"].includes(ctx.session.role);
   const baseParams = { catalog: scope.catalog, ...(scope.revision ? { revision: scope.revision } : {}) };
   function update(values: Record<string, string | null>) {
     setParams(previous => { const next = new URLSearchParams(previous); Object.entries(values).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key)); return next; });
@@ -115,7 +116,7 @@ export default function TrainingDatasets() {
       </Panel>}
       {selected && !scopeError && <>
         <div className={styles.metrics}><MetricCard title={`版本${kind === "dpo" ? "偏好对" : "记录"}总量`} metric={{ value: selected.record_count, unit: selected.record_unit }} /><Panel title="关联来源"><strong className={styles.sourceCount}>{selected.source_refs.length.toLocaleString()} <small>个</small></strong></Panel><MetricCard title="Tokens" metric={{ value: selected.token_count, unit: "token" }} /></div>
-        <div className={styles.toolbar}><span className={styles.muted}>导出当前版本{split ? `的${splitLabels[split as keyof typeof splitLabels] || split}` : "的全部划分"}{search ? `，搜索“${search}”` : ""}，包含筛选后的所有分页。</span><ExportMenu disabled={!scope.revision || !!error} busy={exportBusy} onExport={format => void exportRecords(format)} /></div>
+        <div className={styles.toolbar}><span className={styles.muted}>{DEMO_MODE ? "前端预览 · 下载与构建已停用。当前版本" : "导出当前版本"}{split ? `的${splitLabels[split as keyof typeof splitLabels] || split}` : "的全部划分"}{search ? `，搜索“${search}”` : ""}，包含筛选后的所有分页。</span><ExportMenu disabled={DEMO_MODE || !scope.revision || !!error} busy={exportBusy} onExport={format => void exportRecords(format)} /></div>
         {exportError && <ErrorState error={exportError} />}
         {tab === "overview" && (overview.isPending ? <LoadingState /> : overview.data && <><Panel title="数据划分"><div className={styles.splits}>{overview.data.destination_counts.map(item => <div key={item.key}><span>{splitLabels[item.key]}</span><strong>{item.count.toLocaleString()} <small>{units[selected.record_unit]}</small></strong></div>)}</div></Panel><div className={styles.charts}><DistributionView title="主要来源" data={overview.data.source_distribution} /><DistributionView title="语言分布" data={overview.data.language_distribution} /><DistributionView title="字符长度" data={overview.data.length_distribution} /></div><Link to={lineageLink(scope.catalog, scope.revision, "dataset_version", selected.version_id)}>查看此版本的数据血缘 →</Link></>)}
         {tab === "samples" && <Panel title="样本浏览"><form className={styles.toolbar} onSubmit={e => { e.preventDefault(); update({ q: searchDraft, offset: null, sample_id: null }); }}><label>划分 <select aria-label="样本划分" value={split} onChange={e => update({ split: e.target.value, offset: null, sample_id: null })}><option value="">全部</option>{Object.entries(splitLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label><input aria-label="搜索样本" placeholder="搜索正文、对话或回答" value={searchDraft} onChange={e => setSearchDraft(e.target.value)} /><Button htmlType="submit" aria-label={"\u641c\u7d22"}>搜索</Button></form>

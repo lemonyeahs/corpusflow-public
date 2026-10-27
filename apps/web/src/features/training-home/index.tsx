@@ -1,3 +1,4 @@
+import { DEMO_MODE } from "../../app/demo-mode";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Clock3, FilePlus2 } from "lucide-react";
 import { PageHeader, Panel, LoadingState, EmptyState } from "../../ui";
@@ -14,7 +15,7 @@ export default function TrainingHome() {
   const { session } = useWorkspaceContext();
   const data = query.data;
   return <div className={styles.page}>
-    <PageHeader title="训练数据中心" description="从原始文件到训练语料，让每一份数据有据可循。" actions={(["admin", "engineer"].includes(session.role)) && <Link className={styles.primaryLink} to="/ingest?catalog=workspace"><FilePlus2 size={16} />接入数据</Link>} />
+    <PageHeader title="训练数据中心" description="从原始文件到训练语料，让每一份数据有据可循。" actions={(["admin", "engineer"].includes(session.role)) && <Link className={styles.primaryLink} to={DEMO_MODE ? "/data/all?catalog=workspace" : "/ingest?catalog=workspace"}><FilePlus2 size={16} />{DEMO_MODE ? "浏览数据" : "接入数据"}</Link>} />
     <div className={styles.toolbar}><CatalogControls />{data && !query.error && <ScopeNote scope={data.scope} />}</div>
     {query.isPending ? <LoadingState /> : query.error ? <QueryError error={query.error} retry={() => void query.refetch()} /> : data && <>
       <MetricGrid metrics={data.metrics} items={[["file_count", "原始文件"], ["segment_count", "结构化片段"], ["training_record_count", "训练记录"], ["quality_pass_rate", "质量通过率"]]} />
