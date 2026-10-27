@@ -42,6 +42,15 @@ def candidate(root, workspace="workspace-a", seed=42, counts=(23, 11, 7), mutate
     return revision, path
 
 
+def test_explicit_large_catalog_budget_keeps_default_and_hard_caps(tmp_path):
+    assert GeneratedCatalog(tmp_path).max_records == 100_000
+    large = GeneratedCatalog(tmp_path, max_records=300_000, max_bytes=1024**3)
+    assert large.max_records == 300_000
+    for options in ({"max_records": 1_000_001}, {"max_bytes": 1024**3 + 1}):
+        with pytest.raises(ValueError, match="catalog limits"):
+            GeneratedCatalog(tmp_path, **options)
+
+
 @pytest.fixture
 def published(tmp_path):
     store = GeneratedCatalog(tmp_path)
@@ -374,3 +383,27 @@ def test_cache_is_bounded_and_workspaces_are_separate(tmp_path):
     assert len(store._cache) == 1
     assert store.load("workspace-a").scope.workspace_id == "workspace-a"
     assert len(store._cache) == 1
+
+
+def test_query_result_isolated_without_copying_full_catalog(published, monkeypatch):
+    from corpusflow.modules.training_center import catalog
+    from corpusflow.modules.training_center.query import CatalogQueries
+
+    store, revision, path = published
+    original = catalog.copy_snapshot
+    copied = []
+
+    def recording_copy(value):
+        copied.append(value)
+        return original(value)
+
+    monkeypatch.setattr(catalog, "copy_snapshot", recording_copy)
+    result = store.execute("workspace-a", revision, lambda s: CatalogQueries(s).overview())
+    assert len(copied) == 1 and copied[0] is not store._cache[next(iter(store._cache))]
+    result.datasets[0].name = "poisoned"
+    fresh = store.execute("workspace-a", revision, lambda s: CatalogQueries(s).overview())
+    assert fresh.datasets[0].name != "poisoned"
+    file = path / "datasets/cpt.jsonl"
+    file.write_bytes(file.read_bytes() + b" ")
+    with pytest.raises(CatalogError, match="CHECKSUM_MISMATCH"):
+        store.execute("workspace-a", revision, lambda s: CatalogQueries(s).overview())

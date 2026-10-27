@@ -26,6 +26,27 @@ def records(content, name):
     return [json.loads(line) for line in content[name].splitlines()]
 
 
+def test_large_source_groups_preserve_exact_splits_and_reproducibility():
+    args = ("large-groups", 42, 101, 0, 0)
+    manifest, content = build_catalog(*args, max_source_group_size=50)
+    assert (manifest, content) == build_catalog(*args, max_source_group_size=50)
+    assert manifest["generation_config"]["max_source_group_size"] == 50
+    samples = records(content, "datasets/cpt.jsonl")
+    assert Counter(row["split"] for row in samples) == split_targets(101)
+    groups = defaultdict(set)
+    for row in samples:
+        groups[row["source_group_id"]].add(row["split"])
+    assert len(groups) == 4
+    assert all(len(splits) == 1 for splits in groups.values())
+    assert build_catalog(*args)[0]["revision"] != manifest["revision"]
+
+
+@pytest.mark.parametrize("size", [0, 1001, True, 2.5])
+def test_source_group_size_is_bounded(size):
+    with pytest.raises(ValueError, match="max-source-group-size"):
+        build_catalog("invalid-group", max_source_group_size=size)
+
+
 @pytest.fixture(scope="module")
 def default_catalog():
     return build_catalog("test-workspace")

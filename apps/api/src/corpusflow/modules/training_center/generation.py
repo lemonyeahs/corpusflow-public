@@ -75,11 +75,19 @@ def build_catalog(
     cpt_count: int = 2000,
     sft_count: int = 1500,
     dpo_count: int = 800,
+    *,
+    max_source_group_size: int = 5,
 ) -> tuple[Json, dict[str, bytes]]:
     """Build immutable bytes; runtime timestamps and output paths never affect them."""
     counts = dict(zip(KINDS, (cpt_count, sft_count, dpo_count), strict=True))
     validate_config(workspace_id, seed, counts)
-    config: Json = {"counts": counts, "max_source_group_size": 5, "language": "zh"}
+    if type(max_source_group_size) is not int or not 1 <= max_source_group_size <= 1000:
+        raise ValueError("max-source-group-size must be an integer between 1 and 1000")
+    config: Json = {
+        "counts": counts,
+        "max_source_group_size": max_source_group_size,
+        "language": "zh",
+    }
     identity = {
         "workspace_id": workspace_id,
         "seed": seed,
@@ -322,6 +330,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--workspace-id", required=True)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--max-source-group-size", type=int, default=5)
     parser.add_argument(
         "--output-dir", type=Path, help="new final directory under .local/training-center"
     )
@@ -335,6 +344,7 @@ def main(argv: list[str] | None = None) -> int:
             args.cpt_count,
             args.sft_count,
             args.dpo_count,
+            max_source_group_size=args.max_source_group_size,
         )
         root = Path(__file__).resolve().parents[6] / ".local/training-center"
         output = (args.output_dir or root / args.workspace_id / manifest["revision"]).resolve()

@@ -106,7 +106,7 @@ publish 全量校验候选版本后，通过同目录临时文件、flush/fsync 
 
 校验 manifest 内容 revision、完整内容清单哈希、物理行数、字节数、workspace 归属、各实体唯一 ID、样本类型/字符数、来源组 split 隔离、source/dataset_version 引用和计数。拒绝重复 JSON key、非法 JSON、绝对路径、父目录穿越、符号链接及 Windows junction；同根目录内指向别的工作空间的链接也拒绝。
 
-按 Settings 限制单目录顶层训练记录最多 100000 条、内容文件累计 100 MiB，可下调不能放大。manifest 和索引也有有界读取，超限返回 413 CATALOG_LIMIT_EXCEEDED。内容/引用/已发布元数据损坏返回 409 CHECKSUM_MISMATCH，不泄露磁盘路径或切换目录。当前 v1 读取器只接受没有处理产物的生成目录；非空 segments/processing-runs/lineage-edges 返回 503 ADAPTER_UNAVAILABLE，等待 Agent 3/4 的持久化结构接入，不忽略它们再声称没有处理。
+按 Settings 限制单目录顶层训练记录默认最多 100000 条、内容文件累计 100 MiB。经部署内存预算复核后，可显式配置 TRAINING_CENTER_MAX_RECORDS / TRAINING_CENTER_MAX_BYTES，硬上限分别为 1000000 条 / 1 GiB；默认值保持不变。大目录可通过生成器 --max-source-group-size（默认 5，最大 1000）减少来源小文件数量，仍保持来源组隔离切分。manifest 和索引也有有界读取，超限返回 413 CATALOG_LIMIT_EXCEEDED。内容/引用/已发布元数据损坏返回 409 CHECKSUM_MISMATCH，不泄露磁盘路径或切换目录。当前 v1 读取器只接受没有处理产物的生成目录；非空 segments/processing-runs/lineage-edges 返回 503 ADAPTER_UNAVAILABLE，等待 Agent 3/4 的持久化结构接入，不忽略它们再声称没有处理。
 
 按 workspace/revision/manifest hash 缓存已解析快照，进程内最多 2 份。每次 load 仍逐文件检查实际字节与 SHA256，即使大小/mtime 未变化也能检测损坏；返回深拷贝避免调用方污染缓存。缓存优化的是模型解析，不省略完整性检查，因此大目录需要后续基于实际负载做性能评估。每个请求只使用一次加载的快照完成查询；发布切换不会混拼同一响应的数据。
 
@@ -146,3 +146,7 @@ app.include_router(training_center_router)
 - 本轮前端 typecheck/lint/build 和后端所属模块静态检查通过；共享 OpenAPI 快照差异仍待负责人整合。
 
 历史记录见 [M1_VALIDATION.md](M1_VALIDATION.md)、[M1_WORKSPACE_VALIDATION.md](M1_WORKSPACE_VALIDATION.md)；当前结果见 [M1_DATASETS_FOLLOWUP.md](M1_DATASETS_FOLLOWUP.md)。
+
+大目录发布 CLI 可用 `--max-records` 和 `--max-bytes` 显式指定与 API 一致的容量；默认仍为 100000 / 104857600。查询继续逐次校验内容哈希，但首页、统计和分页只复制返回结果，避免每页复制整个目录。Windows Docker 大目录建议使用专用只读数据卷，保留主机生成原件及发布索引。
+
+2026-10-27 大目录验收：seed=42、来源组上限500，CPT/SFT/DPO=140000/105000/55000，总计300000，来源文件602，内容约239MiB。配置300000条/512MiB，在16GiB Docker环境使用独立只读数据卷。261项单元/契约测试、Ruff/格式/Mypy通过；13次真实HTTP检查通过（首尾页、越界空页、总量）。冷加载9.90秒，热查询0.37～0.44秒；查询后API内存约2.72GiB。Chrome桌面核对首页总量、数据台31页（尾页2文件）、CPT7000页/SFT5250页/DPO2750页（各尾页20条）。本轮未修改前端，未重跑前端构建、完整Worker流程或CI。生成数据不包含真实处理历史；已有workspace处理数据独立保留。

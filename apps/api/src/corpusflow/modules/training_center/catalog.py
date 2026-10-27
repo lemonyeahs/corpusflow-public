@@ -12,12 +12,11 @@ import os
 import re
 import tempfile
 from collections import Counter, OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from threading import RLock
 from typing import TYPE_CHECKING, Any
-
-from pydantic import ValidationError
 
 from corpusflow.modules.training_center.snapshot_copy import copy_snapshot
 
@@ -167,8 +166,8 @@ class GeneratedCatalog:
         max_bytes: int = 100 * 1024 * 1024,
         cache_size: int = 2,
     ) -> None:
-        if not 1 <= max_records <= 100_000 or not 1 <= max_bytes <= 100 * 1024 * 1024:
-            raise ValueError("catalog limits may only be lowered")
+        if not 1 <= max_records <= 1_000_000 or not 1 <= max_bytes <= 1024 * 1024 * 1024:
+            raise ValueError("catalog limits must be within 1,000,000 records and 1 GiB")
         if not 1 <= cache_size <= 10:
             raise ValueError("cache_size must be between 1 and 10")
         self.root = root.resolve()
@@ -226,6 +225,16 @@ class GeneratedCatalog:
 
     def load(self, workspace: str, revision: str | None = None) -> CatalogSnapshot:
         """Load only explicitly published versions, never arbitrary generated folders."""
+        return self._load(workspace, revision, isolate=True)
+
+    def execute[T](
+        self, workspace: str, revision: str | None, query: Callable[[CatalogSnapshot], T]
+    ) -> T:
+        """Run a trusted read-only query and isolate only its result from the cache."""
+        with self._lock:
+            return copy_snapshot(query(self._load(workspace, revision, isolate=False)))
+
+    def _load(self, workspace: str, revision: str | None, *, isolate: bool) -> CatalogSnapshot:
         try:
             if revision is not None:
                 revision_name(revision)
@@ -233,7 +242,8 @@ class GeneratedCatalog:
             selected = revision or registry["active_revision"]
             if selected not in registry["revisions"]:
                 raise CatalogError("SNAPSHOT_EXPIRED", 409)
-            snapshot = self.verify(workspace, selected)
+            with self._lock:
+                snapshot = self._verify(workspace, selected, isolate=isolate)
             if snapshot.content_hash != registry["manifest_hashes"][selected]:
                 raise invalid()
             return snapshot
@@ -244,6 +254,11 @@ class GeneratedCatalog:
 
     def verify(self, workspace: str, revision: str) -> CatalogSnapshot:
         """Validate a candidate before publication; does not make it visible."""
+        # Avoid concurrent cold decodes retaining several complete JSON/DTO trees.
+        with self._lock:
+            return self._verify(workspace, revision)
+
+    def _verify(self, workspace: str, revision: str, *, isolate: bool = True) -> CatalogSnapshot:
         try:
             directory = safe_child(self._workspace(workspace), revision_name(revision))
             manifest_path = safe_child(directory, "manifest.json")
@@ -302,18 +317,24 @@ class GeneratedCatalog:
                 cached = self._cache.get(key)
                 if cached is not None:
                     self._cache.move_to_end(key)
-                    return copy_snapshot(cached)
+                    raw.clear()
+                    del value, lines
+                    return copy_snapshot(cached) if isolate else cached
             rows = {
                 name: [decode_json(line) for line in value.splitlines()]
                 for name, value in raw.items()
             }
             snapshot = self._decode(workspace, manifest, content_hash, rows, sizes)
+            # Drop parsed input before constructing the isolated caller snapshot.
+            rows.clear()
+            raw.clear()
+            del value, lines
             with self._lock:
                 self._cache[key] = snapshot
                 self._cache.move_to_end(key)
                 while len(self._cache) > self.cache_size:
                     self._cache.popitem(last=False)
-            return copy_snapshot(snapshot)
+            return copy_snapshot(snapshot) if isolate else snapshot
         except CatalogError:
             raise
         except (OSError, ValueError, TypeError, KeyError, AttributeError):
@@ -539,11 +560,13 @@ def main() -> None:
     parser.add_argument("--data-dir", type=Path, default=Path(".local/training-center"))
     parser.add_argument("--workspace-id", required=True)
     parser.add_argument("--revision", required=True)
+    parser.add_argument("--max-records", type=int, default=100_000)
+    parser.add_argument("--max-bytes", type=int, default=100 * 1024 * 1024)
     args = parser.parse_args()
     try:
-        catalog = GeneratedCatalog(args.data_dir)
+        catalog = GeneratedCatalog(args.data_dir, args.max_records, args.max_bytes)
         getattr(catalog, args.action)(args.workspace_id, args.revision)
-    except (CatalogError, OSError, ValidationError) as exc:
+    except (CatalogError, OSError, ValueError) as exc:
         parser.exit(2, f"catalog operation failed: {type(exc).__name__}: {exc}\n")
     print(f"{args.action}: {args.workspace_id}/{args.revision}")
 

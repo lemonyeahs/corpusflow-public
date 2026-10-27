@@ -271,8 +271,8 @@ interface LineageGraph {
 - ProcessingSummaryResponse 包含 scope、run_id、status、input_refs、output_refs、steps、totals。steps 按 sequence 唯一升序，ID 对应实际 attempt；totals 为每单位一项 `{unit,input_count,output_count}`，只计整个运行边界，不累加串行步骤重复经过的记录。尚未执行时 steps/totals 可空，不等同于成功处理零条。
 - ComparisonResponse 包含 scope、before/after（均为 `{record_id,text}`）、applied_steps（步骤 ObjectRef）、record_ref、processing_run_ref、changes 字符串数组。before/after 必须是同一记录；无可见对应记录返回 404 COMPARISON_NOT_AVAILABLE，不返回伪造空对比。
 - graph 请求必须给 root_type/root_id。空图可返回所请求 root 和空 nodes/edges；不存在或越权对象仍按 404/403 处理，不能统一伪装成空图。非空图必须包含 root；每条边端点都必须存在，truncated 与 reason 一致。
-- 单次目录读取最多 100,000 个顶层训练记录、内容文件累计 100 MiB；超限 413 CATALOG_LIMIT_EXCEEDED。单次下载最多 100,000 条、编码后 100 MiB，超限 413 EXPORT_LIMIT_EXCEEDED；可以下调限制，不可在未经预算复核时扩大。
-- 下载响应 Content-Type 必须含 UTF-8，Content-Disposition 使用安全文件名及 filename* UTF-8。默认只下载成功完成输出；失败/未完成运行返回 409 INVALID_STATE_TRANSITION。服务端使用分块序列化，并在发送响应头前完成授权、范围和大小校验（可先写入本次专用临时文件）；不能先发 200 再悄悄截断。前端现有 Blob 下载受上述 100 MiB 上限约束。序列化器实现仍属于 M1。
+- 单次目录读取默认最多 100,000 个顶层训练记录、内容文件累计 100 MiB；经部署内存预算复核后可显式配置，硬上限为 1,000,000 条 / 1 GiB；超限 413 CATALOG_LIMIT_EXCEEDED。单次下载默认最多 100,000 条、编码后 100 MiB（使用同一组显式容量配置），超限 413 EXPORT_LIMIT_EXCEEDED；可以下调限制，不可在未经预算复核时扩大。
+- 下载响应 Content-Type 必须含 UTF-8，Content-Disposition 使用安全文件名及 filename* UTF-8。默认只下载成功完成输出；失败/未完成运行返回 409 INVALID_STATE_TRANSITION。服务端使用分块序列化，并在发送响应头前完成授权、范围和大小校验（可先写入本次专用临时文件）；不能先发 200 再悄悄截断。前端现有 Blob 下载默认受 100 MiB 上限约束；提高容量配置前还需评估客户端内存预算。序列化器实现仍属于 M1。
 
 ### 快照、配置和接入责任
 

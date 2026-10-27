@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     training_center_data_dir: Path = Path(".local/training-center")
     training_center_snapshot_ttl_seconds: int = Field(default=900, ge=60, le=86400)
     training_center_snapshot_max_per_workspace: int = Field(default=10, ge=1, le=100)
-    training_center_max_records: int = Field(default=100000, ge=1, le=100000)
-    training_center_max_bytes: int = Field(default=104857600, ge=1, le=104857600)
+    training_center_max_records: int = Field(default=100000, ge=1, le=1000000)
+    training_center_max_bytes: int = Field(default=104857600, ge=1, le=1073741824)
 
     llm_provider: Literal["disabled", "openai_compatible"] = "disabled"
     llm_base_url: str = ""

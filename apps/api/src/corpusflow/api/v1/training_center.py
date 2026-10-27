@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from threading import Lock
 from typing import Annotated, Literal, cast
 
@@ -89,6 +89,13 @@ class Reader:
         self.settings: Settings = request.app.state.config
         self.workspace_provider = workspace_provider
 
+    def execute[T](self, params: m.CatalogQuery, operation: Callable[[CatalogQueries], T]) -> T:
+        if params.catalog == "workspace":
+            return operation(self.query(params))
+        return self.store.execute(
+            self.workspace, params.revision, lambda snapshot: operation(CatalogQueries(snapshot))
+        )
+
     def query(self, params: m.CatalogQuery) -> CatalogQueries:
         if params.catalog == "workspace":
             return CatalogQueries(
@@ -135,26 +142,26 @@ Read = Annotated[Reader, Depends(reader)]
 
 @router.get("/overview", response_model=m.OverviewResponse)
 def overview(read: Read, query: Annotated[m.CatalogQuery, Query()]) -> m.OverviewResponse:
-    return read.query(query).overview()
+    return read.execute(query, lambda queries: queries.overview())
 
 
 @router.get("/formats/{format}/stats", response_model=m.FormatStatsResponse)
 def stats(
     format: m.FileFormat | Literal["all"], read: Read, query: Annotated[m.StatsQuery, Query()]
 ) -> m.FormatStatsResponse:
-    return read.query(query).stats(format, query)
+    return read.execute(query, lambda queries: queries.stats(format, query))
 
 
 @router.get("/files", response_model=m.FilesResponse)
 def files(read: Read, query: Annotated[m.FilesQuery, Query()]) -> m.FilesResponse:
-    return read.query(query).files(query)
+    return read.execute(query, lambda queries: queries.files(query))
 
 
 @router.get("/files/{file_id}", response_model=m.FileDetailResponse)
 def file_detail(
     file_id: str, read: Read, query: Annotated[m.CatalogQuery, Query()]
 ) -> m.FileDetailResponse:
-    return read.query(query).file(file_id)
+    return read.execute(query, lambda queries: queries.file(file_id))
 
 
 @router.get("/files/{file_id}/comparison", response_model=m.ComparisonResponse)
@@ -172,28 +179,28 @@ def comparison(
 
 @router.get("/datasets", response_model=m.DatasetsResponse)
 def datasets(read: Read, query: Annotated[m.DatasetsQuery, Query()]) -> m.DatasetsResponse:
-    return read.query(query).datasets(query.kind)
+    return read.execute(query, lambda queries: queries.datasets(query.kind))
 
 
 @router.get("/datasets/{dataset_id}/overview", response_model=m.DatasetOverviewResponse)
 def dataset_overview(
     dataset_id: str, read: Read, query: Annotated[m.DatasetQuery, Query()]
 ) -> m.DatasetOverviewResponse:
-    return read.query(query).dataset_overview(dataset_id, query.version)
+    return read.execute(query, lambda queries: queries.dataset_overview(dataset_id, query.version))
 
 
 @router.get("/datasets/{dataset_id}/samples", response_model=m.SamplesResponse)
 def samples(
     dataset_id: str, read: Read, query: Annotated[m.SamplesQuery, Query()]
 ) -> m.SamplesResponse:
-    return read.query(query).samples(dataset_id, query)
+    return read.execute(query, lambda queries: queries.samples(dataset_id, query))
 
 
 @router.get("/datasets/{dataset_id}/samples/{sample_id}", response_model=m.SamplesResponse)
 def sample_detail(
     dataset_id: str, sample_id: str, read: Read, query: Annotated[m.DatasetQuery, Query()]
 ) -> m.SamplesResponse:
-    return read.query(query).sample(dataset_id, query.version, sample_id)
+    return read.execute(query, lambda queries: queries.sample(dataset_id, query.version, sample_id))
 
 
 @router.get("/datasets/{dataset_id}/manifest", response_model=m.ManifestResponse)
